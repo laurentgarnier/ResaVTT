@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#121a2b">
+  <title>Sorties VTT</title>
+  <link rel="icon" href="../commun/images/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../commun/theme.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="barre" id="barre"></header>
+  <main id="vue" class="vue"><p class="mut chargement">Chargement…</p></main>
+  <footer class="pied">
+    Météo : <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> ·
+    Cartes : © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> ·
+    <a href="../confidentialite.html">Données personnelles</a> ·
+    <a href="../">Site du club</a>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
