@@ -1,0 +1,10 @@
+{
+  "name": "sorties-vtt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "gas:copier": "node outils/copier-vers-gas.js",
+    "gas:pousser": "npm run gas:copier && cd backend/gas && npx --yes @google/clasp push -f"
+  }
+}
