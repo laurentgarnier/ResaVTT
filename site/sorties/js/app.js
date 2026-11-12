@@ -6,6 +6,8 @@ import { renderConnexion, brancherConnexion } from './ui/connexion.js';
 import { renderGrille, renderJour } from './ui/calendrier.js';
 import { renderSortie, brancherSortie } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
+import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
+import { creneau as creneauDe } from './logique/dates.js';
 
 const etat = { cal: null };
 const vue = () => document.getElementById('vue');
@@ -95,7 +97,31 @@ async function afficherSortie(racine, id) {
   window.scrollTo(0, 0);
 }
 
+function afficherCreation(racine, date) {
+  const cal = etat.cal;
+  const maintenant = new Date();
+  const creneau = date === cal.aujourdhui && maintenant.getHours() >= 11 ? 'apres_midi' : 'matin';
+  const valeurs = valeursParDefaut(date, creneau, cal.moi, cal.parametres);
+  racine.innerHTML = renderFormulaire({ mode: 'creer', valeurs, personnes: cal.personnes, sortiesMemeCreneau: sortiesMemeCreneau(cal, date, creneau), creneau });
+  brancherFormulaire(racine, actions, { mode: 'creer', sortie: { date }, cal });
+}
+
+function afficherModification(racine, id) {
+  const sortie = etat.cal.jours.flatMap((j) => j.sorties).find((s) => s.id === id);
+  if (!sortie || !sortie.peut_modifier) { location.hash = '#/'; return; }
+  racine.innerHTML = renderFormulaire({ mode: 'modifier', valeurs: sortie, personnes: [], sortiesMemeCreneau: [], creneau: creneauDe(sortie.heure) });
+  brancherFormulaire(racine, actions, { mode: 'modifier', sortie, cal: etat.cal });
+}
+
+function afficherPersonnes(racine) {
+  racine.innerHTML = renderPersonnes(etat.cal.personnes);
+  brancherPersonnes(racine, actions);
+}
+
 const ROUTES = [
+  { motif: /^#\/creer\/(\d{4}-\d{2}-\d{2})$/, afficher: (racine, m) => afficherCreation(racine, m[1]) },
+  { motif: /^#\/modifier\/(.+)$/, afficher: (racine, m) => afficherModification(racine, decodeURIComponent(m[1])) },
+  { motif: /^#\/personnes$/, afficher: (racine) => afficherPersonnes(racine) },
   { motif: /^#\/$/, afficher: (racine) => afficherCalendrier(racine) },
   { motif: /^#\/jour\/(\d{4}-\d{2}-\d{2})$/, afficher: async (racine, m) => afficherJour(racine, m[1], await meteoCourante()) },
   { motif: /^#\/sortie\/(.+)$/, afficher: (racine, m) => afficherSortie(racine, decodeURIComponent(m[1])) },
