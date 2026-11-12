@@ -8,6 +8,7 @@ import { renderSortie, brancherSortie } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
 import { creneau as creneauDe } from './logique/dates.js';
+import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
 
 const etat = { cal: null };
 const vue = () => document.getElementById('vue');
@@ -118,7 +119,36 @@ function afficherPersonnes(racine) {
   brancherPersonnes(racine, actions);
 }
 
+async function afficherAdmin(racine, onglet) {
+  if (!etat.cal.est_admin) {
+    toast('Réservé aux administrateurs.');
+    location.hash = '#/';
+    return;
+  }
+  if (!etat.cal.admin_verifie) {
+    const ecranCode = (options) => { racine.innerHTML = renderCode(options); };
+    ecranCode({ envoye: false });
+    brancherCode(racine, actions, ecranCode);
+    return;
+  }
+  let options = {};
+  const afficher = async () => {
+    const d = await actions.appeler('admin_lire');
+    racine.innerHTML = renderAdmin(d, onglet, options);
+    brancherAdmin(racine, actions, d, (o) => { options = o; reconstruire(); });
+  };
+  // Chaque réaffichage repart d'un élément neuf pour ne pas cumuler les écouteurs.
+  const reconstruire = () => {
+    const neuf = racine.cloneNode(false);
+    racine.replaceWith(neuf);
+    racine = neuf;
+    afficher().catch((e) => toast(e.message));
+  };
+  await afficher();
+}
+
 const ROUTES = [
+  { motif: /^#\/admin(?:\/(recurrences|fermetures|parametres|messages))?$/, afficher: (racine, m) => afficherAdmin(racine, m[1] || 'recurrences') },
   { motif: /^#\/creer\/(\d{4}-\d{2}-\d{2})$/, afficher: (racine, m) => afficherCreation(racine, m[1]) },
   { motif: /^#\/modifier\/(.+)$/, afficher: (racine, m) => afficherModification(racine, decodeURIComponent(m[1])) },
   { motif: /^#\/personnes$/, afficher: (racine) => afficherPersonnes(racine) },
