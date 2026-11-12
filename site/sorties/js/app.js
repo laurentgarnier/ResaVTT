@@ -9,6 +9,7 @@ import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
 import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
+import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
 
 const etat = { cal: null };
 const vue = () => document.getElementById('vue');
@@ -79,6 +80,31 @@ async function afficherCalendrier(racine) {
   } else {
     afficherJour(racine, premierJourUtile(), meteo);
   }
+  afficherEncartInstallation(racine);
+}
+
+// Installation : l'invite Android est conservée pour un bouton « Installer l'appli ».
+let inviteInstallation = null;
+window.addEventListener('beforeinstallprompt', (ev) => { ev.preventDefault(); inviteInstallation = ev; });
+
+function afficherEncartInstallation(racine) {
+  let masque = false;
+  try { masque = localStorage.getItem('sorties-vtt-installation-plus-tard') === '1'; } catch (e) { /* sans stockage */ }
+  if (masque) return;
+  const html = renderEncartInstallation({ plateforme: plateformeDepuis(navigator.userAgent), installee: !modeNavigateur(), invitePossible: !!inviteInstallation });
+  if (!html) return;
+  racine.insertAdjacentHTML('afterbegin', html);
+  racine.querySelector('.installer').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    if (b.dataset.action === 'installer' && inviteInstallation) {
+      inviteInstallation.prompt();
+      await inviteInstallation.userChoice;
+      inviteInstallation = null;
+    }
+    try { localStorage.setItem('sorties-vtt-installation-plus-tard', '1'); } catch (e) { /* sans stockage */ }
+    b.closest('.installer').remove();
+  });
 }
 
 function afficherJour(racine, date, meteo) {
@@ -188,6 +214,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && lireJeton() && etat.cal) actions.rafraichir().catch(() => {});
 });
 window.addEventListener('hashchange', router);
+if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 router();
 
 export { actions };
