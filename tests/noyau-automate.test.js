@@ -103,3 +103,21 @@ test("purge : numéro d'un adhérent inactif effacé, jetons et personnes suppri
   assert.ok(!JSON.stringify(t.depot.lire('Discussions')).includes('+33600000002'));
   assert.ok(t.depot.lire('Discussions').some((m) => m.auteur_nom === 'Ben'));
 });
+
+test("purge : si la liste des adhérents est vide ou illisible, personne n'est effacé", () => {
+  const t = contexteTest({ maintenant: new Date(2026, 10, 12, 4, 0) });
+  t.connecter('0600000002');
+  const personnesAvant = t.depot.lire('Personnes').length;
+  t.adherents.splice(0, t.adherents.length);
+  ticNoyau(t.ctx);
+  assert.equal(t.depot.lire('Personnes').length, personnesAvant);
+  assert.equal(t.depot.lire('Jetons').length, 1);
+  assert.ok(JSON.stringify(t.depot.lire('Inscriptions')).includes('+336'));
+});
+
+test("purge : si plus d'un adhérent sur cinq disparaît d'un coup, la purge des départs est suspendue", () => {
+  const t = contexteTest({ maintenant: new Date(2026, 10, 12, 4, 0) });
+  for (const a of t.adherents.slice(0, 15)) a.actif = false;
+  ticNoyau(t.ctx);
+  assert.ok(t.depot.lire('Personnes').some((p) => p.telephone === '+33600000001'));
+});

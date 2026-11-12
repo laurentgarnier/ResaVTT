@@ -2,7 +2,10 @@
 import { CONFIG } from '../config.js';
 
 const CLE_JETON = 'sorties-vtt-jeton';
-const ERREURS_A_REESSAYER = ['erreur_interne'];
+// Seul « serveur occupé » est sûr à réessayer : la requête n'a pas été traitée.
+// Une erreur réseau n'est réessayée que pour une lecture (une écriture a pu être enregistrée avant la coupure).
+const ERREURS_A_REESSAYER = ['occupe'];
+const ACTIONS_LECTURE = ['calendrier', 'discussion_lire', 'trace_lire', 'admin_lire', 'admin_geocoder'];
 
 export class ErreurApi extends Error {
   constructor(code, message, extra = {}) {
@@ -44,6 +47,7 @@ export async function appeler(action, params = {}, options = {}) {
       r = await rep.json();
     } catch (e) {
       derniere = new ErreurApi('reseau', 'Connexion impossible. Vérifiez votre réseau.');
+      if (!ACTIONS_LECTURE.includes(action)) throw derniere;
       continue;
     }
     if (r.ok) return r.data;

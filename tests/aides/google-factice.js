@@ -3,6 +3,9 @@ import { createHash, randomUUID } from 'node:crypto';
 
 function creerFeuille(nom) {
   const donnees = [];
+  // Comme Google Sheets : une feuille a un nombre maximal de lignes (1000 au départ) ;
+  // écrire au-delà échoue, deleteRow le réduit, insertRowsAfter l'augmente.
+  let lignesMax = 1000;
   const largeur = () => donnees.reduce((m, l) => Math.max(m, l.length), 0);
   const plage = (r, c, nr, nc) => ({
     getValues: () => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => {
@@ -10,6 +13,7 @@ function creerFeuille(nom) {
       return v === undefined ? '' : v;
     })),
     setValues: (v) => {
+      if (r + v.length - 1 > lignesMax) throw new Error(`Les coordonnées de la plage sont en dehors des dimensions de la feuille (${nom}).`);
       v.forEach((ligne, i) => {
         while (donnees.length < r + i) donnees.push([]);
         ligne.forEach((x, j) => { donnees[r - 1 + i][c - 1 + j] = x; });
@@ -29,11 +33,12 @@ function creerFeuille(nom) {
       return 0;
     },
     getLastColumn: () => largeur(),
-    getMaxRows: () => 1000,
+    getMaxRows: () => lignesMax,
+    insertRowsAfter: (_apres, n) => { lignesMax += n; },
     getRange: (r, c, nr = 1, nc = 1) => plage(r, c, nr, nc),
     appendRow: (l) => { donnees.push([...l]); },
-    deleteRow: (r) => { donnees.splice(r - 1, 1); },
-    deleteRows: (r, n) => { donnees.splice(r - 1, n); },
+    deleteRow: (r) => { donnees.splice(r - 1, 1); lignesMax -= 1; },
+    deleteRows: (r, n) => { donnees.splice(r - 1, n); lignesMax -= n; },
     setFrozenRows: () => {},
   };
 }

@@ -35,10 +35,27 @@ test('appeler : erreur métier levée sans nouvel essai, avec code et message', 
   assert.equal(n, 1);
 });
 
-test('appeler : erreur_interne réessayée deux fois puis levée', async () => {
+test('appeler : serveur occupé réessayé deux fois puis levé', async () => {
   let n = 0;
-  const fetchImpl = async () => { n++; return reponse({ ok: false, erreur: 'erreur_interne', message: 'occupé' }); };
+  const fetchImpl = async () => { n++; return reponse({ ok: false, erreur: 'occupe', message: 'Serveur occupé, réessayez.' }); };
+  await assert.rejects(appeler('sortie_creer', {}, { fetchImpl, url: 'u', delais: [0, 0] }), (e) => e.code === 'occupe');
+  assert.equal(n, 3);
+});
+
+test("appeler : erreur_interne jamais réessayée (l'écriture a pu avoir lieu)", async () => {
+  let n = 0;
+  const fetchImpl = async () => { n++; return reponse({ ok: false, erreur: 'erreur_interne', message: 'x' }); };
   await assert.rejects(appeler('calendrier', {}, { fetchImpl, url: 'u', delais: [0, 0] }), (e) => e.code === 'erreur_interne');
+  assert.equal(n, 1);
+});
+
+test('appeler : erreur réseau réessayée pour une lecture, pas pour une écriture', async () => {
+  let n = 0;
+  const fetchImpl = async () => { n++; throw new TypeError('réseau'); };
+  await assert.rejects(appeler('discussion_ecrire', {}, { fetchImpl, url: 'u', delais: [0, 0] }), (e) => e.code === 'reseau');
+  assert.equal(n, 1);
+  n = 0;
+  await assert.rejects(appeler('discussion_lire', {}, { fetchImpl, url: 'u', delais: [0, 0] }), (e) => e.code === 'reseau');
   assert.equal(n, 3);
 });
 

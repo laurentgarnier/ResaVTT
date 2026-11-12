@@ -141,3 +141,12 @@ test('supprimer la trace par défaut la masque pour cette sortie seulement', () 
   assert.deepEqual(sortieDe(t, admin, 'R:sm:2026-11-21:1').traces.map((x) => x.nom_fichier), ['boucle-foret.gpx']);
   assert.ok(t.depot.lire('Traces').some((x) => x.id === 't-boucle-foret'));
 });
+
+test("le créateur d'une sortie ne peut pas supprimer la trace d'une autre sortie", () => {
+  const t = contexteTest();
+  const ludo = t.connecter('0600000003');
+  const r = t.appel('trace_supprimer', { jeton: ludo, sortie_id: 'libre-etangs', trace_id: 't-inter' });
+  assert.equal(r.erreur, 'trace_inconnue');
+  assert.ok(t.depot.lire('Traces').some((x) => x.id === 't-inter'));
+  assert.equal(t.appel('trace_supprimer', { jeton: ludo, sortie_id: 'libre-etangs', trace_id: 't-boucle-foret' }).erreur, 'trace_inconnue');
+});

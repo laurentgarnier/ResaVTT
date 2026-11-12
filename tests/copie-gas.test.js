@@ -61,3 +61,19 @@ test('adaptateur : initialiser, chargerDonneesDemo, puis doPost connexion et cal
   vm.runInContext('installer()', contexte);
   assert.equal(g.declencheurs.length, 1);
 });
+
+test("adaptateur : on peut ajouter au-delà des 1000 lignes initiales d'une feuille, même après des suppressions", () => {
+  const g = creerGoogleFactice();
+  const contexte = vm.createContext({ ...g.globaux, console });
+  vm.runInContext(codeGas(), contexte);
+  vm.runInContext('initialiser()', contexte);
+  const n = vm.runInContext(`(function () {
+    const depot = depotSheets(classeurAppli());
+    const lignes = (k) => Array.from({ length: k }, (_, i) => ({ horodatage: 'h' + i, type: 't', detail: String(i) }));
+    depot.ajouter('Journal', lignes(600));
+    depot.supprimer('Journal', (l) => Number(l.detail) < 300);
+    depot.ajouter('Journal', lignes(900));
+    return depot.lire('Journal').length;
+  })()`, contexte);
+  assert.equal(n, 1200);
+});

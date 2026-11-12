@@ -132,6 +132,14 @@ export function purger(ctx, aujourdhui) {
   ctx.depot.supprimer('Jetons', (j) => String(j.derniere_utilisation).slice(0, 10) < limiteJetons);
 
   const actifs = new Set(ctx.adherents.lire().filter((a) => estVrai(a.actif)).map((a) => a.telephone));
+  const connus = new Set(ctx.depot.lire('Personnes').map((p) => p.telephone).filter(Boolean));
+  const departs = [...connus].filter((tel) => !actifs.has(tel));
+  // Garde-fou : une liste d'adhérents vide ou amputée d'un coup (en-tête renommé, mauvais onglet…) ne doit rien effacer.
+  if (!actifs.size || departs.length > Math.max(3, connus.size * 0.2)) {
+    ctx.journal('purge', `Purge des départs suspendue : ${departs.length} numéros absents sur ${connus.size}. Vérifiez le fichier Adhérents.`);
+    alerterPurgeSuspendue(ctx, departs.length, connus.size);
+    return;
+  }
   const partis = (tel) => tel && !actifs.has(tel);
   ctx.depot.supprimer('Jetons', (j) => partis(j.telephone));
   ctx.depot.supprimer('Personnes', (p) => partis(p.telephone));
@@ -139,6 +147,17 @@ export function purger(ctx, aujourdhui) {
   ctx.depot.modifier('Discussions', (m) => partis(m.telephone), { telephone: '' });
   ctx.depot.modifier('Traces', (t) => partis(t.ajoute_par_tel), { ajoute_par_tel: '' });
   ctx.depot.modifier('Sorties', (s) => partis(s.createur_tel), { createur_tel: '' });
+}
+
+function alerterPurgeSuspendue(ctx, nbDeparts, nbConnus) {
+  const { parametres } = reglagesEnvoi(ctx);
+  if (!parametres.email_alertes) return;
+  try {
+    ctx.services.mail(parametres.email_alertes, 'Sorties VTT : purge suspendue',
+      `${nbDeparts} numéros sur ${nbConnus} n'apparaissent plus comme adhérents actifs. Par précaution, rien n'a été effacé.\nVérifiez le fichier Adhérents (onglet, en-têtes nom / telephone / actif).`);
+  } catch (e) {
+    ctx.journal('alerte', String(e));
+  }
 }
 
 function purgeDue(ctx, maintenant, aujourdhui) {

@@ -4,12 +4,13 @@ import { appeler, lireJeton, enregistrerJeton, effacerJeton } from './api.js';
 import { echapper } from './logique/html.js';
 import { renderConnexion, brancherConnexion } from './ui/connexion.js';
 import { renderGrille, renderJour } from './ui/calendrier.js';
-import { renderSortie, brancherSortie } from './ui/sortie.js';
+import { renderSortie, brancherSortie, arreterDiscussion } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
 import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
 import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
+import { reaffichageAutomatiquePermis } from './ui/navigation.js';
 
 const etat = { cal: null };
 const vue = () => document.getElementById('vue');
@@ -198,6 +199,7 @@ async function router() {
     if (e.code !== 'non_connecte') vue().innerHTML = `<p class="erreur">${echapper(e.message)}</p><button class="btn o" onclick="location.reload()">Réessayer</button>`;
     return undefined;
   }
+  arreterDiscussion();
   // Une vue reconstruite repart d'un élément neuf : les écouteurs de la vue précédente disparaissent avec lui.
   const ancienne = vue();
   const neuve = ancienne.cloneNode(false);
@@ -211,7 +213,9 @@ async function router() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && lireJeton() && etat.cal) actions.rafraichir().catch(() => {});
+  if (document.visibilityState !== 'visible' || !lireJeton() || !etat.cal) return;
+  if (reaffichageAutomatiquePermis(location.hash)) actions.rafraichir().catch(() => {});
+  else chargerCalendrier().catch(() => {});
 });
 window.addEventListener('hashchange', router);
 if ('serviceWorker' in navigator && location.hostname !== 'localhost') {

@@ -152,7 +152,9 @@ export function actionTraceLire(ctx, _u, req) {
 export function actionTraceSupprimer(ctx, u, req) {
   const s = trouverSortie(ctx, req.sortie_id);
   const t = ctx.depot.lire('Traces').find((x) => x.id === req.trace_id);
-  if (!t) throw erreurMetier('trace_inconnue', 'Trace introuvable.');
+  // La trace doit appartenir à cette sortie (ou être la trace par défaut de sa règle).
+  const rattachee = t && (t.sortie_id === s.id || (t.regle_id && !t.sortie_id && t.id === s.trace_regle_id));
+  if (!rattachee) throw erreurMetier('trace_inconnue', 'Trace introuvable.');
   const peutSortie = peutModifier(sortiePourDroits(s), u);
   if (t.regle_id && !t.sortie_id) {
     if (!peutSortie) throw interdit();

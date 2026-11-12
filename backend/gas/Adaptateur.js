@@ -22,7 +22,7 @@ function doPost(e) {
   }
   if (ACTIONS_SANS_VERROU.indexOf(requete.action) >= 0) return repondreJson(traiter(requete, contexteGoogle()));
   var verrou = LockService.getScriptLock();
-  if (!verrou.tryLock(10000)) return repondreJson({ ok: false, erreur: 'erreur_interne', message: 'Serveur occupé, réessayez.' });
+  if (!verrou.tryLock(10000)) return repondreJson({ ok: false, erreur: 'occupe', message: 'Serveur occupé, réessayez.' });
   try {
     return repondreJson(traiter(requete, contexteGoogle()));
   } finally {
@@ -85,7 +85,13 @@ function depotSheets(classeur) {
       var f = feuille(onglet);
       var ent = entetes(f);
       var lignes = objets.map(function (o) { return objetEnLigne(ent, o); });
-      f.getRange(f.getLastRow() + 1, 1, lignes.length, ent.length).setValues(lignes);
+      var debut = f.getLastRow() + 1;
+      // Une feuille a un nombre maximal de lignes (1000 au départ, réduit par chaque suppression) : on l'agrandit au besoin.
+      var manque = debut + lignes.length - 1 - f.getMaxRows();
+      if (manque > 0) f.insertRowsAfter(f.getMaxRows(), manque);
+      var plage = f.getRange(debut, 1, lignes.length, ent.length);
+      plage.setNumberFormat('@');
+      plage.setValues(lignes);
     },
     modifier: function (onglet, filtre, champs) {
       var f = feuille(onglet);

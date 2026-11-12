@@ -7,6 +7,13 @@ import { afficherCarte } from './carte.js';
 
 const MESSAGES_VISIBLES = 2;
 const INTERVALLE_DISCUSSION_MS = 30000;
+let minuteurDiscussion = null;
+
+// Un seul rafraîchissement de discussion à la fois, arrêté à chaque changement d'écran.
+export function arreterDiscussion() {
+  clearInterval(minuteurDiscussion);
+  minuteurDiscussion = null;
+}
 
 function heureMessage(iso) {
   const d = new Date(iso);
@@ -192,9 +199,8 @@ export function brancherSortie(racine, actions, sortie) {
   }
 
   chargerMessages().catch((e) => actions.toast(e.message));
-  const minuteur = setInterval(() => {
+  arreterDiscussion();
+  minuteurDiscussion = setInterval(() => {
     if (document.visibilityState === 'visible') chargerMessages().catch(() => {});
   }, INTERVALLE_DISCUSSION_MS);
-  const arreter = () => { clearInterval(minuteur); window.removeEventListener('hashchange', arreter); };
-  window.addEventListener('hashchange', arreter);
 }

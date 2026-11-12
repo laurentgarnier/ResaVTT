@@ -129,10 +129,16 @@ export function brancherFormulaire(racine, actions, { mode, sortie, cal }) {
       } else {
         await actions.appeler('sortie_modifier', { sortie_id: id, ...champs, date: form.date.value });
       }
+      let messageFin = mode === 'creer' ? 'Sortie publiée.' : 'Sortie modifiée.';
+      // La sortie existe désormais : un échec d'envoi de trace ne doit pas inviter à la recréer.
       for (const t of traces) {
-        await actions.appeler('trace_ajouter', { sortie_id: id, nom_fichier: t.nom, contenu: t.contenu, km: String(t.km), dplus: String(t.dplus) });
+        try {
+          await actions.appeler('trace_ajouter', { sortie_id: id, nom_fichier: t.nom, contenu: t.contenu, km: String(t.km), dplus: String(t.dplus) });
+        } catch (e) {
+          messageFin = `Sortie enregistrée, mais la trace ${t.nom} n'a pas pu être ajoutée : ${e.message}`;
+        }
       }
-      actions.toast(mode === 'creer' ? 'Sortie publiée.' : 'Sortie modifiée.');
+      actions.toast(messageFin);
       await actions.rafraichir();
       actions.aller(lienSortie(id));
     } catch (e) {
