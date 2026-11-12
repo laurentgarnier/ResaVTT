@@ -1,6 +1,7 @@
 // Routeur des actions de l'API (spec technique §4) : contrôle du jeton, droits relus à chaque appel.
 import { estVrai } from './schema.js';
 import { actionConnexion, actionDeconnexion, actionCalendrier, actionPersonnesEnregistrer, actionInscription } from './actions-adherent.js';
+import { actionSortieCreer, actionSortieModifier, actionSortieHoraire, actionSortieAnnuler, actionDiscussionLire, actionDiscussionEcrire, actionDiscussionSupprimer, actionTraceAjouter, actionTraceLire, actionTraceSupprimer } from './actions-sorties.js';
 
 // Construite à l'appel (et non au chargement) : Apps Script ne garantit pas l'ordre de chargement des fichiers.
 function tableActions() {
@@ -10,6 +11,16 @@ function tableActions() {
     calendrier: actionCalendrier,
     personnes_enregistrer: actionPersonnesEnregistrer,
     inscription: actionInscription,
+    sortie_creer: actionSortieCreer,
+    sortie_modifier: actionSortieModifier,
+    sortie_horaire: actionSortieHoraire,
+    sortie_annuler: actionSortieAnnuler,
+    discussion_lire: actionDiscussionLire,
+    discussion_ecrire: actionDiscussionEcrire,
+    discussion_supprimer: actionDiscussionSupprimer,
+    trace_ajouter: actionTraceAjouter,
+    trace_lire: actionTraceLire,
+    trace_supprimer: actionTraceSupprimer,
   };
 }
 
