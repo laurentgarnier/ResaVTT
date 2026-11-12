@@ -1,0 +1,44 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { pire, picto, synthetiser, heureParHeure } from '../site/sorties/js/logique/meteo.js';
+import { fabriquerHoraire } from './aides/meteo.js';
+
+test('le pire code suit la gravité, pas le numéro', () => {
+  assert.equal(pire([3, 51]), 51);
+  assert.equal(pire([95, 99, 61]), 99);
+  assert.equal(pire([45, 61]), 61);
+  assert.equal(pire([80, 65]), 65);
+});
+
+test('picto en français', () => {
+  assert.deepEqual(picto(0), { emoji: '☀️', libelle: 'Ensoleillé' });
+  assert.equal(picto(95).libelle, 'Orage');
+});
+
+test('synthèse matin 8–12 h et après-midi 13–18 h', () => {
+  const h = fabriquerHoraire('2026-11-14', {
+    8: { t: 2, p: 0, c: 0, v: 10 }, 9: { t: 3, p: 0, c: 0 }, 10: { t: 4, p: 0, c: 0 }, 11: { t: 5, p: 0, c: 0 },
+    12: { t: 6, p: 30, c: 3, mm: 0.4 },
+    13: { t: 9, p: 10, c: 2 }, 14: { t: 9, p: 10, c: 2 }, 15: { t: 9, p: 10, c: 2 }, 16: { t: 9, p: 10, c: 2 }, 17: { t: 8, p: 10, c: 2 },
+    18: { t: 7, p: 80, c: 61, v: 22.6 }, 19: { t: 5, p: 100, c: 95 },
+  });
+  const s = synthetiser(h, '2026-11-14');
+  assert.deepEqual([s.matin.tmin, s.matin.tmax, s.matin.pluie_proba, s.matin.code, s.matin.vent_max, s.matin.pluie_mm], [2, 6, 30, 3, 10, 0.4]);
+  assert.equal(s.apres_midi.code, 61);
+  assert.equal(s.apres_midi.vent_max, 23);
+  assert.equal(s.apres_midi.emoji, '🌧');
+});
+
+test('jour hors horizon → null', () => {
+  const s = synthetiser(fabriquerHoraire('2026-11-14', {}), '2026-12-01');
+  assert.equal(s.matin, null);
+  assert.equal(s.apres_midi, null);
+});
+
+test('heureParHeure : 16 entrées de 06 à 21', () => {
+  const l = heureParHeure(fabriquerHoraire('2026-11-14', { 6: { t: 1, p: 5, c: 45 } }), '2026-11-14');
+  assert.equal(l.length, 16);
+  assert.equal(l[0].heure, '06');
+  assert.equal(l[15].heure, '21');
+  assert.deepEqual([l[0].temp, l[0].pluie_proba, l[0].code, l[0].emoji], [1, 5, 45, '🌫']);
+});
