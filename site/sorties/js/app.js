@@ -3,6 +3,9 @@ import { CONFIG } from '../config.js';
 import { appeler, lireJeton, enregistrerJeton, effacerJeton } from './api.js';
 import { echapper } from './logique/html.js';
 import { renderConnexion, brancherConnexion } from './ui/connexion.js';
+import { renderGrille, renderJour } from './ui/calendrier.js';
+import { renderSortie, brancherSortie } from './ui/sortie.js';
+import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 
 const etat = { cal: null };
 const vue = () => document.getElementById('vue');
@@ -39,7 +42,7 @@ function afficherBarre() {
     ${cal ? `<span class="chip optionnel">Connecté : ${echapper(cal.moi.nom)}</span>
       <a class="chip" href="#/personnes">👪 Personnes</a>
       ${cal.est_admin ? '<a class="chip" href="#/admin">⚙ Admin</a>' : ''}
-      <a class="chip" href="#/deconnexion">Déconnexion</a>` : ''}`;
+      <a class="chip optionnel" href="#/deconnexion">Déconnexion</a>` : ''}`;
 }
 
 function afficherConnexion(erreur = '') {
@@ -54,11 +57,49 @@ async function chargerCalendrier() {
   afficherBarre();
 }
 
-const ROUTES = [];
+const ECRAN_LARGE = '(min-width: 900px)';
 
-export function ajouterRoute(motif, afficher) {
-  ROUTES.push({ motif, afficher });
+async function meteoCourante() {
+  const p = etat.cal.parametres;
+  const hourly = await chargerMeteo(p.commune_lat, p.commune_lon);
+  return { parDate: meteoParDate(hourly, etat.cal.jours.filter((j) => !j.passe).map((j) => j.date)), hourly };
 }
+
+function premierJourUtile() {
+  return etat.cal.aujourdhui;
+}
+
+async function afficherCalendrier(racine) {
+  const meteo = await meteoCourante();
+  if (window.matchMedia(ECRAN_LARGE).matches) {
+    racine.innerHTML = renderGrille(etat.cal, meteo.parDate);
+  } else {
+    afficherJour(racine, premierJourUtile(), meteo);
+  }
+}
+
+function afficherJour(racine, date, meteo) {
+  racine.innerHTML = renderJour(etat.cal, date, meteo.parDate, date === etat.cal.aujourdhui ? heuresDuJour(meteo.hourly, date) : null);
+  const onglet = racine.querySelector('.onglet.on');
+  if (onglet) onglet.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+
+async function afficherSortie(racine, id) {
+  const sortie = etat.cal.jours.flatMap((j) => j.sorties).find((s) => s.id === id);
+  if (!sortie) {
+    racine.innerHTML = '<p class="mut">Cette sortie n\'existe plus.</p><a class="btn o" href="#/">Retour au calendrier</a>';
+    return;
+  }
+  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes);
+  brancherSortie(racine, actions, sortie);
+  window.scrollTo(0, 0);
+}
+
+const ROUTES = [
+  { motif: /^#\/$/, afficher: (racine) => afficherCalendrier(racine) },
+  { motif: /^#\/jour\/(\d{4}-\d{2}-\d{2})$/, afficher: async (racine, m) => afficherJour(racine, m[1], await meteoCourante()) },
+  { motif: /^#\/sortie\/(.+)$/, afficher: (racine, m) => afficherSortie(racine, decodeURIComponent(m[1])) },
+];
 
 async function router() {
   if (!lireJeton()) return afficherConnexion();
@@ -75,15 +116,16 @@ async function router() {
     if (e.code !== 'non_connecte') vue().innerHTML = `<p class="erreur">${echapper(e.message)}</p><button class="btn o" onclick="location.reload()">Réessayer</button>`;
     return undefined;
   }
+  // Une vue reconstruite repart d'un élément neuf : les écouteurs de la vue précédente disparaissent avec lui.
+  const ancienne = vue();
+  const neuve = ancienne.cloneNode(false);
+  ancienne.replaceWith(neuve);
   for (const r of ROUTES) {
     const m = hash.match(r.motif);
-    if (m) return r.afficher(vue(), actions, m);
+    if (m) return r.afficher(neuve, m);
   }
-  return afficherAccueilProvisoire();
-}
-
-function afficherAccueilProvisoire() {
-  vue().innerHTML = `<p>Bonjour ${echapper(etat.cal.moi.nom)} : ${etat.cal.jours.reduce((n, j) => n + j.sorties.length, 0)} sorties sur 2 semaines.</p>`;
+  location.hash = '#/';
+  return undefined;
 }
 
 document.addEventListener('visibilitychange', () => {

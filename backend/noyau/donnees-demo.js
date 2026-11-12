@@ -98,7 +98,7 @@ export function creerDonneesDemo(aujourdhui, porteur) {
 
   const message = (n, sortieId, auteur, texte, systeme) => ({
     id: `m-${n}`, sortie_id: sortieId, auteur_nom: auteur, telephone: systeme ? '' : telDe[auteur], texte, trace_id: '',
-    horodatage: `${aujourdhui}T0${n}:00:00`, supprime: false, systeme: !!systeme,
+    horodatage: `${aujourdhui}T${String(6 + n).padStart(2, '0')}:00:00.000Z`, supprime: false, systeme: !!systeme,
   });
   const discussions = [
     message(1, idInter, 'Ben', "Ben a changé l'horaire : 09:30.", true),

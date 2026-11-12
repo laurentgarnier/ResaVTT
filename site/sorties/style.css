@@ -183,3 +183,6 @@ details.plus summary { color: var(--acc); font-weight: 700; margin-top: 12px; cu
   .vue { padding: 10px 12px 20px; }
   .barre .chip.optionnel { display: none; }
 }
+
+/* Colonnes étroites de la grille : le badge passe sous le titre. */
+.jour .srow { flex-wrap: wrap; justify-content: flex-start; }
