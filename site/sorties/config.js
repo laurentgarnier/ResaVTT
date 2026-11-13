@@ -12,7 +12,7 @@ function surcharge() {
 }
 
 export const CONFIG = {
-  urlApi: surcharge() || (enLocal ? '/api' : 'A_RENSEIGNER_URL_APPS_SCRIPT'),
+  urlApi: surcharge() || (enLocal ? '/api' : 'https://script.google.com/macros/s/AKfycbzMk1Tc5Y-4GzT7KFrH2FnKGBYzMgFKlKKqPyywApi1QjyQMIcNqzvhL_WEuco826kmkQ/exec'),
   urlAppli: '',
   indiceDemo: 'Démo : essayez 06 00 00 00 02 (Ben) ou votre propre numéro (administrateur).',
 };
