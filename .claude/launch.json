@@ -4,8 +4,21 @@
     {
       "name": "sorties-dev",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["outils/serveur-dev.js", "8080"],
+      "runtimeArgs": [
+        "outils/serveur-dev.js",
+        "8080"
+      ],
       "port": 8080
+    },
+    {
+      "name": "sorties-dev-lent",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "outils/serveur-dev.js",
+        "8081",
+        "2500"
+      ],
+      "port": 8081
     }
   ]
 }
