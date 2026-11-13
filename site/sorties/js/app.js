@@ -11,8 +11,19 @@ import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
 import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
 import { reaffichageAutomatiquePermis } from './ui/navigation.js';
+import { creerAttente } from './ui/attente.js';
+import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from './cache-calendrier.js';
+import { aujourdhuiLocal } from './logique/dates.js';
 
-const etat = { cal: null };
+const etat = { cal: null, calRecuA: 0 };
+const attente = creerAttente();
+
+// Ces écritures demandent le calendrier à jour dans leur réponse : pas de second aller-retour pour réafficher.
+const ECRITURES = ['inscription', 'sortie_creer', 'sortie_modifier', 'sortie_horaire', 'sortie_annuler', 'trace_ajouter',
+  'trace_supprimer', 'personnes_enregistrer', 'admin_code_verifier', 'admin_enregistrer'];
+// Appels de fond (rafraîchissement de la discussion) : pas d'indicateur d'attente.
+const SILENCIEUSES = ['discussion_lire'];
+const FRAICHEUR = 2000; // ms : un calendrier reçu depuis moins longtemps n'est pas redemandé
 const vue = () => document.getElementById('vue');
 
 const modeNavigateur = () => !window.matchMedia('(display-mode: standalone)').matches && !navigator.standalone;
@@ -34,8 +45,15 @@ const actions = {
   etat,
   toast,
   aller,
-  appeler: (action, params) => appeler(action, params, { surDeconnexion: () => afficherConnexion('Votre session a expiré, reconnectez-vous.') }),
-  rafraichir: async () => { await chargerCalendrier(); router(); },
+  appeler: (action, params = {}) => appeler(action, ECRITURES.includes(action) ? { ...params, avec_calendrier: true } : params, {
+    surDeconnexion: () => afficherConnexion('Votre session a expiré, reconnectez-vous.'),
+    surCalendrier: recevoirCalendrier,
+    ...(SILENCIEUSES.includes(action) ? {} : { surDebut: attente.debut, surFin: attente.fin }),
+  }),
+  rafraichir: async () => {
+    if (Date.now() - etat.calRecuA > FRAICHEUR) await chargerCalendrier();
+    router();
+  },
   connecte: async (jeton) => { enregistrerJeton(jeton); await chargerCalendrier(); aller('#/'); },
   afficherConnexion,
 };
@@ -52,14 +70,33 @@ function afficherBarre() {
 
 function afficherConnexion(erreur = '') {
   etat.cal = null;
+  oublierCalendrier();
   afficherBarre();
   vue().innerHTML = renderConnexion({ modeNavigateur: modeNavigateur(), indiceDemo: CONFIG.indiceDemo, erreur });
   brancherConnexion(vue(), actions);
 }
 
-async function chargerCalendrier() {
-  etat.cal = await actions.appeler('calendrier');
+function recevoirCalendrier(cal) {
+  etat.cal = cal;
+  etat.calRecuA = Date.now();
+  enregistrerCalendrier(cal, lireJeton());
   afficherBarre();
+}
+
+async function chargerCalendrier() {
+  recevoirCalendrier(await actions.appeler('calendrier'));
+}
+
+// À l'ouverture : le dernier calendrier connu s'affiche aussitôt, la version du serveur le remplace dès qu'elle arrive.
+function partirDuCache() {
+  const enCache = lireCalendrierEnCache(lireJeton(), aujourdhuiLocal(new Date()));
+  if (!enCache) return false;
+  etat.cal = enCache;
+  afficherBarre();
+  chargerCalendrier()
+    .then(() => { if (reaffichageAutomatiquePermis(location.hash)) router(); })
+    .catch(() => {});
+  return true;
 }
 
 const ECRAN_LARGE = '(min-width: 900px)';
@@ -185,6 +222,15 @@ const ROUTES = [
 ];
 
 async function router() {
+  attente.debut();
+  try {
+    return await routerSansAttente();
+  } finally {
+    attente.fin();
+  }
+}
+
+async function routerSansAttente() {
   if (!lireJeton()) return afficherConnexion();
   const hash = location.hash || '#/';
   if (hash === '#/deconnexion') {
@@ -194,7 +240,7 @@ async function router() {
     return afficherConnexion();
   }
   try {
-    if (!etat.cal) await chargerCalendrier();
+    if (!etat.cal && !partirDuCache()) await chargerCalendrier();
   } catch (e) {
     if (e.code !== 'non_connecte') vue().innerHTML = `<p class="erreur">${echapper(e.message)}</p><button class="btn o" onclick="location.reload()">Réessayer</button>`;
     return undefined;

@@ -12,8 +12,10 @@ export function afficherCarte(element, points) {
     maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(carte);
   const latlngs = points.map((p) => [p[0], p[1]]);
-  const trace = L.polyline(latlngs, { color: '#c6f432', weight: 4 }).addTo(carte);
-  L.circleMarker(latlngs[0], { radius: 6, color: '#4ea3ff', fillColor: '#4ea3ff', fillOpacity: 1 }).addTo(carte);
-  if (latlngs.length > 1) L.circleMarker(latlngs[latlngs.length - 1], { radius: 5, color: '#ff6b6b', fillColor: '#ff6b6b', fillOpacity: 1 }).addTo(carte);
+  // Rouge soutenu bordé de blanc : lisible sur le fond de carte clair comme sur les zones boisées.
+  L.polyline(latlngs, { color: '#ffffff', weight: 7, opacity: 0.85 }).addTo(carte);
+  const trace = L.polyline(latlngs, { color: '#d7191c', weight: 4 }).addTo(carte);
+  L.circleMarker(latlngs[0], { radius: 7, color: '#ffffff', weight: 2, fillColor: '#1565c0', fillOpacity: 1 }).bindTooltip('Départ').addTo(carte);
+  if (latlngs.length > 1) L.circleMarker(latlngs[latlngs.length - 1], { radius: 6, color: '#ffffff', weight: 2, fillColor: '#212121', fillOpacity: 1 }).bindTooltip('Arrivée').addTo(carte);
   carte.fitBounds(trace.getBounds(), { padding: [12, 12] });
 }

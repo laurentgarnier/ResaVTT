@@ -38,10 +38,14 @@ const ctx = {
   journal: (type, detail) => console.log(`[${type}] ${detail}`),
 };
 
+// Troisième argument facultatif : délai ajouté à chaque appel /api (ms), pour voir l'appli comme avec Google.
+const LATENCE = Number(process.argv[3]) || 0;
+
 createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api') {
     let corps = '';
     for await (const morceau of req) corps += morceau;
+    if (LATENCE) await new Promise((r) => setTimeout(r, LATENCE));
     let reponse;
     try { reponse = traiter(JSON.parse(corps), ctx); } catch (e) { reponse = { ok: false, erreur: 'requete_invalide', message: 'Requête invalide.' }; }
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });

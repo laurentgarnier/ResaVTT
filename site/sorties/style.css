@@ -186,3 +186,22 @@ details.plus summary { color: var(--acc); font-weight: 700; margin-top: 12px; cu
 
 /* Colonnes étroites de la grille : le badge passe sous le titre. */
 .jour .srow { flex-wrap: wrap; justify-content: flex-start; }
+
+/* Retour visuel au toucher */
+.btn, .chip, .sortie, .onglet, .lien-plus, .segment label { -webkit-tap-highlight-color: transparent; transition: transform .08s ease, filter .08s ease; }
+.btn:active, .chip:active, .sortie:active, .onglet:active, .lien-plus:active, .segment label:active { transform: scale(.97); filter: brightness(1.25); }
+
+/* Attente : barre animée en haut d'écran pendant un échange avec le serveur */
+.attente-barre { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2000; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity .15s; }
+body.en-attente .attente-barre { opacity: 1; transition-delay: .1s; }
+.attente-barre::before { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: var(--acc); border-radius: 3px; animation: attente-glisse 1s ease-in-out infinite; }
+@keyframes attente-glisse { to { left: 100%; } }
+
+/* Bouton dont l'action est en cours : roue + grisé, plus de second clic possible */
+.occupe { opacity: .8; cursor: progress; pointer-events: none; }
+.occupe::before { content: ""; display: inline-block; width: .9em; height: .9em; margin-right: .5em; vertical-align: -.12em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: attente-tourne .7s linear infinite; }
+@keyframes attente-tourne { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .attente-barre::before { animation-duration: 2.5s; }
+  .occupe::before { animation-duration: 1.6s; }
+}
