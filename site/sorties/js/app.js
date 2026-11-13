@@ -10,7 +10,7 @@ import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormula
 import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
 import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
-import { reaffichageAutomatiquePermis } from './ui/navigation.js';
+import { reaffichageAutomatiquePermis, destinationApresConnexion } from './ui/navigation.js';
 import { creerAttente } from './ui/attente.js';
 import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from './cache-calendrier.js';
 import { aujourdhuiLocal } from './logique/dates.js';
@@ -54,7 +54,7 @@ const actions = {
     if (Date.now() - etat.calRecuA > FRAICHEUR) await chargerCalendrier();
     router();
   },
-  connecte: async (jeton) => { enregistrerJeton(jeton); await chargerCalendrier(); aller('#/'); },
+  connecte: async (jeton) => { enregistrerJeton(jeton); await chargerCalendrier(); aller(destinationApresConnexion(location.hash)); },
   afficherConnexion,
 };
 

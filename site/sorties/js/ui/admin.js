@@ -141,7 +141,7 @@ function ongletMessages(d) {
     </div>
     <form class="bloc" id="form-modeles">
       <h3>Textes des messages</h3>
-      <p class="meta">{{lien}} est remplacé par l'adresse de l'appli, {{liste_annulations}} par la liste des sorties annulées.</p>
+      <p class="meta">{{lien}} est remplacé par l'adresse de l'appli ; dans le rappel, {{lien_samedi}} et {{lien_dimanche}} par les liens vers le samedi et le dimanche qui suivent l'envoi ; {{liste_annulations}} par la liste des sorties annulées.</p>
       ${Object.entries(LIBELLES_MODELES).map(([cle, libelle]) => `<label>${libelle}</label><textarea name="${cle}">${echapper(d.modeles[cle])}</textarea>`).join('')}
       <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les textes</button>
     </form>`;

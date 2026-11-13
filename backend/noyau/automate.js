@@ -1,6 +1,6 @@
 // Tâches automatiques (spec technique §7) : génération, annulations à notifier, rappel hebdomadaire, purge.
-import { fenetre, aujourdhuiLocal, jourSemaine } from '../../site/sorties/js/logique/dates.js';
-import { remplirModele, listeAnnulations, MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
+import { fenetre, aujourdhuiLocal, jourSemaine, prochainJour } from '../../site/sorties/js/logique/dates.js';
+import { remplirModele, listeAnnulations, lienJour, MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { estVrai, lireCleValeur } from './schema.js';
 import { completerRecurrences, horodatage } from './actions-adherent.js';
 import { courrierListe, courrierWhatsApp } from './courriers.js';
@@ -79,7 +79,12 @@ function etapesMessage(ctx, objet, texteMail, texteWhatsApp) {
 
 export function envoyerRappel(ctx, cle) {
   const { parametres, modeles } = reglagesEnvoi(ctx);
-  const valeurs = { lien: parametres.url_appli };
+  const aujourdhui = aujourdhuiLocal(ctx.services.maintenant());
+  const valeurs = {
+    lien: parametres.url_appli,
+    lien_samedi: lienJour(parametres.url_appli, prochainJour(aujourdhui, 5)),
+    lien_dimanche: lienJour(parametres.url_appli, prochainJour(aujourdhui, 6)),
+  };
   return envoyerEtapes(ctx, cle, etapesMessage(ctx, modeles.rappel_mail_objet,
     remplirModele(modeles.rappel_mail_corps, valeurs), remplirModele(modeles.rappel_whatsapp, valeurs)));
 }

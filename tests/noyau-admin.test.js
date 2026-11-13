@@ -98,7 +98,7 @@ test('rappel_envoyer_maintenant envoie immédiatement les deux mails', () => {
   assert.deepEqual(r.data, { etape_mail: 'ok', etape_whatsapp: 'ok' });
   const [liste, wa] = t.mails.slice(avant);
   assert.equal(liste.destinataires, PORTEUR.email);
-  assert.equal(liste.texte, "Les sorties du week-end sont ouvertes !\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://exemple.github.io/sorties/");
+  assert.equal(liste.texte, "Les sorties du week-end sont ouvertes !\n🚵 Samedi : https://exemple.github.io/sorties/#/jour/2026-11-14\n🚵 Dimanche : https://exemple.github.io/sorties/#/jour/2026-11-15\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://exemple.github.io/sorties/");
   assert.equal(wa.objet, 'À poster sur WhatsApp');
   assert.match(wa.html, /href="https:\/\/wa\.me\/33611111111\?text=Les%20sorties/);
   assert.match(wa.html, /📲 Envoyer sur WhatsApp/);

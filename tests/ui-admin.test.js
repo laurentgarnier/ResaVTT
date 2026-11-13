@@ -49,6 +49,7 @@ test('onglet messages : bouton « Envoyer le rappel maintenant » et historique 
   assert.match(html, /rappel:manuel:/);
   assert.match(html, /class="ok">✓ mail/);
   assert.match(html, /name="rappel_whatsapp"/);
+  assert.match(html, /\{\{lien_samedi\}\} et \{\{lien_dimanche\}\}/);
 });
 
 test('modèles et paramètres affichés échappés', () => {

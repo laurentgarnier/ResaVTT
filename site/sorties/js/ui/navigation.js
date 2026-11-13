@@ -5,3 +5,8 @@
 export function reaffichageAutomatiquePermis(hash) {
   return !hash || hash === '#/' || /^#\/jour\//.test(hash);
 }
+
+// Un lien reçu (mail, WhatsApp) mène à un écran précis : on y arrive après s'être connecté.
+export function destinationApresConnexion(hash) {
+  return !hash || hash === '#/deconnexion' ? '#/' : hash;
+}

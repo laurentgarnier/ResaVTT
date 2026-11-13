@@ -18,6 +18,11 @@ export function jourSemaine(date) {
   return (new Date(versUtc(date)).getUTCDay() + 6) % 7;
 }
 
+// Premier jour donné (lundi = 0 … dimanche = 6) à partir de date incluse.
+export function prochainJour(date, jour) {
+  return ajouterJours(date, (jour - jourSemaine(date) + 7) % 7);
+}
+
 export function lundiDe(date) {
   return ajouterJours(date, -jourSemaine(date));
 }

@@ -205,7 +205,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 - **`Modeles`** (clé / valeur) :
   - rappel_mail_objet, rappel_mail_corps, rappel_whatsapp ;
   - annulation_mail_objet, annulation_mail_corps, annulation_whatsapp.
-  - Le rappel hebdomadaire est un **simple rappel avec le lien de l'appli** **[décidé]**. Il n'utilise que `{{lien}}`. Les modèles par défaut, rappel comme annulation, invitent d'abord à ouvrir l'appli installée depuis l'écran d'accueil, puis donnent `{{lien}}` pour la version web (texte en spécification fonctionnelle §4.9).
+  - Le rappel hebdomadaire est un **simple rappel avec le lien de l'appli** **[décidé]**. Il utilise `{{lien}}`, ainsi que `{{lien_samedi}}` et `{{lien_dimanche}}` : liens directs vers la page du jour (`<url_appli>#/jour/AAAA-MM-JJ`) du premier samedi et du premier dimanche à partir de la date d'envoi. Après connexion, l'appli ouvre l'écran demandé par le lien. Les modèles par défaut, rappel comme annulation, invitent d'abord à ouvrir l'appli installée depuis l'écran d'accueil, puis donnent `{{lien}}` pour la version web (texte en spécification fonctionnelle §4.9).
   - Les modèles d'annulation utilisent `{{lien}}` et `{{liste_annulations}}`. Ce second champ est un bloc texte que le code génère, avec une ligne par sortie annulée : titre, date, heure, motif. Il n'y a donc pas besoin de boucle dans le moteur de modèles, et le même modèle sert pour une ou plusieurs annulations.
 
 ### Gérés par le code

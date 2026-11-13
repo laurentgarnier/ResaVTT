@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { remplirModele, lienWhatsApp, listeAnnulations, MODELES_DEFAUT } from '../site/sorties/js/logique/modeles.js';
 
 test('rappel WhatsApp : texte exact et lien vers un numéro', () => {
-  const t = remplirModele(MODELES_DEFAUT.rappel_whatsapp, { lien: 'https://x.github.io/sorties/' });
-  assert.equal(t, "Les sorties du week-end sont ouvertes !\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://x.github.io/sorties/");
+  const t = remplirModele(MODELES_DEFAUT.rappel_whatsapp, { lien: 'https://x.github.io/sorties/', lien_samedi: 'S', lien_dimanche: 'D' });
+  assert.equal(t, "Les sorties du week-end sont ouvertes !\n🚵 Samedi : S\n🚵 Dimanche : D\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://x.github.io/sorties/");
   assert.ok(lienWhatsApp('a b', '+33612345678').startsWith('https://wa.me/33612345678?text=a%20b'));
   assert.ok(lienWhatsApp('a').startsWith('https://wa.me/?text='));
   assert.ok(lienWhatsApp('a', '').startsWith('https://wa.me/?text='));
