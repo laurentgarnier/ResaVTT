@@ -4,6 +4,7 @@ import { remplirModele, listeAnnulations, lienJour, MODELES_DEFAUT } from '../..
 import { estVrai, lireCleValeur } from './schema.js';
 import { completerRecurrences, horodatage } from './actions-adherent.js';
 import { courrierListe, courrierWhatsApp } from './courriers.js';
+import { archiverSorties } from './statistiques.js';
 
 const SEUIL_ALERTE_ENVOI = 3;
 
@@ -123,8 +124,10 @@ export function purger(ctx, aujourdhui) {
   const { parametres } = reglagesEnvoi(ctx);
   const limite = dateMoinsMois(aujourdhui, Number(parametres.conservation_mois) || 12);
   const limiteJetons = dateMoinsMois(aujourdhui, 12);
-  const anciennes = new Set(ctx.depot.lire('Sorties').filter((s) => s.date < limite).map((s) => s.id));
+  const aSupprimer = ctx.depot.lire('Sorties').filter((s) => s.date < limite);
+  const anciennes = new Set(aSupprimer.map((s) => s.id));
   if (anciennes.size) {
+    archiverSorties(ctx, aSupprimer);
     ctx.depot.supprimer('Sorties', (s) => anciennes.has(s.id));
     ctx.depot.supprimer('Inscriptions', (i) => anciennes.has(i.sortie_id));
     ctx.depot.supprimer('Discussions', (m) => anciennes.has(m.sortie_id));

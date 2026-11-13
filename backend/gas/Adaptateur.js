@@ -75,8 +75,10 @@ function depotSheets(classeur) {
   var groupeTente = false;
   function feuille(onglet) {
     var f = classeur.getSheetByName(onglet);
-    if (!f) throw new Error('Onglet manquant : ' + onglet + ' (lancez initialiser()).');
-    return f;
+    if (f) return f;
+    // Onglet ajouté par une nouvelle version (ex. Bilan) : créé à la volée, sans relancer initialiser().
+    if (ONGLETS[onglet]) return preparerFeuille(classeur, onglet, ONGLETS[onglet]);
+    throw new Error('Onglet manquant : ' + onglet + ' (lancez initialiser()).');
   }
   function precharger() {
     if (groupeTente) return;
@@ -92,6 +94,8 @@ function depotSheets(classeur) {
       rep.valueRanges.forEach(function (vr, i) { memo[noms[i]] = vr.values || []; });
     } catch (e) {
       Logger.log('Lecture groupée impossible, lecture onglet par onglet : ' + e);
+      // Cause la plus probable : un onglet manquant. On le crée pour que la lecture groupée marche à l'appel suivant.
+      noms.forEach(function (n) { feuille(n); });
     }
   }
   function valeurs(onglet) {

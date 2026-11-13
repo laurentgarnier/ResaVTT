@@ -10,7 +10,7 @@ import { envoyerRappel } from './automate.js';
 const DUREE_CODE_MS = 15 * 60 * 1000;
 const ESSAIS_CODE_MAX = 5;
 
-function exigerAdminVerifie(u) {
+export function exigerAdminVerifie(u) {
   if (!u.est_admin || !u.admin_verifie) throw erreurMetier('admin_non_verifie', 'Saisissez le code reçu par email pour accéder à l’administration.');
 }
 

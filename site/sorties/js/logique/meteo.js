@@ -65,6 +65,7 @@ export function heureParHeure(hourly, date) {
     heure: hourly.time[i].slice(11, 13),
     temp: Math.round(hourly.temperature_2m[i]),
     pluie_proba: hourly.precipitation_probability[i],
+    pluie_mm: Math.round((hourly.precipitation[i] || 0) * 10) / 10,
     code: hourly.weather_code[i],
     emoji: picto(hourly.weather_code[i]).emoji,
   }));

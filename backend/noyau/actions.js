@@ -2,6 +2,7 @@
 import { estVrai } from './schema.js';
 import { actionConnexion, actionDeconnexion, actionCalendrier, actionPersonnesEnregistrer, actionInscription } from './actions-adherent.js';
 import { actionAdminCodeDemander, actionAdminCodeVerifier, actionAdminLire, actionAdminEnregistrer, actionAdminGeocoder, actionRappelEnvoyerMaintenant } from './actions-admin.js';
+import { actionAdminStats } from './statistiques.js';
 import { actionSortieCreer, actionSortieModifier, actionSortieHoraire, actionSortieAnnuler, actionDiscussionLire, actionDiscussionEcrire, actionDiscussionSupprimer, actionTraceAjouter, actionTraceLire, actionTraceSupprimer } from './actions-sorties.js';
 
 // Construite à l'appel (et non au chargement) : Apps Script ne garantit pas l'ordre de chargement des fichiers.
@@ -27,6 +28,7 @@ function tableActions() {
     admin_lire: actionAdminLire,
     admin_enregistrer: actionAdminEnregistrer,
     admin_geocoder: actionAdminGeocoder,
+    admin_stats: actionAdminStats,
     rappel_envoyer_maintenant: actionRappelEnvoyerMaintenant,
   };
 }

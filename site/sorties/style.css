@@ -214,3 +214,20 @@ body.en-attente .attente-barre { opacity: 1; transition-delay: .1s; }
   .occupe::before { animation-duration: 1.6s; }
 }
 .admin .nouvelle-regle { display: block; text-align: center; margin: 4px 0 12px; }
+
+/* Statistiques (admin) */
+.annees { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
+.annees a { padding: 6px 12px; border-radius: 8px; background: var(--card); color: var(--mut); text-decoration: none; font-size: 13px; }
+.annees a.on { background: var(--acc-dk); color: var(--acc-txt); font-weight: 700; }
+.chiffres { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.chiffres > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13px; color: var(--mut); }
+.chiffres b { display: block; font-size: 26px; color: var(--txt); }
+.jauge { display: block; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.jauge i { display: block; height: 100%; background: var(--acc); }
+.ligne-stat { display: grid; grid-template-columns: 84px 1fr; column-gap: 8px; align-items: center; margin: 6px 0; font-size: 13px; }
+.ligne-stat small { grid-column: 2; color: var(--mut); }
+.demi-journees { width: 100%; border-collapse: collapse; font-size: 13px; }
+.demi-journees th { text-align: left; font-weight: 600; padding: 4px 6px 4px 0; }
+.demi-journees thead th { color: var(--mut); font-weight: 400; }
+.demi-journees td { padding: 4px 6px; width: 40%; }
+.demi-journees td .jauge { margin-bottom: 2px; }

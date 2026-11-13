@@ -78,3 +78,17 @@ test("tic lit la liste des adhérents à la source (la purge ne se fie pas au ca
   vm.runInContext('tic()', contexte);
   assert.ok((g.stats.ouvertures[g.proprietes.ADHERENTS_ID] || 0) >= 1);
 });
+
+test("classeur d'avant l'onglet Bilan : l'onglet manquant est créé tout seul, la lecture groupée reprend dès l'appel suivant", () => {
+  const { g, post, remettreAZero } = installer({ sheetsAvance: true });
+  g.classeurActif.deleteSheet(g.classeurActif.getSheetByName('Bilan'));
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  assert.equal(post({ action: 'calendrier', jeton }).ok, true);
+  const bilan = g.classeurActif.getSheetByName('Bilan');
+  assert.ok(bilan, 'onglet Bilan recréé');
+  assert.deepEqual(bilan.getRange(1, 1, 1, 5).getValues()[0], ['sortie_id', 'date', 'heure', 'statut', 'participants']);
+  remettreAZero();
+  assert.equal(post({ action: 'calendrier', jeton }).ok, true);
+  assert.equal(g.stats.batchGet, 1);
+  assert.ok(g.stats.getValues <= 1, `lectures feuille à feuille : ${g.stats.getValues}`);
+});

@@ -36,6 +36,37 @@ function pointsDemo(xml) {
   return res;
 }
 
+// Créneaux habituels d'une semaine (lundi = 0) et participation moyenne, pour un historique crédible.
+const HISTORIQUE_SEMAINE = [
+  { jour: 2, heure: '14:00', moyenne: 5 },
+  { jour: 5, heure: '09:00', moyenne: 9 },
+  { jour: 5, heure: '09:00', moyenne: 12 },
+  { jour: 5, heure: '09:00', moyenne: 6 },
+  { jour: 5, heure: '14:00', moyenne: 4 },
+  { jour: 6, heure: '09:00', moyenne: 10 },
+  { jour: 6, heure: '09:00', moyenne: 7 },
+];
+// Plus de monde aux beaux jours (janvier … décembre).
+const SAISON = [0.6, 0.65, 0.8, 1, 1.1, 1.2, 1.1, 0.8, 1.15, 1, 0.75, 0.6];
+
+// Bilan anonyme des sorties des 13 mois précédant la fenêtre affichée (pseudo-aléatoire mais reproductible).
+function historiqueDemo(lundi) {
+  let graine = 7;
+  const hasard = () => { graine = (graine * 16807) % 2147483647; return graine / 2147483647; };
+  const lignes = [];
+  for (let semaine = 57; semaine >= 1; semaine--) {
+    const lundiPasse = ajouterJours(lundi, -7 * semaine);
+    HISTORIQUE_SEMAINE.forEach((c, i) => {
+      const date = ajouterJours(lundiPasse, c.jour);
+      const facteur = SAISON[Number(date.slice(5, 7)) - 1];
+      const annulee = hasard() < 0.04;
+      lignes.push({ sortie_id: `H:${date}:${i}`, date, heure: c.heure, statut: annulee ? 'annulee' : 'ouverte',
+        participants: String(annulee ? 0 : Math.max(1, Math.round(c.moyenne * facteur * (0.6 + 0.8 * hasard())))) });
+    });
+  }
+  return lignes;
+}
+
 export function creerDonneesDemo(aujourdhui, porteur) {
   const dates = fenetre(aujourdhui);
   const lundi = dates[0];
@@ -125,7 +156,7 @@ export function creerDonneesDemo(aujourdhui, porteur) {
   return {
     adherents,
     tables: {
-      Jetons: [], Journal: [], Envois: [],
+      Jetons: [], Journal: [], Envois: [], Bilan: historiqueDemo(lundi),
       Personnes: personnes, Sorties: sorties, Inscriptions: inscriptions, Discussions: discussions, Traces: traces,
       Regles: regles, RegleSorties: regleSorties, Fermetures: [fermeture],
       Parametres: Object.entries(parametres).map(([cle, valeur]) => ({ cle, valeur })),

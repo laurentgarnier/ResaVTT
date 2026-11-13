@@ -16,6 +16,7 @@ export const ONGLETS = {
   Modeles: ['cle', 'valeur'],
   Envois: ['cle', 'etape_mail', 'etape_whatsapp', 'tentatives', 'derniere_erreur', 'horodatage'],
   Journal: ['horodatage', 'type', 'detail'],
+  Bilan: ['sortie_id', 'date', 'heure', 'statut', 'participants'],
 };
 
 export const ENTETES_ADHERENTS = ['nom', 'telephone', 'email', 'actif', 'admin'];
@@ -31,7 +32,7 @@ export const PARAMETRES_DEFAUT = {
   destinataires_whatsapp: '',
   whatsapp_numero: '',
   email_alertes: '',
-  conservation_mois: '12',
+  conservation_mois: '1',
   url_appli: '',
   contact_rgpd: '',
 };

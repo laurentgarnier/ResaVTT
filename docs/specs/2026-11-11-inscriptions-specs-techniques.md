@@ -221,6 +221,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
   - Sur une sortie, `trace_supprimer` appliqué à la trace par défaut la masque pour cette sortie uniquement (colonne `traces_masquees` de `Sorties`).
 - **`Envois`** : cle (par exemple `rappel:2026-11-12` ou `annulation:<sortie_id>`), etape_mail, etape_whatsapp, tentatives, derniere_erreur.
 - **`Journal`** : horodatage, type, detail.
+- **`Bilan`** : sortie_id, date, heure, statut, participants. Une ligne anonyme par sortie supprimée par la purge (§7.4), pour les statistiques annuelles. Aucun nom ni numéro. L'adaptateur crée l'onglet s'il manque.
 
 **Les numéros de téléphone ne sortent jamais de l'API**, à l'exception de celui du compte connecté. Pour indiquer qui a créé ou modifié quelque chose, l'API ne renvoie que des noms.
 
@@ -251,6 +252,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 | `trace_supprimer` | créateur de la sortie, auteur de la trace, ou admin | — |
 | `admin_lire` / `admin_enregistrer` | admin | Lecture et écriture de `Regles` + `RegleSorties`, `Fermetures`, `Parametres` et `Modeles`. Enregistrer une fermeture déclenche immédiatement l'annulation des sorties déjà générées sur la période (§7.3). |
 | `rappel_envoyer_maintenant` | admin | Envoie immédiatement le rappel hebdomadaire (mail à la liste et mail WhatsApp), avec la clé `rappel:manuel:<horodatage>`. Sert aux tests et aux démonstrations. |
+| `admin_stats` | admin | Statistiques d'une année (`annee`, par défaut l'année en cours) : sorties proposées et annulées, total des participants (inscriptions), participants et sorties par mois, participants par jour de la semaine et demi-journée (matin : départ avant 13 h). Réunit `Bilan` et les sorties encore présentes ; seules les sorties déjà parties comptent, les annulées sont mises à part. Renvoie aussi `annees`, les années disponibles. |
 | `admin_geocoder` | admin | Cherche une commune via l'API de géocodage Open-Meteo et renvoie des candidats avec latitude et longitude. |
 
 ## 5. PWA (front)
@@ -279,7 +281,7 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 - **Synthèse du matin (8–12 h) et de l'après-midi (13–18 h)** :
   - température minimale et maximale ;
   - probabilité de pluie maximale ;
-  - cumul de pluie ;
+  - cumul de pluie, affiché en mm (aussi heure par heure) ;
   - vent maximal ;
   - `weather_code` le plus défavorable, traduit en pictogramme et en libellé français. Les codes WMO ne sont **pas** classés par gravité : le plus défavorable se choisit avec une table de gravité explicite (par exemple orage > neige forte > pluie forte > averses > pluie faible > bruine > brouillard > couvert > éclaircies > clair), pas avec le code numérique le plus élevé.
 - **Jour courant** : un tableau heure par heure de 6 h à 21 h.
@@ -404,7 +406,7 @@ Une sortie est concernée lorsqu'elle est `annulee` par un admin ou par une ferm
 Une sortie libre supprimée par son créateur n'envoie ni mail ni message WhatsApp.
 
 ### 7.4 Purge (RGPD)
-Les éléments suivants, plus anciens que `conservation_mois`, sont supprimés :
+Les éléments suivants, plus anciens que `conservation_mois` (1 mois par défaut), sont supprimés. Avant suppression, chaque sortie laisse sa ligne dans `Bilan` :
 - sorties, inscriptions, discussions ;
 - traces, y compris le fichier sur Drive, mis à la corbeille ;
 - lignes `Envois`.

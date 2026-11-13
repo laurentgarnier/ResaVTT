@@ -3,7 +3,7 @@ import { echapper } from '../logique/html.js';
 import { aujourdhuiLocal } from '../logique/dates.js';
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['parametres', 'Paramètres'], ['messages', 'Messages']];
+const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
 const LIBELLES_MODELES = {
   rappel_mail_objet: 'Rappel du jeudi : objet du mail',
   rappel_mail_corps: 'Rappel du jeudi : texte du mail',
@@ -121,7 +121,7 @@ function ongletParametres(d) {
     ${c('whatsapp_numero', 'Numéro WhatsApp à ouvrir directement (facultatif, sinon choix du groupe)')}
     ${c('email_alertes', 'Email prévenu en cas d\'échec d\'envoi', 'type="email"')}
     ${c('url_appli', 'Adresse de l\'appli (lien des messages)', 'type="url"')}
-    ${c('conservation_mois', 'Durée de conservation des données (mois)', 'type="number" min="1" max="36"')}
+    ${c('conservation_mois', 'Durée de conservation des sorties (mois) ; leurs chiffres restent dans les statistiques', 'type="number" min="1" max="36"')}
     <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les paramètres</button>
   </form>`;
 }
@@ -147,9 +147,44 @@ function ongletMessages(d) {
     </form>`;
 }
 
+const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+function decimale(n) {
+  return String(Math.round(n * 10) / 10).replace('.', ',');
+}
+
+// Barre proportionnelle au maximum de la série (aucune barre si la série est vide).
+function barre(valeur, max) {
+  return `<span class="jauge"><i style="width:${max ? Math.round((valeur / max) * 100) : 0}%"></i></span>`;
+}
+
+function ongletStats(s) {
+  const annees = `<nav class="annees">${s.annees.map((a) => `<a href="#/admin/stats/${a}"${a === s.annee ? ' class="on"' : ''}>${a}</a>`).join('')}</nav>`;
+  if (!s.sorties) return `${annees}<div class="bloc"><p class="mut">Aucune sortie passée en ${s.annee}.</p></div>`;
+  const maxMois = Math.max(...s.par_mois.map((m) => m.participants));
+  const maxDemi = Math.max(...s.par_demi_journee.flatMap((d) => [d.matin, d.apres_midi]));
+  return `${annees}
+    <div class="chiffres">
+      <div><b>${s.sorties}</b> sorties proposées</div>
+      <div><b>${s.participants}</b> participants<br><small class="mut">${decimale(s.participants / s.sorties)} par sortie</small></div>
+    </div>
+    ${s.annulees ? `<p class="meta">${s.annulees} sortie${s.annulees > 1 ? 's' : ''} annulée${s.annulees > 1 ? 's' : ''}, non comptée${s.annulees > 1 ? 's' : ''}.</p>` : ''}
+    <div class="bloc stats">
+      <h3>Participants par mois</h3>
+      ${s.par_mois.map((m) => `<div class="ligne-stat"><span>${MOIS[m.mois - 1]}</span>${barre(m.participants, maxMois)}<small>${m.participants} participants · ${m.sorties} sorties</small></div>`).join('')}
+    </div>
+    <div class="bloc stats">
+      <h3>Participants par demi-journée</h3>
+      <table class="demi-journees"><thead><tr><th></th><th>Matin</th><th>Après-midi</th></tr></thead><tbody>
+      ${s.par_demi_journee.map((d) => `<tr><th>${JOURS[d.jour]}</th><td>${barre(d.matin, maxDemi)}${d.matin}</td><td>${barre(d.apres_midi, maxDemi)}${d.apres_midi}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="meta">Matin : départ avant 13 h. Sorties annulées non comptées.</p>
+    </div>`;
+}
+
 export function renderAdmin(d, onglet, { regleEditee } = {}) {
   if (onglet === 'recurrences' && regleEditee) return `<section class="admin">${ecranRegle(d, regleEditee)}</section>`;
-  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d) }[onglet] || (() => ongletRecurrences(d));
+  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) }[onglet] || (() => ongletRecurrences(d));
   return `<section class="admin">
     <a class="retour" href="#/">‹ Calendrier</a>
     <h1 style="font-size:20px;margin:0">⚙ Administration</h1>

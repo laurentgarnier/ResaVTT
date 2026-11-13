@@ -42,3 +42,9 @@ test('heureParHeure : 16 entrées de 06 à 21', () => {
   assert.equal(l[15].heure, '21');
   assert.deepEqual([l[0].temp, l[0].pluie_proba, l[0].code, l[0].emoji], [1, 5, 45, '🌫']);
 });
+
+test('heureParHeure : précipitations de chaque heure en mm, arrondies au dixième', () => {
+  const l = heureParHeure(fabriquerHoraire('2026-11-14', { 7: { t: 1, p: 60, c: 61, mm: 1.26 } }), '2026-11-14');
+  assert.equal(l[1].pluie_mm, 1.3);
+  assert.equal(l[0].pluie_mm, 0);
+});

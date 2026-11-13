@@ -94,3 +94,31 @@ test("écran de création d'une récurrence : formulaire vide ; récurrence inco
   assert.match(inconnue, /Cette récurrence n'existe plus/);
   assert.match(inconnue, /href="#\/admin\/recurrences"/);
 });
+
+test('onglet statistiques : chiffres de l\'année, choix de l\'année, participants par mois et par demi-journée', () => {
+  const s = {
+    annee: 2026, annees: [2026, 2025], sorties: 120, annulees: 3, participants: 1050,
+    par_mois: Array.from({ length: 12 }, (_, i) => ({ mois: i + 1, sorties: i === 10 ? 12 : 0, participants: i === 10 ? 96 : 0 })),
+    par_demi_journee: Array.from({ length: 7 }, (_, jour) => ({ jour, matin: jour === 5 ? 400 : 0, apres_midi: jour === 2 ? 75 : 0 })),
+  };
+  const html = renderAdmin(s, 'stats');
+  assert.match(html, /class="on"[^>]*>Statistiques/);
+  assert.match(html, /<b>120<\/b>\s*sorties proposées/);
+  assert.match(html, /<b>1050<\/b>\s*participants/);
+  assert.match(html, /8,8 par sortie/);
+  assert.match(html, /3 sorties annulées/);
+  assert.match(html, /href="#\/admin\/stats\/2025"/);
+  assert.match(html, /class="on"[^>]*>2026/);
+  assert.match(html, /Novembre<\/span>[\s\S]*?96 participants · 12 sorties/);
+  assert.match(html, /Samedi[\s\S]*?400/);
+  assert.match(html, /Mercredi[\s\S]*?75/);
+});
+
+test('onglet statistiques : année sans sortie', () => {
+  const s = { annee: 2026, annees: [2026], sorties: 0, annulees: 0, participants: 0,
+    par_mois: Array.from({ length: 12 }, (_, i) => ({ mois: i + 1, sorties: 0, participants: 0 })),
+    par_demi_journee: Array.from({ length: 7 }, (_, jour) => ({ jour, matin: 0, apres_midi: 0 })) };
+  const html = renderAdmin(s, 'stats');
+  assert.match(html, /Aucune sortie passée en 2026/);
+  assert.doesNotMatch(html, /NaN|Infinity/);
+});

@@ -75,3 +75,14 @@ test('sortie annulée barrée dans la vue jour', () => {
   assert.match(html, /class="sortie annulee/);
   assert.match(html, /Annulée/);
 });
+
+test('météo : les précipitations sont affichées en mm, plus en %', () => {
+  const cal = calendrierBen();
+  const grille = blocJour(renderGrille(cal, meteoPartout(cal)), '2026-11-14');
+  assert.match(grille, /💧0 mm/);
+  assert.match(grille, /💧0,2 mm/);
+  assert.doesNotMatch(grille, /💧\d+ %/);
+  const heures = [{ heure: '06', temp: 3, pluie_proba: 10, pluie_mm: 1.5, code: 61, emoji: '🌧' }];
+  const jour = renderJour(cal, '2026-11-12', meteoPartout(cal), heures);
+  assert.match(jour, /06h<b>🌧<\/b>3°<br>1,5 mm/);
+});
