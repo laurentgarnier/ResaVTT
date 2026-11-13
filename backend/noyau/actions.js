@@ -61,7 +61,13 @@ export function traiter(requete, ctx) {
       if (!u) return { ok: false, erreur: 'non_connecte', message: 'Veuillez vous reconnecter.' };
     }
     const data = action(ctx, u, requete);
-    return { ok: true, data: data === undefined ? null : data };
+    const reponse = { ok: true, data: data === undefined ? null : data };
+    // Après une écriture, le calendrier à jour part dans la même réponse : l'appli évite un second aller-retour.
+    if (requete.avec_calendrier && requete.action !== 'calendrier') {
+      const apres = utilisateurCourant(requete, ctx);
+      if (apres) reponse.calendrier = actionCalendrier(ctx, apres);
+    }
+    return reponse;
   } catch (e) {
     if (e && e.code) return { ok: false, erreur: e.code, message: e.message, ...e.extra };
     ctx.journal('erreur', `${requete.action} : ${e && e.stack ? e.stack : e}`);

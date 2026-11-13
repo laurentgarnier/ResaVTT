@@ -35,7 +35,19 @@ export async function appeler(action, params = {}, options = {}) {
     url = CONFIG.urlApi,
     delais = [400, 1200],
     surDeconnexion = () => {},
+    surCalendrier = () => {},
+    surDebut = () => {},
+    surFin = () => {},
   } = options;
+  surDebut();
+  try {
+    return await envoyer(action, params, { fetchImpl, url, delais, surDeconnexion, surCalendrier });
+  } finally {
+    surFin();
+  }
+}
+
+async function envoyer(action, params, { fetchImpl, url, delais, surDeconnexion, surCalendrier }) {
   const jeton = lireJeton();
   const corps = JSON.stringify({ action, ...(jeton ? { jeton } : {}), ...params });
   let derniere = null;
@@ -50,7 +62,10 @@ export async function appeler(action, params = {}, options = {}) {
       if (!ACTIONS_LECTURE.includes(action)) throw derniere;
       continue;
     }
-    if (r.ok) return r.data;
+    if (r.ok) {
+      if (r.calendrier) surCalendrier(r.calendrier);
+      return r.data;
+    }
     const { ok, erreur, message, ...extra } = r;
     void ok;
     derniere = new ErreurApi(erreur, message || 'Erreur.', extra);

@@ -20,11 +20,12 @@ function doPost(e) {
   } catch (err) {
     return repondreJson({ ok: false, erreur: 'requete_invalide', message: 'Requête invalide.' });
   }
-  if (ACTIONS_SANS_VERROU.indexOf(requete.action) >= 0) return repondreJson(traiter(requete, contexteGoogle()));
+  var options = { cacheAdherents: requete.action !== 'connexion' };
+  if (ACTIONS_SANS_VERROU.indexOf(requete.action) >= 0) return repondreJson(traiter(requete, contexteGoogle(options)));
   var verrou = LockService.getScriptLock();
   if (!verrou.tryLock(10000)) return repondreJson({ ok: false, erreur: 'occupe', message: 'Serveur occupé, réessayez.' });
   try {
-    return repondreJson(traiter(requete, contexteGoogle()));
+    return repondreJson(traiter(requete, contexteGoogle(options)));
   } finally {
     verrou.releaseLock();
   }
@@ -66,24 +67,50 @@ function valeursFeuille(feuille) {
   return feuille.getRange(1, 1, nbLignes, nbColonnes).getValues();
 }
 
+// Dépôt sur le classeur. Les lectures d'une même requête sont mémorisées : au premier besoin, tous les onglets
+// (hors Journal) sont lus en un seul appel au service avancé Sheets ; à défaut, onglet par onglet.
+// Toute écriture sur un onglet efface sa mémoire : la lecture suivante repart de la feuille.
 function depotSheets(classeur) {
+  var memo = {};
+  var groupeTente = false;
   function feuille(onglet) {
     var f = classeur.getSheetByName(onglet);
     if (!f) throw new Error('Onglet manquant : ' + onglet + ' (lancez initialiser()).');
     return f;
   }
-  function entetes(f) {
-    return f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0].map(function (e) { return String(e).trim(); });
+  function precharger() {
+    if (groupeTente) return;
+    groupeTente = true;
+    if (typeof Sheets === 'undefined') return;
+    var noms = Object.keys(ONGLETS).filter(function (n) { return n !== 'Journal'; });
+    try {
+      var rep = Sheets.Spreadsheets.Values.batchGet(classeur.getId(), {
+        ranges: noms.map(function (n) { return "'" + n.replace(/'/g, "''") + "'"; }),
+        valueRenderOption: 'UNFORMATTED_VALUE',
+        dateTimeRenderOption: 'FORMATTED_STRING',
+      });
+      rep.valueRanges.forEach(function (vr, i) { memo[noms[i]] = vr.values || []; });
+    } catch (e) {
+      Logger.log('Lecture groupée impossible, lecture onglet par onglet : ' + e);
+    }
+  }
+  function valeurs(onglet) {
+    precharger();
+    if (!Object.prototype.hasOwnProperty.call(memo, onglet)) memo[onglet] = valeursFeuille(feuille(onglet));
+    return memo[onglet];
+  }
+  function entetes(onglet) {
+    return (valeurs(onglet)[0] || []).map(function (e) { return String(e).trim(); });
   }
   function reecrire(f, ent, rang, objet) {
     f.getRange(rang, 1, 1, ent.length).setValues([objetEnLigne(ent, objet)]);
   }
   return {
-    lire: function (onglet) { return lignesEnObjets(valeursFeuille(feuille(onglet))); },
+    lire: function (onglet) { return lignesEnObjets(valeurs(onglet)); },
     ajouter: function (onglet, objets) {
       if (!objets.length) return;
       var f = feuille(onglet);
-      var ent = entetes(f);
+      var ent = entetes(onglet);
       var lignes = objets.map(function (o) { return objetEnLigne(ent, o); });
       var debut = f.getLastRow() + 1;
       // Une feuille a un nombre maximal de lignes (1000 au départ, réduit par chaque suppression) : on l'agrandit au besoin.
@@ -92,22 +119,25 @@ function depotSheets(classeur) {
       var plage = f.getRange(debut, 1, lignes.length, ent.length);
       plage.setNumberFormat('@');
       plage.setValues(lignes);
+      delete memo[onglet];
     },
     modifier: function (onglet, filtre, champs) {
       var f = feuille(onglet);
-      var ent = entetes(f);
+      var ent = entetes(onglet);
       var n = 0;
-      objetsIndexes(valeursFeuille(f)).forEach(function (l) {
+      objetsIndexes(valeurs(onglet)).forEach(function (l) {
         if (!filtre(l.objet)) return;
         reecrire(f, ent, l.rang, Object.assign({}, l.objet, champs));
         n++;
       });
+      if (n) delete memo[onglet];
       return n;
     },
     supprimer: function (onglet, filtre) {
       var f = feuille(onglet);
-      var rangs = objetsIndexes(valeursFeuille(f)).filter(function (l) { return filtre(l.objet); }).map(function (l) { return l.rang; });
+      var rangs = objetsIndexes(valeurs(onglet)).filter(function (l) { return filtre(l.objet); }).map(function (l) { return l.rang; });
       rangs.sort(function (a, b) { return b - a; }).forEach(function (r) { f.deleteRow(r); });
+      if (rangs.length) delete memo[onglet];
       return rangs.length;
     },
   };
@@ -118,17 +148,44 @@ function hexSha256(texte) {
   return octets.map(function (b) { return ((b + 256) % 256).toString(16).padStart(2, '0'); }).join('');
 }
 
-function contexteGoogle() {
+var CLE_CACHE_ADHERENTS = 'adherents';
+var DUREE_CACHE_ADHERENTS = 300; // secondes : une modification du fichier Adhérents est vue au plus 5 min après
+
+function lireAdherentsSource() {
+  return lignesEnObjets(valeursFeuille(classeurAdherents().getSheets()[0])).map(function (a) {
+    return { nom: String(a.nom || '').trim(), telephone: normaliserTelephone(String(a.telephone || '')) || '', email: String(a.email || '').trim(), actif: a.actif, admin: a.admin };
+  }).filter(function (a) { return a.nom && a.telephone; });
+}
+
+function oublierAdherentsEnCache() {
+  try { CacheService.getScriptCache().remove(CLE_CACHE_ADHERENTS); } catch (e) { /* cache indisponible */ }
+}
+
+// options.cacheAdherents : la liste des adhérents peut venir du cache (5 min). Jamais pour la connexion ni pour tic (purge).
+function contexteGoogle(options) {
+  options = options || {};
   var props = proprietesScript();
   var depot = depotSheets(classeurAppli());
+  var adherentsMemo = null;
+  function adherents() {
+    if (adherentsMemo) return adherentsMemo;
+    var cache = null;
+    try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
+    var brut = options.cacheAdherents && cache ? cache.get(CLE_CACHE_ADHERENTS) : null;
+    if (brut) {
+      adherentsMemo = JSON.parse(brut);
+    } else {
+      adherentsMemo = lireAdherentsSource();
+      if (cache) {
+        try { cache.put(CLE_CACHE_ADHERENTS, JSON.stringify(adherentsMemo), DUREE_CACHE_ADHERENTS); } catch (e) { /* trop gros ou indisponible */ }
+      }
+    }
+    return adherentsMemo;
+  }
   return {
     depot: depot,
     adherents: {
-      lire: function () {
-        return lignesEnObjets(valeursFeuille(classeurAdherents().getSheets()[0])).map(function (a) {
-          return { nom: String(a.nom || '').trim(), telephone: normaliserTelephone(String(a.telephone || '')) || '', email: String(a.email || '').trim(), actif: a.actif, admin: a.admin };
-        }).filter(function (a) { return a.nom && a.telephone; });
-      },
+      lire: function () { return adherents().map(function (a) { return Object.assign({}, a); }); },
     },
     services: {
       maintenant: function () { return new Date(); },
@@ -232,6 +289,7 @@ function chargerDonneesDemo() {
   if (feuilleAdh.getLastRow() > 1) feuilleAdh.getRange(2, 1, feuilleAdh.getLastRow() - 1, ENTETES_ADHERENTS.length).clearContent();
   var lignesAdh = donnees.adherents.map(function (a) { return [a.nom, a.telephone, a.email, a.actif, a.admin]; });
   feuilleAdh.getRange(2, 1, lignesAdh.length, ENTETES_ADHERENTS.length).setValues(lignesAdh);
+  oublierAdherentsEnCache();
   Logger.log('Données de démonstration chargées : ' + donnees.adherents.length + ' adhérents.');
 }
 

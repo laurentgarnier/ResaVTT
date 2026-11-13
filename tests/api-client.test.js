@@ -67,3 +67,18 @@ test('appeler : non_connecte efface le jeton', async () => {
   assert.equal(lireJeton(), null);
   assert.equal(deconnecte, true);
 });
+
+test('appeler : un calendrier joint à la réponse est transmis à surCalendrier, la donnée reste data', async () => {
+  const recus = [];
+  const fetchImpl = async () => reponse({ ok: true, data: { id: 'S1' }, calendrier: { jours: [] } });
+  const data = await appeler('sortie_creer', {}, { fetchImpl, url: 'https://api', surCalendrier: (c) => recus.push(c) });
+  assert.deepEqual(data, { id: 'S1' });
+  assert.deepEqual(recus, [{ jours: [] }]);
+});
+
+test('appeler : surDebut / surFin encadrent chaque appel, même en échec', async () => {
+  const evts = [];
+  const fetchImpl = async () => reponse({ ok: false, erreur: 'refuse', message: 'Non.' });
+  await assert.rejects(appeler('inscription', {}, { fetchImpl, url: 'https://api', surDebut: () => evts.push('debut'), surFin: () => evts.push('fin') }));
+  assert.deepEqual(evts, ['debut', 'fin']);
+});

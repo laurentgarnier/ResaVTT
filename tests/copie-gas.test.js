@@ -4,12 +4,9 @@ import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { creerGoogleFactice } from './aides/google-factice.js';
+import { scriptGasComplet, fichiersGas } from '../outils/code-gas.js';
 
-function codeGas() {
-  execFileSync('node', ['outils/copier-vers-gas.js']);
-  const gen = readdirSync('backend/gas/gen').sort().map((f) => readFileSync(`backend/gas/gen/${f}`, 'utf8'));
-  return gen.concat(readFileSync('backend/gas/Adaptateur.js', 'utf8')).join('\n;\n');
-}
+const codeGas = scriptGasComplet;
 
 test('copie vers Apps Script : aucun import/export, le tout se compile en un seul script', () => {
   const code = codeGas();
@@ -76,4 +73,11 @@ test("adaptateur : on peut ajouter au-delà des 1000 lignes initiales d'une feui
     return depot.lire('Journal').length;
   })()`, contexte);
   assert.equal(n, 1200);
+});
+
+test('copier-vers-gas écrit dans backend/gas/gen exactement les fichiers construits en mémoire', () => {
+  execFileSync('node', ['outils/copier-vers-gas.js']);
+  const attendus = fichiersGas();
+  assert.deepEqual(readdirSync('backend/gas/gen').sort(), attendus.map((f) => f.nom).sort());
+  for (const f of attendus) assert.equal(readFileSync(`backend/gas/gen/${f.nom}`, 'utf8'), f.code);
 });
