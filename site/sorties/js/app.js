@@ -183,7 +183,7 @@ function afficherPersonnes(racine) {
   brancherPersonnes(racine, actions);
 }
 
-async function afficherAdmin(racine, onglet) {
+async function afficherAdmin(racine, onglet, initiales = {}) {
   if (!etat.cal.est_admin) {
     toast('Réservé aux administrateurs.');
     location.hash = '#/';
@@ -195,10 +195,11 @@ async function afficherAdmin(racine, onglet) {
     brancherCode(racine, actions, ecranCode);
     return;
   }
-  let options = {};
+  let options = initiales;
   const afficher = async () => {
     const d = await actions.appeler('admin_lire');
     racine.innerHTML = renderAdmin(d, onglet, options);
+    if (options.regleEditee) window.scrollTo(0, 0);
     brancherAdmin(racine, actions, d, (o) => { options = o; reconstruire(); });
   };
   // Chaque réaffichage repart d'un élément neuf pour ne pas cumuler les écouteurs.
@@ -212,6 +213,7 @@ async function afficherAdmin(racine, onglet) {
 }
 
 const ROUTES = [
+  { motif: /^#\/admin\/recurrences\/(.+)$/, afficher: (racine, m) => afficherAdmin(racine, 'recurrences', { regleEditee: decodeURIComponent(m[1]) }) },
   { motif: /^#\/admin(?:\/(recurrences|fermetures|parametres|messages))?$/, afficher: (racine, m) => afficherAdmin(racine, m[1] || 'recurrences') },
   { motif: /^#\/creer\/(\d{4}-\d{2}-\d{2})$/, afficher: (racine, m) => afficherCreation(racine, m[1]) },
   { motif: /^#\/modifier\/(.+)$/, afficher: (racine, m) => afficherModification(racine, decodeURIComponent(m[1])) },

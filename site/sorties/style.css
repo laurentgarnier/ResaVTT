@@ -205,3 +205,4 @@ body.en-attente .attente-barre { opacity: 1; transition-delay: .1s; }
   .attente-barre::before { animation-duration: 2.5s; }
   .occupe::before { animation-duration: 1.6s; }
 }
+.admin .nouvelle-regle { display: block; text-align: center; margin: 4px 0 12px; }

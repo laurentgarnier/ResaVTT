@@ -56,20 +56,31 @@ function formulaireRegle(regle, sorties) {
     </div>
     <label>Sorties créées (une par ligne, par exemple les groupes de niveau)</label>
     <textarea name="titres" required>${echapper(sorties.map((s) => s.titre).join('\n'))}</textarea>
-    <div class="actions"><button class="btn p" type="submit">Enregistrer</button>${regle ? '<button class="btn o" type="button" data-action="annuler-edition">Annuler</button>' : ''}</div>
+    <div class="actions"><button class="btn p" type="submit">Enregistrer</button><a class="btn o" href="#/admin/recurrences">Annuler</a></div>
   </form>`;
 }
 
-function ongletRecurrences(d, regleEditee) {
+const lienRegle = (id) => `#/admin/recurrences/${encodeURIComponent(id)}`;
+
+// Écran dédié à une récurrence (création ou modification), comme la création d'une sortie.
+function ecranRegle(d, regleEditee) {
+  const retour = '<a class="retour" href="#/admin/recurrences">‹ Récurrences</a>';
+  if (regleEditee === 'nouvelle') return `${retour}${formulaireRegle(null, [])}`;
+  const regle = d.regles.find((r) => r.id === regleEditee);
+  if (!regle) return `${retour}<p class="mut">Cette récurrence n'existe plus.</p>`;
+  const sorties = d.regle_sorties.filter((s) => s.regle_id === regle.id).sort((a, b) => Number(a.ordre) - Number(b.ordre));
+  return `${retour}${formulaireRegle(regle, sorties)}`;
+}
+
+function ongletRecurrences(d) {
   const sortiesDe = (id) => d.regle_sorties.filter((s) => s.regle_id === id).sort((a, b) => Number(a.ordre) - Number(b.ordre));
-  const edition = d.regles.find((r) => r.id === regleEditee);
-  return d.regles.map((r) => `<div class="bloc">
+  return `<a class="btn p nouvelle-regle" href="#/admin/recurrences/nouvelle">+ Nouvelle récurrence</a>`
+    + d.regles.map((r) => `<div class="bloc">
       <h3><span>${echapper(r.nom)}</span><label class="interrupteur"><input type="checkbox" data-active="${echapper(r.id)}"${r.active ? ' checked' : ''}> active</label></h3>
       <div class="meta">${frequence(r.frequence_semaines)} · ${echapper(r.heure)} · ${echapper(r.point_rdv)} · ${JOURS[Number(r.jour)]}</div>
       <ul>${sortiesDe(r.id).map((s) => `<li>${echapper(s.titre)}</li>`).join('')}</ul>
-      <div class="actions"><button class="btn o" data-editer="${echapper(r.id)}">✎ Modifier</button><button class="btn d" data-supprimer-regle="${echapper(r.id)}">Supprimer</button></div>
+      <div class="actions"><a class="btn o" href="${echapper(lienRegle(r.id))}">✎ Modifier</a><button class="btn d" data-supprimer-regle="${echapper(r.id)}">Supprimer</button></div>
     </div>`).join('')
-    + formulaireRegle(edition, edition ? sortiesDe(edition.id) : [])
     + '<p class="meta">Les sorties apparaissent automatiquement jusqu\'à la fin de la semaine prochaine. Modifier une règle ne change pas les sorties déjà affichées.</p>';
 }
 
@@ -137,7 +148,8 @@ function ongletMessages(d) {
 }
 
 export function renderAdmin(d, onglet, { regleEditee } = {}) {
-  const contenu = { recurrences: () => ongletRecurrences(d, regleEditee), fermetures: () => ongletFermetures(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d) }[onglet] || (() => ongletRecurrences(d));
+  if (onglet === 'recurrences' && regleEditee) return `<section class="admin">${ecranRegle(d, regleEditee)}</section>`;
+  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d) }[onglet] || (() => ongletRecurrences(d));
   return `<section class="admin">
     <a class="retour" href="#/">‹ Calendrier</a>
     <h1 style="font-size:20px;margin:0">⚙ Administration</h1>
@@ -177,11 +189,13 @@ function titresVersSorties(regleId, texte, existantes) {
 }
 
 export function brancherAdmin(racine, actions, d, reafficher) {
-  const enregistrer = async (donnees, message) => {
+  // retour : écran à rouvrir après l'enregistrement (la liste, après l'écran d'une récurrence).
+  const enregistrer = async (donnees, message, retour) => {
     try {
       await actions.appeler('admin_enregistrer', donnees);
       actions.toast(message);
-      await actions.rafraichir();
+      if (retour && location.hash !== retour) location.hash = retour;
+      else await actions.rafraichir();
     } catch (e) { actions.toast(e.message); }
   };
   racine.addEventListener('change', (ev) => {
@@ -193,8 +207,6 @@ export function brancherAdmin(racine, actions, d, reafficher) {
   racine.addEventListener('click', async (ev) => {
     const b = ev.target.closest('button');
     if (!b) return;
-    if (b.dataset.editer) reafficher({ regleEditee: b.dataset.editer });
-    if (b.dataset.action === 'annuler-edition') reafficher({});
     if (b.dataset.supprimerRegle && confirm('Supprimer cette récurrence ? Les sorties déjà affichées restent.')) {
       enregistrer({ regles: d.regles.filter((r) => r.id !== b.dataset.supprimerRegle), regle_sorties: d.regle_sorties.filter((s) => s.regle_id !== b.dataset.supprimerRegle) }, 'Récurrence supprimée.');
     }
@@ -234,9 +246,9 @@ export function brancherAdmin(racine, actions, d, reafficher) {
       if (id) {
         const regles = d.regles.map((r) => (r.id === id ? { ...r, ...regle, active: r.active } : r));
         const autres = d.regle_sorties.filter((s) => s.regle_id !== id);
-        enregistrer({ regles, regle_sorties: autres.concat(titresVersSorties(id, f.titres.value, d.regle_sorties.filter((s) => s.regle_id === id))) }, 'Récurrence modifiée.');
+        enregistrer({ regles, regle_sorties: autres.concat(titresVersSorties(id, f.titres.value, d.regle_sorties.filter((s) => s.regle_id === id))) }, 'Récurrence modifiée.', '#/admin/recurrences');
       } else {
-        enregistrer({ regles: d.regles.concat([regle]), regle_sorties: d.regle_sorties.concat(titresVersSorties('__nouvelle_0', f.titres.value, [])) }, 'Récurrence créée.');
+        enregistrer({ regles: d.regles.concat([regle]), regle_sorties: d.regle_sorties.concat(titresVersSorties('__nouvelle_0', f.titres.value, [])) }, 'Récurrence créée.', '#/admin/recurrences');
       }
     }
     if (f.id === 'form-fermeture') {

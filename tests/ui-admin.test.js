@@ -58,3 +58,38 @@ test('modèles et paramètres affichés échappés', () => {
   assert.doesNotMatch(renderAdmin(d, 'messages'), /<script>x/);
   assert.doesNotMatch(renderAdmin(d, 'parametres'), /<script>y/);
 });
+
+test("liste des récurrences : « Modifier » et « Nouvelle récurrence » mènent à un écran d'édition dédié, sans formulaire sous la liste", () => {
+  const d = donneesAdmin();
+  const html = renderAdmin(d, 'recurrences');
+  assert.doesNotMatch(html, /id="form-regle"/);
+  assert.match(html, /href="#\/admin\/recurrences\/nouvelle"[^>]*>\+ Nouvelle récurrence/);
+  const r = d.regles[0];
+  assert.match(html, new RegExp(`href="#/admin/recurrences/${encodeURIComponent(r.id)}"[^>]*>✎ Modifier`));
+  assert.ok(html.indexOf('+ Nouvelle récurrence') < html.indexOf(r.nom), 'le bouton de création est en tête de liste');
+});
+
+test("écran d'édition d'une récurrence : seulement son formulaire rempli, retour vers la liste", () => {
+  const d = donneesAdmin();
+  const r = d.regles.find((x) => x.nom === 'Samedi matin');
+  const html = renderAdmin(d, 'recurrences', { regleEditee: r.id });
+  assert.match(html, /id="form-regle"/);
+  assert.match(html, new RegExp(`data-id="${r.id}"`));
+  assert.match(html, /✎ Modifier « Samedi matin »/);
+  assert.match(html, /name="nom" value="Samedi matin"/);
+  assert.match(html, />Cool\nInter\nSportif<\/textarea>/);
+  assert.match(html, /href="#\/admin\/recurrences"[^>]*>‹ Récurrences/);
+  assert.doesNotMatch(html, /Dimanche matin/);
+  assert.doesNotMatch(html, /class="menu-admin"/);
+});
+
+test("écran de création d'une récurrence : formulaire vide ; récurrence inconnue : message et retour", () => {
+  const d = donneesAdmin();
+  const nouvelle = renderAdmin(d, 'recurrences', { regleEditee: 'nouvelle' });
+  assert.match(nouvelle, /\+ Nouvelle récurrence/);
+  assert.match(nouvelle, /id="form-regle" data-id=""/);
+  assert.match(nouvelle, /name="nom" value=""/);
+  const inconnue = renderAdmin(d, 'recurrences', { regleEditee: 'n-existe-pas' });
+  assert.match(inconnue, /Cette récurrence n'existe plus/);
+  assert.match(inconnue, /href="#\/admin\/recurrences"/);
+});
