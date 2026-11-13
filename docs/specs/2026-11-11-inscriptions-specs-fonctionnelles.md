@@ -185,11 +185,11 @@ Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de 
   - le point de rendez-vous ;
   - la **fréquence** : toutes les semaines, toutes les 2 semaines, etc., avec une date de départ ;
   - la **liste des sorties générées**, chacune avec son titre et éventuellement un kilométrage, un dénivelé, une description ou une trace par défaut.
-- Règles initiales **[décidé]** :
-  - **Samedi matin**, 9 h, chaque semaine, au point de rendez-vous du club, avec 3 sorties (les 3 groupes de niveau, titres à définir).
-  - **Samedi après-midi**, 14 h, même structure.
-  - **Dimanche matin**, 9 h, même structure.
-- *Le nombre de sorties par règle (3 groupes de niveau) n'est pas tranché pour le samedi après-midi et le dimanche. Je l'ai supposé identique au samedi matin.*
+- Règles initiales **[décidé]**, chacune avec **un seul créneau** (une sortie générée) et le rendez-vous à **PDL**, le point de rendez-vous du club :
+  - **Samedi matin**, 9 h, chaque semaine ;
+  - **Samedi après-midi**, 14 h, chaque semaine ;
+  - **Dimanche matin**, 9 h, chaque semaine.
+- Une règle peut toujours générer plusieurs sorties (par exemple une par groupe de niveau) si le club le souhaite plus tard.
 - Les sorties issues des règles apparaissent automatiquement **au plus tard au début de la « semaine prochaine »** affichée, c'est-à-dire avec environ 2 semaines d'avance.
 - La création et la modification d'une règle se font sur un **écran dédié**, comme la création d'une sortie, et non sous la liste des règles **[décidé]**. Enregistrer ou annuler ramène à la liste.
 - Modifier une règle ne change que les sorties **qui n'ont pas encore été générées**. Les sorties déjà visibles se modifient une par une **[choix du rédacteur]**.
@@ -264,6 +264,6 @@ Chaque jeudi à l'heure paramétrée, sans intervention :
 - **Volumétrie** : quelques dizaines à quelques centaines d'adhérents, et quelques dizaines de sorties par mois.
 
 ## 7. Questions encore ouvertes (peuvent attendre le paramétrage)
-1. Les titres des 3 sorties du samedi matin. Faut-il aussi 3 sorties le samedi après-midi et le dimanche matin ?
-2. L'adresse du point de rendez-vous par défaut et la commune du club.
+1. ~~Les titres des 3 sorties du samedi matin.~~ Tranché : un seul créneau par règle (voir 4.8).
+2. La commune du club (pour la météo). Le point de rendez-vous par défaut est **PDL**.
 3. Les textes actuels du mail et du message WhatsApp, pour servir de modèles.

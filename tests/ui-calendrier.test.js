@@ -35,14 +35,15 @@ test('grille : 14 cartes, jours passés grisés sans météo, jeudi encadré', (
   assert.doesNotMatch(blocJour(html, '2026-11-10'), /Créer une sortie/);
 });
 
-test('vue jour samedi : 4 sorties, « 18 inscrits » sur Inter, pastille « +14 », sections Matin / Après-midi', () => {
+test('vue jour samedi : 2 sorties, « 22 inscrits » le matin, pastille « +18 », sections Matin / Après-midi', () => {
   const cal = calendrierBen();
   const html = renderJour(cal, '2026-11-14', meteoPartout(cal), null);
-  assert.equal((html.match(/class="sortie[ "]/g) || []).length, 4);
-  assert.match(html, /18 inscrits/);
-  assert.match(html, /\+14/);
+  assert.equal((html.match(/class="sortie[ "]/g) || []).length, 2);
+  assert.match(html, /22 inscrits/);
+  assert.match(html, /\+18/);
   assert.ok(html.indexOf('>Matin<') < html.indexOf('>Après-midi<'));
-  assert.match(html, /href="#\/sortie\/R%3Asm%3A2026-11-14%3A2"/);
+  assert.match(html, /href="#\/sortie\/R%3Asm%3A2026-11-14%3A1"/);
+  assert.match(html, /href="#\/sortie\/R%3Asa%3A2026-11-14%3A1"/);
   assert.match(html, /class="onglet on"[^>]*>[^<]*sam/);
   assert.match(html, /\+ Créer une sortie samedi/);
 });
@@ -50,8 +51,8 @@ test('vue jour samedi : 4 sorties, « 18 inscrits » sur Inter, pastille « +14 
 test('vue jour samedi : nombre de personnes distinctes', () => {
   const cal = calendrierBen();
   const sam = cal.jours.find((j) => j.date === '2026-11-14');
-  assert.equal(personnesDistinctes(sam.sorties), 39);
-  assert.match(renderJour(cal, '2026-11-14', null, null), /<b>39 personnes<\/b> roulent/);
+  assert.equal(personnesDistinctes(sam.sorties), 30);
+  assert.match(renderJour(cal, '2026-11-14', null, null), /<b>30 personnes<\/b> roulent/);
 });
 
 test('météo absente → « Météo indisponible » ; hors horizon → « Prévision indisponible »', () => {

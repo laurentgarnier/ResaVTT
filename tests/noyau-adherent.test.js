@@ -35,7 +35,7 @@ test("adhérent désactivé dans Adherents → non_connecte à l'appel suivant",
   assert.equal(t.appel('calendrier', { jeton }).erreur, 'non_connecte');
 });
 
-test('calendrier : 14 jours, samedi à 4 sorties, Inter à 09:30, aucun numéro dans la réponse', () => {
+test('calendrier : 14 jours, un seul créneau par règle (samedi matin, samedi après-midi, dimanche matin), rendez-vous PDL, aucun numéro', () => {
   const t = contexteTest();
   const c = t.appel('calendrier', { jeton: t.connecter('0600000002') }).data;
   assert.equal(c.jours.length, 14);
@@ -43,26 +43,32 @@ test('calendrier : 14 jours, samedi à 4 sorties, Inter à 09:30, aucun numéro 
   assert.equal(c.jours[0].passe, true);
   assert.equal(c.jours[3].passe, false);
   const sam = samedi(c);
-  assert.deepEqual(sam.sorties.map((s) => s.titre), ['Cool', 'Inter', 'Sportif', 'Sam. après-midi']);
-  assert.equal(sam.sorties[1].heure, '09:30');
-  assert.equal(sam.sorties[1].modifie_par, 'Ben');
-  assert.equal(sam.sorties[1].inscrits.length, 18);
-  assert.equal(sam.sorties[0].inscrits.length, 12);
+  assert.deepEqual(sam.sorties.map((s) => s.titre), ['Samedi matin', 'Samedi après-midi']);
+  assert.equal(sam.sorties[0].heure, '09:30');
+  assert.equal(sam.sorties[0].modifie_par, 'Ben');
+  assert.equal(sam.sorties[0].inscrits.length, 22);
+  assert.equal(sam.sorties[1].inscrits.length, 8);
+  const dim = c.jours.find((j) => j.date === '2026-11-15');
+  assert.deepEqual(dim.sorties.map((s) => [s.titre, s.statut]), [['Dimanche matin', 'annulee']]);
+  const recurrentes = c.jours.flatMap((j) => j.sorties).filter((s) => s.type === 'recurrente');
+  assert.ok(recurrentes.length >= 6);
+  assert.ok(c.jours.flatMap((j) => j.sorties).every((s) => s.point_rdv === 'PDL'));
   assert.ok(!JSON.stringify(c.jours).includes('+33'));
-  assert.equal(c.parametres.point_rdv_defaut, 'Place de la mairie');
+  assert.equal(c.parametres.point_rdv_defaut, 'PDL');
 });
 
 test('inscrits triés, inscrit_par, traces et messages', () => {
   const t = contexteTest();
   const sam = samedi(t.appel('calendrier', { jeton: t.connecter('0600000002') }).data);
-  const inter = sam.sorties[1];
-  const noms = inter.inscrits.map((i) => i.nom_affiche);
+  const [matin, apresMidi] = sam.sorties;
+  const noms = matin.inscrits.map((i) => i.nom_affiche);
   assert.deepEqual(noms, [...noms].sort((a, b) => a.localeCompare(b, 'fr')));
-  assert.equal(inter.inscrits.find((i) => i.nom_affiche === 'Gérard').inscrit_par, 'Jo');
-  assert.equal(inter.inscrits.find((i) => i.nom_affiche === 'Jo').inscrit_par, null);
-  assert.equal(inter.nb_messages, 3);
-  assert.deepEqual(sam.sorties[0].traces.map((x) => x.nom_fichier), ['boucle-foret.gpx', 'variante-courte.gpx']);
-  assert.ok(Number(sam.sorties[0].traces[0].km) > 15);
+  assert.equal(matin.inscrits.find((i) => i.nom_affiche === 'Gérard').inscrit_par, 'Jo');
+  assert.equal(matin.inscrits.find((i) => i.nom_affiche === 'Jo').inscrit_par, null);
+  assert.equal(matin.nb_messages, 3);
+  assert.deepEqual(matin.traces.map((x) => x.nom_fichier), ['boucle-foret.gpx', 'inter-rocher.gpx']);
+  assert.ok(Number(matin.traces[0].km) > 15);
+  assert.deepEqual(apresMidi.traces.map((x) => x.nom_fichier), ['variante-courte.gpx']);
 });
 
 test('dimanche courant fermé : sortie annulée avec motif', () => {
@@ -76,7 +82,7 @@ test('dimanche courant fermé : sortie annulée avec motif', () => {
   assert.equal(dimSuivant.statut, 'ouverte');
 });
 
-test('inscription multiple sur le même créneau', () => {
+test('inscription au samedi matin et au samedi après-midi, puis désinscription', () => {
   const t = contexteTest();
   const jeton = t.connecter('0600000002');
   const c0 = t.appel('calendrier', { jeton }).data;
@@ -86,22 +92,22 @@ test('inscription multiple sur le même créneau', () => {
     assert.equal(t.appel('inscription', { jeton, sortie_id: s.id, personne_ids: [moi.id], inscrit: true }).ok, true);
   }
   const sam = samedi(t.appel('calendrier', { jeton }).data);
-  assert.equal(sam.sorties[0].inscrits.length, 13);
+  assert.equal(sam.sorties[0].inscrits.length, 23);
   assert.ok(sam.sorties[0].inscrits.find((i) => i.nom_affiche === 'Ben').a_moi);
   assert.ok(sam.sorties[1].inscrits.find((i) => i.nom_affiche === 'Ben').a_moi);
   t.appel('inscription', { jeton, sortie_id: sam0.sorties[0].id, personne_ids: [moi.id], inscrit: false });
-  assert.equal(samedi(t.appel('calendrier', { jeton }).data).sorties[0].inscrits.length, 12);
+  assert.equal(samedi(t.appel('calendrier', { jeton }).data).sorties[0].inscrits.length, 22);
 });
 
 test("inscription refusée après l'heure du rendez-vous", () => {
   const t = contexteTest();
   const jeton = t.connecter('0600000002');
   const c = t.appel('calendrier', { jeton }).data;
-  t.regler(new Date(2026, 10, 14, 9, 5));
+  t.regler(new Date(2026, 10, 14, 9, 35)); // samedi matin partie à 09:30, samedi après-midi à 14:00
   const r = t.appel('inscription', { jeton, sortie_id: 'R:sm:2026-11-14:1', personne_ids: [c.personnes[0].id], inscrit: true });
   assert.equal(r.erreur, 'inscriptions_closes');
   assert.equal(r.message, 'Inscriptions closes');
-  const r2 = t.appel('inscription', { jeton, sortie_id: 'R:sm:2026-11-14:2', personne_ids: [c.personnes[0].id], inscrit: true });
+  const r2 = t.appel('inscription', { jeton, sortie_id: 'R:sa:2026-11-14:1', personne_ids: [c.personnes[0].id], inscrit: true });
   assert.equal(r2.ok, true);
 });
 

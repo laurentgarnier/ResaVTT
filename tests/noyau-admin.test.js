@@ -41,7 +41,7 @@ test("admin_lire refusé tant que le code n'est pas vérifié", () => {
   const ok = adminVerifie(t);
   const d = t.appel('admin_lire', { jeton: ok }).data;
   assert.deepEqual(d.regles.map((r) => r.nom), ['Samedi matin', 'Samedi après-midi', 'Dimanche matin']);
-  assert.equal(d.regle_sorties.length, 5);
+  assert.equal(d.regle_sorties.length, 3);
   assert.equal(d.parametres.whatsapp_numero, PORTEUR.telephone);
   assert.match(d.modeles.rappel_whatsapp, /^Les sorties du week-end/);
   assert.equal(d.fermetures.length, 1);
@@ -69,8 +69,8 @@ test('nouvelle règle mardi 18:30 toutes les 2 semaines → sortie le mardi suiv
   assert.deepEqual(mardi.map((s) => [s.titre, s.heure, s.point_rdv]), [['Nocturne frontale', '18:30', 'Parking du stade']]);
   assert.equal(c.jours.find((j) => j.date === '2026-11-10').sorties.length, 0);
   const sam = c.jours.find((j) => j.date === '2026-11-14').sorties;
-  assert.equal(sam.length, 4);
-  assert.equal(sam[1].inscrits.length, 18);
+  assert.equal(sam.length, 2);
+  assert.equal(sam[0].inscrits.length, 22);
 });
 
 test('paramètres et modèles : seules les clés connues sont enregistrées', () => {

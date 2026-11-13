@@ -12,14 +12,14 @@ function donnees(id, tel = '0600000002') {
   return { sortie, messages, personnes: cal.personnes };
 }
 
-test('détail Inter : 18 noms triés, « Gérard (par Jo) »', () => {
-  const { sortie, messages, personnes } = donnees('R:sm:2026-11-14:2');
+test('détail du samedi matin : 22 noms triés, « Gérard (par Jo) »', () => {
+  const { sortie, messages, personnes } = donnees('R:sm:2026-11-14:1');
   const html = renderSortie(sortie, messages, personnes);
   const noms = [...html.matchAll(/<span class="n">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.equal(noms.length, 18);
+  assert.equal(noms.length, 22);
   assert.deepEqual(noms, [...noms].sort((a, b) => a.localeCompare(b, 'fr')));
   assert.match(html, /Gérard<\/span> <small>\(par Jo\)<\/small>/);
-  assert.match(html, /Inscrits <span>18 · ordre alphabétique<\/span>/);
+  assert.match(html, /Inscrits <span>22 · ordre alphabétique<\/span>/);
   assert.match(html, /09:30/);
   assert.match(html, /modifié par Ben/);
   assert.match(html, /inter-rocher\.gpx/);
@@ -27,7 +27,7 @@ test('détail Inter : 18 noms triés, « Gérard (par Jo) »', () => {
 });
 
 test('discussion : les 2 derniers messages et un lien vers les précédents', () => {
-  const { sortie, messages, personnes } = donnees('R:sm:2026-11-14:2');
+  const { sortie, messages, personnes } = donnees('R:sm:2026-11-14:1');
   const html = renderSortie(sortie, messages, personnes);
   assert.match(html, /Voir le message précédent|Voir les 1 messages précédents/);
   assert.match(html, /On attend jusqu/);

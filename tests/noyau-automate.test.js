@@ -11,21 +11,21 @@ function adminVerifie(t) {
   return jeton;
 }
 
-test('fermeture du samedi suivant → 4 sorties annulées, un seul mail liste et un seul mail WhatsApp au tic', () => {
+test('fermeture du samedi suivant → 2 sorties annulées, un seul mail liste et un seul mail WhatsApp au tic', () => {
   const t = contexteTest({ maintenant: new Date(2026, 10, 12, 10, 0) });
   const jeton = adminVerifie(t);
   const d = t.appel('admin_lire', { jeton }).data;
   t.appel('admin_enregistrer', { jeton, fermetures: [...d.fermetures, { debut: '2026-11-21', fin: '2026-11-21', regle_id: '', motif: 'Vacances' }] });
   const annulees = t.depot.lire('Sorties').filter((s) => s.date === '2026-11-21' && s.statut === 'annulee');
-  assert.equal(annulees.length, 4);
+  assert.equal(annulees.length, 2);
   assert.ok(annulees.every((s) => s.motif_annulation === 'Vacances'));
   ticNoyau(t.ctx);
   const annulation = t.mails.filter((m) => /annul/i.test(m.texte));
   assert.equal(annulation.length, 2);
   assert.equal(annulation[0].destinataires, PORTEUR.email);
   assert.equal(annulation[0].objet, 'Sorties VTT : annulation');
-  assert.equal((annulation[0].texte.match(/^• /gm) || []).length, 4);
-  assert.match(annulation[0].texte, /• Samedi 21 novembre 09:00 – Cool \(Vacances\)/);
+  assert.equal((annulation[0].texte.match(/^• /gm) || []).length, 2);
+  assert.match(annulation[0].texte, /• Samedi 21 novembre 09:00 – Samedi matin \(Vacances\)/);
   assert.equal(annulation[1].objet, 'À poster sur WhatsApp');
   const n = t.mails.length;
   ticNoyau(t.ctx);

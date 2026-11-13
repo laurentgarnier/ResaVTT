@@ -22,8 +22,10 @@ test('écran du code : demande puis saisie, essais restants', () => {
 test('onglet récurrences : 3 règles initiales et leurs sorties', () => {
   const html = renderAdmin(donneesAdmin(), 'recurrences');
   for (const nom of ['Samedi matin', 'Samedi après-midi', 'Dimanche matin']) assert.match(html, new RegExp(nom));
-  assert.match(html, /<li>Cool<\/li><li>Inter<\/li><li>Sportif<\/li>/);
-  assert.match(html, /Chaque semaine · 09:00 · Place de la mairie/);
+  assert.equal((html.match(/<li>Samedi matin<\/li>/g) || []).length, 1);
+  assert.match(html, /<li>Samedi après-midi<\/li>/);
+  assert.match(html, /<li>Dimanche matin<\/li>/);
+  assert.match(html, /Chaque semaine · 09:00 · PDL/);
   assert.match(html, /\+ Nouvelle récurrence/);
   assert.match(html, /class="on"[^>]*>Récurrences/);
 });
@@ -78,7 +80,7 @@ test("écran d'édition d'une récurrence : seulement son formulaire rempli, ret
   assert.match(html, new RegExp(`data-id="${r.id}"`));
   assert.match(html, /✎ Modifier « Samedi matin »/);
   assert.match(html, /name="nom" value="Samedi matin"/);
-  assert.match(html, />Cool\nInter\nSportif<\/textarea>/);
+  assert.match(html, />Samedi matin<\/textarea>/);
   assert.match(html, /href="#\/admin\/recurrences"[^>]*>‹ Récurrences/);
   assert.doesNotMatch(html, /Dimanche matin/);
   assert.doesNotMatch(html, /class="menu-admin"/);

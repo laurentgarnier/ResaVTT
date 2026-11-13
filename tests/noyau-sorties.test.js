@@ -23,7 +23,7 @@ test('sortie libre créée : créateur inscrit, visible au calendrier', () => {
   assert.equal(t.appel('sortie_creer', { jeton, date: '2026-11-13', heure: '', titre: 'x', point_rdv: 'y', personne_ids: [] }).erreur, 'champs_invalides');
 });
 
-test("Ben change l'heure de Cool → message système, modifie_par Ben", () => {
+test("Ben change l'heure du samedi matin → message système, modifie_par Ben", () => {
   const t = contexteTest();
   const jeton = t.connecter('0600000002');
   assert.equal(t.appel('sortie_horaire', { jeton, sortie_id: 'R:sm:2026-11-14:1', heure: '08:45' }).ok, true);
@@ -86,12 +86,12 @@ test('message de 1001 caractères ou vide refusé', () => {
 test('discussion_lire depuis un horodatage ne renvoie que les nouveaux', () => {
   const t = contexteTest();
   const jeton = t.connecter('0600000002');
-  const avant = t.appel('discussion_lire', { jeton, sortie_id: 'R:sm:2026-11-14:2' }).data;
+  const avant = t.appel('discussion_lire', { jeton, sortie_id: 'R:sm:2026-11-14:1' }).data;
   assert.equal(avant.length, 3);
   assert.equal(avant[0].a_moi, false);
   t.regler(new Date(2026, 10, 12, 21, 0));
-  t.appel('discussion_ecrire', { jeton, sortie_id: 'R:sm:2026-11-14:2', texte: 'Je viens !' });
-  const nouveaux = t.appel('discussion_lire', { jeton, sortie_id: 'R:sm:2026-11-14:2', depuis: avant.at(-1).horodatage }).data;
+  t.appel('discussion_ecrire', { jeton, sortie_id: 'R:sm:2026-11-14:1', texte: 'Je viens !' });
+  const nouveaux = t.appel('discussion_lire', { jeton, sortie_id: 'R:sm:2026-11-14:1', depuis: avant.at(-1).horodatage }).data;
   assert.deepEqual(nouveaux.map((m) => [m.auteur_nom, m.texte, m.a_moi]), [['Ben', 'Je viens !', true]]);
   assert.ok(!JSON.stringify(nouveaux).includes('+33'));
 });
@@ -137,7 +137,7 @@ test('supprimer la trace par défaut la masque pour cette sortie seulement', () 
   const admin = t.connecter('0611111111');
   verifierAdmin(t, admin);
   assert.equal(t.appel('trace_supprimer', { jeton: admin, sortie_id: 'R:sm:2026-11-14:1', trace_id: 't-boucle-foret' }).ok, true);
-  assert.deepEqual(sortieDe(t, admin, 'R:sm:2026-11-14:1').traces.map((x) => x.nom_fichier), ['variante-courte.gpx']);
+  assert.deepEqual(sortieDe(t, admin, 'R:sm:2026-11-14:1').traces.map((x) => x.nom_fichier), ['inter-rocher.gpx']);
   assert.deepEqual(sortieDe(t, admin, 'R:sm:2026-11-21:1').traces.map((x) => x.nom_fichier), ['boucle-foret.gpx']);
   assert.ok(t.depot.lire('Traces').some((x) => x.id === 't-boucle-foret'));
 });

@@ -45,7 +45,7 @@ test('adaptateur : initialiser, chargerDonneesDemo, puis doPost connexion et cal
   const cal = post({ action: 'calendrier', jeton: cx.data.jeton });
   assert.equal(cal.ok, true, JSON.stringify(cal));
   assert.equal(cal.data.jours.length, 14);
-  assert.ok(cal.data.jours.some((j) => j.sorties.length >= 4));
+  assert.ok(cal.data.jours.some((j) => j.sorties.length >= 2));
   const trace = post({ action: 'trace_lire', jeton: cx.data.jeton, trace_id: 't-boucle-foret' });
   assert.match(trace.data.contenu, /^<\?xml/);
 

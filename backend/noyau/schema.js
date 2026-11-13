@@ -25,7 +25,7 @@ export const PARAMETRES_DEFAUT = {
   commune_nom: 'Fontainebleau',
   commune_lat: '48.4047',
   commune_lon: '2.7016',
-  point_rdv_defaut: 'Place de la mairie',
+  point_rdv_defaut: 'PDL',
   rappel_jour: '3',
   rappel_heure: '18:00',
   adresse_liste: '',

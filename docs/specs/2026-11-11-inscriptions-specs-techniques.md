@@ -491,7 +491,7 @@ sequenceDiagram
   - samedi 9 h ;
   - samedi 14 h ;
   - dimanche 9 h ;
-  - chacune avec 3 sorties aux titres provisoires « Groupe 1/2/3 ».
+  - chacune avec une seule sortie, rendez-vous « PDL » (`point_rdv_defaut`).
 - **`INSTALL.md`** : guide pas à pas pour un bénévole. Il couvre :
   - la création du Sheet ;
   - le déploiement du script ;

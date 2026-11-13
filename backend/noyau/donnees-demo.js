@@ -13,12 +13,14 @@ const NOMS_DEMO = ['Marie', 'Ben', 'Ludo', 'Jo', 'Alex', 'Claire', 'Damien', 'É
   'Inès', 'Bastien', 'Chloé', 'Vincent', 'Sarah', 'Mathieu', 'Léa', 'Quentin', 'Agathe', 'Florian'];
 
 const INSCRITS_DEMO = {
-  cool: ['Marie', 'Gaëtan', 'Ana', 'Pierrot', 'Julie', 'Lucie', 'Camille', 'Inès', 'Chloé', 'Léa', 'Agathe', 'Sarah'],
-  inter: ['Alex', 'Claire', 'Damien', 'Émilie', 'Fabrice', 'Gérard', 'Hugo', 'Jo', 'Kévin', 'Laure', 'Manu', 'Nadia', 'Olivier', 'Rémi', 'Sophie', 'Thomas', 'Yann', 'Bastien'],
-  sportif: ['Ludo', 'Paul', 'Nico', 'Antoine', 'Romain', 'Vincent', 'Quentin'],
-  apresMidi: ['Ana', 'Nico', 'Mathieu', 'Florian'],
+  samediMatin: ['Alex', 'Claire', 'Damien', 'Émilie', 'Fabrice', 'Gérard', 'Hugo', 'Jo', 'Kévin', 'Laure', 'Manu', 'Nadia',
+    'Olivier', 'Rémi', 'Sophie', 'Thomas', 'Yann', 'Bastien', 'Marie', 'Julie', 'Lucie', 'Chloé'],
+  samediApresMidi: ['Gaëtan', 'Ana', 'Pierrot', 'Inès', 'Léa', 'Agathe', 'Nico', 'Mathieu'],
   libre: ['Ludo', 'Sam', 'Julie', 'Hugo', 'Florian', 'Mathieu', 'Paul', 'Camille'],
 };
+
+// Point de rendez-vous du club.
+const RDV = 'PDL';
 
 function telephoneDemo(i) {
   return '+336000000' + String(i + 1).padStart(2, '0');
@@ -38,13 +40,9 @@ function pointsDemo(xml) {
 
 // Créneaux habituels d'une semaine (lundi = 0) et participation moyenne, pour un historique crédible.
 const HISTORIQUE_SEMAINE = [
-  { jour: 2, heure: '14:00', moyenne: 5 },
-  { jour: 5, heure: '09:00', moyenne: 9 },
-  { jour: 5, heure: '09:00', moyenne: 12 },
-  { jour: 5, heure: '09:00', moyenne: 6 },
-  { jour: 5, heure: '14:00', moyenne: 4 },
-  { jour: 6, heure: '09:00', moyenne: 10 },
-  { jour: 6, heure: '09:00', moyenne: 7 },
+  { jour: 5, heure: '09:00', moyenne: 20 },
+  { jour: 5, heure: '14:00', moyenne: 8 },
+  { jour: 6, heure: '09:00', moyenne: 15 },
 ];
 // Plus de monde aux beaux jours (janvier … décembre).
 const SAISON = [0.6, 0.65, 0.8, 1, 1.1, 1.2, 1.1, 0.8, 1.15, 1, 0.75, 0.6];
@@ -86,16 +84,15 @@ export function creerDonneesDemo(aujourdhui, porteur) {
   const personneParNom = Object.fromEntries(personnes.map((p) => [p.nom_affiche, p]));
 
   const regles = [
-    { id: 'sm', nom: 'Samedi matin', jour: '5', heure: '09:00', point_rdv: 'Place de la mairie', frequence_semaines: '1', date_depart: lundi, active: true },
-    { id: 'sa', nom: 'Samedi après-midi', jour: '5', heure: '14:00', point_rdv: 'Place de la mairie', frequence_semaines: '1', date_depart: lundi, active: true },
-    { id: 'dm', nom: 'Dimanche matin', jour: '6', heure: '09:00', point_rdv: 'Place de la mairie', frequence_semaines: '1', date_depart: lundi, active: true },
+    { id: 'sm', nom: 'Samedi matin', jour: '5', heure: '09:00', point_rdv: RDV, frequence_semaines: '1', date_depart: lundi, active: true },
+    { id: 'sa', nom: 'Samedi après-midi', jour: '5', heure: '14:00', point_rdv: RDV, frequence_semaines: '1', date_depart: lundi, active: true },
+    { id: 'dm', nom: 'Dimanche matin', jour: '6', heure: '09:00', point_rdv: RDV, frequence_semaines: '1', date_depart: lundi, active: true },
   ];
+  // Un seul créneau par règle.
   const regleSorties = [
-    { regle_id: 'sm', ordre: '1', titre: 'Cool', lieu: 'Forêt domaniale', km: '30', dplus: '400', description: 'Rythme tranquille, regroupements fréquents.', trace_id: 't-boucle-foret' },
-    { regle_id: 'sm', ordre: '2', titre: 'Inter', lieu: 'Rochers', km: '42', dplus: '750', description: '', trace_id: '' },
-    { regle_id: 'sm', ordre: '3', titre: 'Sportif', lieu: '', km: '55', dplus: '1100', description: '', trace_id: '' },
-    { regle_id: 'sa', ordre: '1', titre: 'Sam. après-midi', lieu: '', km: '', dplus: '', description: '', trace_id: '' },
-    { regle_id: 'dm', ordre: '1', titre: 'Dim. matin', lieu: '', km: '', dplus: '', description: '', trace_id: '' },
+    { regle_id: 'sm', ordre: '1', titre: 'Samedi matin', lieu: 'Forêt domaniale', km: '42', dplus: '750', description: 'Regroupements aux carrefours, chacun à son rythme.', trace_id: 't-boucle-foret' },
+    { regle_id: 'sa', ordre: '1', titre: 'Samedi après-midi', lieu: 'Rochers', km: '30', dplus: '400', description: 'Rythme tranquille.', trace_id: '' },
+    { regle_id: 'dm', ordre: '1', titre: 'Dimanche matin', lieu: '', km: '50', dplus: '900', description: '', trace_id: '' },
   ];
   const fermeture = { id: 'f-chasse', debut: dimanche, fin: dimanche, regle_id: '', motif: 'Arrêté préfectoral, chasse', cree_par: porteur.nom };
 
@@ -103,12 +100,12 @@ export function creerDonneesDemo(aujourdhui, porteur) {
   for (const id of sortiesAAnnulerPourFermeture(fermeture, sorties)) {
     Object.assign(sorties.find((s) => s.id === id), { statut: 'annulee', motif_annulation: fermeture.motif, a_notifier: false, annulation_notifiee: true });
   }
-  const idCool = `R:sm:${samedi}:1`;
-  const idInter = `R:sm:${samedi}:2`;
-  Object.assign(sorties.find((s) => s.id === idInter), { heure: '09:30', modifie_par: 'Ben', modifie_le: horo });
+  const idMatin = `R:sm:${samedi}:1`;
+  const idApresMidi = `R:sa:${samedi}:1`;
+  Object.assign(sorties.find((s) => s.id === idMatin), { heure: '09:30', modifie_par: 'Ben', modifie_le: horo });
   const idLibre = 'libre-etangs';
   sorties.push({
-    id: idLibre, date: vendredi, heure: '13:30', titre: 'Boucle des étangs', point_rdv: 'Église', lieu: 'Étangs', km: '35', dplus: '450',
+    id: idLibre, date: vendredi, heure: '13:30', titre: 'Boucle des étangs', point_rdv: RDV, lieu: 'Étangs', km: '35', dplus: '450',
     description: 'Rythme tranquille, pause café à mi-parcours.', type: 'libre', regle_id: '', ordre: '', trace_regle_id: '',
     createur_tel: telDe.Ludo, createur_nom: 'Ludo', statut: 'ouverte', motif_annulation: '', a_notifier: false, annulation_notifiee: false,
     modifie_par: '', modifie_le: '', traces_masquees: '', cree_le: horo,
@@ -121,10 +118,8 @@ export function creerDonneesDemo(aujourdhui, porteur) {
       inscriptions.push({ sortie_id: sortieId, personne_id: p.id, nom_affiche: p.nom_affiche, telephone: p.telephone, horodatage: horo });
     }
   };
-  inscrire(idCool, INSCRITS_DEMO.cool);
-  inscrire(idInter, INSCRITS_DEMO.inter);
-  inscrire(`R:sm:${samedi}:3`, INSCRITS_DEMO.sportif);
-  inscrire(`R:sa:${samedi}:1`, INSCRITS_DEMO.apresMidi);
+  inscrire(idMatin, INSCRITS_DEMO.samediMatin);
+  inscrire(idApresMidi, INSCRITS_DEMO.samediApresMidi);
   inscrire(idLibre, INSCRITS_DEMO.libre);
 
   const message = (n, sortieId, auteur, texte, systeme) => ({
@@ -132,11 +127,11 @@ export function creerDonneesDemo(aujourdhui, porteur) {
     horodatage: `${aujourdhui}T${String(6 + n).padStart(2, '0')}:00:00.000Z`, supprime: false, systeme: !!systeme,
   });
   const discussions = [
-    message(1, idInter, 'Ben', "Ben a changé l'horaire : 09:30.", true),
-    message(2, idInter, 'Claire', 'Ça glisse dans la descente du chêne, prudence.'),
-    message(3, idInter, 'Ben', "On attend jusqu'à 9h35 max, ensuite on part."),
-    message(4, idCool, 'Gaëtan', 'Je pars à 11h30 max, je ferai la variante courte.'),
-    message(5, idCool, 'Ana', 'Quelqu’un a une pompe ? La mienne a lâché 😅'),
+    message(1, idMatin, 'Ben', "Ben a changé l'horaire : 09:30.", true),
+    message(2, idMatin, 'Claire', 'Ça glisse dans la descente du chêne, prudence.'),
+    message(3, idMatin, 'Ben', "On attend jusqu'à 9h35 max, ensuite on part."),
+    message(4, idApresMidi, 'Gaëtan', 'Je pars à 16h30 max, je ferai la variante courte.'),
+    message(5, idApresMidi, 'Ana', 'Quelqu’un a une pompe ? La mienne a lâché 😅'),
     message(6, idLibre, 'Ludo', 'Prévoyez une frontale, on rentre à la tombée de la nuit.'),
   ];
 
@@ -147,8 +142,8 @@ export function creerDonneesDemo(aujourdhui, porteur) {
   };
   const traces = [
     trace('t-boucle-foret', 'boucle-foret.gpx', '', 'sm', ''),
-    trace('t-variante', 'variante-courte.gpx', idCool, '', 'Gaëtan'),
-    trace('t-inter', 'inter-rocher.gpx', idInter, '', 'Ben'),
+    trace('t-variante', 'variante-courte.gpx', idApresMidi, '', 'Gaëtan'),
+    trace('t-inter', 'inter-rocher.gpx', idMatin, '', 'Ben'),
   ];
 
   const parametres = { ...PARAMETRES_DEFAUT, adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone };

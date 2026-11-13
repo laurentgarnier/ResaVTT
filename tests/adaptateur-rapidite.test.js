@@ -24,7 +24,7 @@ test('calendrier : le classeur est lu en un seul appel groupé, le fichier Adhé
   remettreAZero();
   const cal = post({ action: 'calendrier', jeton });
   assert.equal(cal.ok, true, JSON.stringify(cal));
-  assert.ok(cal.data.jours.some((j) => j.sorties.length >= 4));
+  assert.ok(cal.data.jours.some((j) => j.sorties.length >= 2));
   assert.equal(g.stats.batchGet, 1);
   assert.ok((g.stats.ouvertures[g.proprietes.ADHERENTS_ID] || 0) <= 1, JSON.stringify(g.stats.ouvertures));
   assert.ok(g.stats.getValues <= 1, `lectures feuille à feuille : ${g.stats.getValues}`);
@@ -55,7 +55,7 @@ test("sans service avancé Sheets, tout fonctionne en lecture feuille à feuille
   remettreAZero();
   const cal = post({ action: 'calendrier', jeton });
   assert.equal(cal.ok, true, JSON.stringify(cal));
-  assert.ok(cal.data.jours.some((j) => j.sorties.length >= 4));
+  assert.ok(cal.data.jours.some((j) => j.sorties.length >= 2));
   assert.ok(g.stats.getValues <= 11, `lectures : ${g.stats.getValues}`);
 });
 
@@ -63,7 +63,7 @@ test("écriture puis relecture dans la même requête : la relecture voit l'écr
   const { post } = installer({ sheetsAvance: true });
   const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
   const cal = post({ action: 'calendrier', jeton }).data;
-  const sortie = cal.jours.find((j) => j.sorties.length >= 4).sorties[0];
+  const sortie = cal.jours.find((j) => j.sorties.length >= 2).sorties[0];
   const r = post({ action: 'inscription', jeton, sortie_id: sortie.id, personne_ids: [cal.personnes[0].id], inscrit: true, avec_calendrier: true });
   assert.equal(r.ok, true, JSON.stringify(r));
   const apres = r.calendrier.jours.flatMap((j) => j.sorties).find((s) => s.id === sortie.id);

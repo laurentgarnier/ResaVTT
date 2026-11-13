@@ -4,7 +4,7 @@ import { contexteTest } from './aides/contexte-test.js';
 import { renderFrise, renderAgenda } from '../site/sorties/js/ui/calendrier-variantes.js';
 import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, DISPOSITIONS, THEMES } from '../site/sorties/js/ui/affichage.js';
 
-// Marie est inscrite aux sorties « Cool » du jeu de démonstration.
+// Marie est inscrite à la sortie du samedi matin du jeu de démonstration.
 function calendrierMarie() {
   const t = contexteTest();
   return t.appel('calendrier', { jeton: t.connecter('0600000001') }).data;

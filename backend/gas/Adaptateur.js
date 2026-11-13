@@ -284,7 +284,7 @@ function chargerDonneesDemo() {
     depot.supprimer(onglet, function () { return true; });
     depot.ajouter(onglet, donnees.tables[onglet]);
   });
-  var voulus = { adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone };
+  var voulus = { adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone, point_rdv_defaut: PARAMETRES_DEFAUT.point_rdv_defaut };
   Object.keys(voulus).forEach(function (cle) {
     if (!depot.modifier('Parametres', function (l) { return l.cle === cle; }, { valeur: voulus[cle] })) depot.ajouter('Parametres', [{ cle: cle, valeur: voulus[cle] }]);
   });
