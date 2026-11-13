@@ -353,3 +353,6 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
 .ligne-sortie .heure.modifie { color: var(--warn); }
 .vent-dir { white-space: nowrap; }
 .vent-dir i { display: inline-block; font-style: normal; font-weight: 700; margin-right: 2px; color: var(--blue); }
+details.heures { margin: 2px 0 6px; }
+details.heures summary { cursor: pointer; color: var(--acc); font-weight: 700; font-size: 12.5px; padding: 2px 0; }
+details.heures .horaire { overscroll-behavior-x: contain; }

@@ -3,7 +3,7 @@
 // - agenda : une liste qui part d'aujourd'hui, mes sorties en tête, l'heure en premier, les jours vides sur une ligne.
 import { echapper } from '../logique/html.js';
 import { libelleJour, jourSemaine } from '../logique/dates.js';
-import { mm, vent, blocMeteo, encadreSortie, blocHeures, pastilles, badgeSortie, lienSortie } from './calendrier.js';
+import { mm, vent, blocMeteo, encadreSortie, blocHeures, bandeHeures, pastilles, badgeSortie, lienSortie } from './calendrier.js';
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -20,19 +20,26 @@ function resumeJour(jour) {
 
 // ——— Frise horizontale ———
 
-function colonneJour(cal, jour, meteoParDate) {
+// Détail heure par heure d'une colonne : déplié pour aujourd'hui, à déplier pour les autres jours à venir.
+function heuresRepliables(heures, ouvert) {
+  if (!heures || !heures.length) return '';
+  return `<details class="heures"${ouvert ? ' open' : ''}><summary>⏱ Heure par heure</summary>${bandeHeures(heures)}</details>`;
+}
+
+function colonneJour(cal, jour, meteoParDate, heuresDe) {
   const classes = ['col-jour', jour.passe ? 'passe' : '', jour.date === cal.aujourdhui ? 'aujourdhui' : ''].filter(Boolean).join(' ');
   return `<section id="jour-${jour.date}" class="${classes}">
     <header class="col-tete"><b>${echapper(libelleJour(jour.date))}</b>${jour.date === cal.aujourdhui ? '<span class="pastille-jour">Aujourd\'hui</span>' : ''}</header>
     ${blocMeteo(meteoParDate, jour)}
+    ${jour.passe ? '' : heuresRepliables(heuresDe(jour.date), jour.date === cal.aujourdhui)}
     <div class="resume">${resumeJour(jour)}</div>
     <div class="col-sorties">${jour.sorties.map((s) => encadreSortie(s, true)).join('')}</div>
     ${jour.passe ? '' : `<a class="btn o" href="#/creer/${jour.date}">+ Créer une sortie</a>`}
   </section>`;
 }
 
-export function renderFrise(cal, meteoParDate) {
-  const semaine = (jours) => jours.map((j) => colonneJour(cal, j, meteoParDate)).join('');
+export function renderFrise(cal, meteoParDate, heuresDe = () => null) {
+  const semaine = (jours) => jours.map((j) => colonneJour(cal, j, meteoParDate, heuresDe)).join('');
   return `<div class="frise-entete"><span>Cette semaine</span><span class="mut petit">Faites glisser pour voir les autres jours →</span></div>
     <div class="frise" tabindex="0" aria-label="Calendrier des 14 jours">
       ${semaine(cal.jours.slice(0, 7))}<div class="frise-separateur"><span>Semaine prochaine</span></div>${semaine(cal.jours.slice(7))}

@@ -99,10 +99,14 @@ function ongletsJours(cal, dateChoisie) {
   }).join('')}</nav>`;
 }
 
+export function bandeHeures(heures) {
+  return `<div class="horaire">${heures.map((h) => `<div>${h.heure}h<b>${h.emoji}</b>${h.temp}°<br>${mm(h.pluie_mm)}<br>${h.vent ?? 0} km/h${h.vent_cardinal ? `<br>${orientationVent(h.vent_dir, h.vent_cardinal)}` : ''}</div>`).join('')}</div>`;
+}
+
 export function blocHeures(heures) {
   if (!heures || !heures.length) return '';
   return `<div class="petit mut" style="margin-top:8px">Météo heure par heure</div>
-    <div class="horaire">${heures.map((h) => `<div>${h.heure}h<b>${h.emoji}</b>${h.temp}°<br>${mm(h.pluie_mm)}<br>${h.vent ?? 0} km/h${h.vent_cardinal ? `<br>${orientationVent(h.vent_dir, h.vent_cardinal)}` : ''}</div>`).join('')}</div>`;
+    ${bandeHeures(heures)}`;
 }
 
 export function renderJour(cal, date, meteoParDate, heures) {

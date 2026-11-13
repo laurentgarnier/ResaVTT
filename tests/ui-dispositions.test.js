@@ -94,3 +94,14 @@ test('agenda : le résumé météo d\'un jour donne aussi le vent en km/h et son
   const html = renderAgenda(cal, meteoPartout(cal));
   assert.match(html, /class="meteo-mini"><span class="plage"><small>Matin<\/small> ☀️ 4–6° · 💧0 mm · 🌬 10 km\/h <span class="vent-dir" title="Vent de secteur SO">/);
 });
+
+test('frise : météo heure par heure dépliée pour aujourd\'hui, repliée pour les autres jours à venir, absente des jours passés', () => {
+  const cal = calendrierMarie();
+  const heures = (date) => [{ heure: '09', temp: date === cal.aujourdhui ? 3 : 7, pluie_proba: 0, pluie_mm: 0.4, vent: 12, vent_dir: 90, vent_cardinal: 'E', code: 0, emoji: '☀️' }];
+  const html = renderFrise(cal, meteoPartout(cal), heures);
+  const colonne = (date) => { const d = html.indexOf(`id="jour-${date}"`); return html.slice(d, html.indexOf('</section>', d)); };
+  assert.match(colonne(cal.aujourdhui), /<details class="heures" open><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>3°<br>0,4 mm<br>12 km\/h/);
+  assert.match(colonne('2026-11-14'), /<details class="heures"><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>7°/);
+  assert.doesNotMatch(colonne('2026-11-09'), /class="heures"/);
+  assert.doesNotMatch(renderFrise(cal, null, () => null), /class="heures"/);
+});
