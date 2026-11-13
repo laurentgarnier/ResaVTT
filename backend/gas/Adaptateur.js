@@ -21,8 +21,9 @@ function doPost(e) {
     return repondreJson({ ok: false, erreur: 'requete_invalide', message: 'Requête invalide.' });
   }
   var debut = Date.now();
-  var options = { cacheAdherents: requete.action !== 'connexion' };
+  var options = { cacheAdherents: requete.action !== 'connexion', cacheDonnees: true, peuplerCache: false };
   if (ACTIONS_SANS_VERROU.indexOf(requete.action) >= 0) return repondreJson(traiterEtMesurer(requete, options, debut, 0));
+  options.peuplerCache = true;
   var verrou = LockService.getScriptLock();
   if (!verrou.tryLock(10000)) return repondreJson({ ok: false, erreur: 'occupe', message: 'Serveur occupé, réessayez.' });
   try {
@@ -78,34 +79,92 @@ function valeursFeuille(feuille) {
   return feuille.getRange(1, 1, nbLignes, nbColonnes).getValues();
 }
 
-// Dépôt sur le classeur. Les lectures d'une même requête sont mémorisées : au premier besoin, tous les onglets
-// (hors Journal) sont lus en un seul appel au service avancé Sheets ; à défaut, onglet par onglet.
-// Toute écriture sur un onglet efface sa mémoire : la lecture suivante repart de la feuille.
-function depotSheets(classeur) {
+// Dépôt sur le classeur. Les lectures d'une même requête sont mémorisées : au premier besoin, les onglets courants
+// sont lus en un seul appel au service avancé Sheets ; à défaut, onglet par onglet.
+// Cache des données (options.cacheDonnees) : cette lecture groupée est gardée 5 min dans CacheService. Une requête
+// qui la trouve n'ouvre même pas le classeur. Seule une requête qui tient le verrou (options.peuplerCache) remplit
+// le cache, et toute écriture le vide : aucune lecture concurrente ne peut y remettre des données d'avant l'écriture.
+// Toute écriture sur un onglet efface aussi sa mémoire : la lecture suivante repart de la feuille.
+var CLE_CACHE_DONNEES = 'donnees';
+var DUREE_CACHE_DONNEES = 300; // secondes : une modification faite à la main dans le classeur est vue au plus 5 min après
+var TAILLE_MAX_CACHE = 95000; // CacheService refuse une valeur de plus de 100 Ko
+var ONGLETS_HORS_LECTURE_GROUPEE = ['Journal', 'Bilan']; // lus seulement par la purge et les statistiques
+
+function cacheScript() {
+  try { return CacheService.getScriptCache(); } catch (e) { return null; }
+}
+
+function oublierDonneesEnCache() {
+  var cache = cacheScript();
+  if (cache) { try { cache.remove(CLE_CACHE_DONNEES); } catch (e) { /* cache indisponible */ } }
+}
+
+function depotSheets(source, options) {
+  options = options || {};
+  var classeurOuvert = typeof source === 'function' ? null : source;
   var memo = {};
+  var venuDuCache = {}; // onglets dont la mémoire vient du cache : relus avant toute modification
   var groupeTente = false;
-  var mesure = { lecture_groupee: 'non tentée', lecture_groupee_ms: 0, feuilles_lues_une_a_une: 0, ecritures: 0 };
+  var mesure = { lecture_groupee: 'non tentée', lecture_groupee_ms: 0, ouverture_classeur_ms: 0, feuilles_lues_une_a_une: 0, ecritures: 0 };
+  function classeur() {
+    if (!classeurOuvert) {
+      var t0 = Date.now();
+      classeurOuvert = source();
+      mesure.ouverture_classeur_ms = Date.now() - t0;
+    }
+    return classeurOuvert;
+  }
+  function idClasseur() {
+    return options.id || classeur().getId();
+  }
   function feuille(onglet) {
-    var f = classeur.getSheetByName(onglet);
+    var f = classeur().getSheetByName(onglet);
     if (f) return f;
     // Onglet ajouté par une nouvelle version (ex. Bilan) : créé à la volée, sans relancer initialiser().
-    if (ONGLETS[onglet]) return preparerFeuille(classeur, onglet, ONGLETS[onglet]);
+    if (ONGLETS[onglet]) return preparerFeuille(classeur(), onglet, ONGLETS[onglet]);
     throw new Error('Onglet manquant : ' + onglet + ' (lancez initialiser()).');
+  }
+  function ecrit(onglet) {
+    delete memo[onglet];
+    mesure.ecritures++;
+    oublierDonneesEnCache();
+  }
+  function lireCache() {
+    var cache = options.cacheDonnees ? cacheScript() : null;
+    var brut = cache ? cache.get(CLE_CACHE_DONNEES) : null;
+    if (!brut) return false;
+    try { memo = JSON.parse(brut); } catch (e) { memo = {}; return false; }
+    Object.keys(memo).forEach(function (n) { venuDuCache[n] = true; });
+    mesure.lecture_groupee = 'cache';
+    return true;
+  }
+  function remplirCache(noms) {
+    var cache = options.cacheDonnees && options.peuplerCache ? cacheScript() : null;
+    if (!cache) return;
+    var copie = {};
+    noms.forEach(function (n) { copie[n] = memo[n]; });
+    var brut = JSON.stringify(copie);
+    if (brut.length > TAILLE_MAX_CACHE) { mesure.cache = 'trop gros (' + brut.length + ' car.)'; return; }
+    try { cache.put(CLE_CACHE_DONNEES, brut, DUREE_CACHE_DONNEES); mesure.cache = 'rempli'; } catch (e) { mesure.cache = 'refusé'; }
   }
   function precharger() {
     if (groupeTente) return;
     groupeTente = true;
-    if (typeof Sheets === 'undefined') { mesure.lecture_groupee = 'service Sheets indisponible'; return; }
-    var noms = Object.keys(ONGLETS).filter(function (n) { return n !== 'Journal'; });
     var t0 = Date.now();
+    if (lireCache()) { mesure.lecture_groupee_ms = Date.now() - t0; return; }
+    if (typeof Sheets === 'undefined') { mesure.lecture_groupee = 'service Sheets indisponible'; return; }
+    var noms = Object.keys(ONGLETS).filter(function (n) { return ONGLETS_HORS_LECTURE_GROUPEE.indexOf(n) < 0; });
     try {
-      var rep = Sheets.Spreadsheets.Values.batchGet(classeur.getId(), {
+      var rep = Sheets.Spreadsheets.Values.batchGet(idClasseur(), {
         ranges: noms.map(function (n) { return "'" + n.replace(/'/g, "''") + "'"; }),
         valueRenderOption: 'UNFORMATTED_VALUE',
         dateTimeRenderOption: 'FORMATTED_STRING',
       });
       rep.valueRanges.forEach(function (vr, i) { memo[noms[i]] = vr.values || []; });
       mesure.lecture_groupee = 'ok';
+      mesure.lignes = {};
+      noms.forEach(function (n) { mesure.lignes[n] = Math.max(0, memo[n].length - 1); });
+      remplirCache(noms);
     } catch (e) {
       mesure.lecture_groupee = 'échec : ' + String(e && e.message ? e.message : e).slice(0, 200);
       Logger.log('Lecture groupée impossible, lecture onglet par onglet : ' + e);
@@ -122,6 +181,16 @@ function depotSheets(classeur) {
       mesure.feuilles_lues_une_a_une++;
     }
     return memo[onglet];
+  }
+  // Avant de modifier ou de supprimer des lignes repérées par leur rang : la feuille elle-même, pas le cache,
+  // qui peut ignorer une ligne ajoutée ou supprimée à la main dans le classeur.
+  function valeursFraiches(onglet) {
+    precharger();
+    if (venuDuCache[onglet]) {
+      delete memo[onglet];
+      delete venuDuCache[onglet];
+    }
+    return valeurs(onglet);
   }
   function entetes(onglet) {
     return (valeurs(onglet)[0] || []).map(function (e) { return String(e).trim(); });
@@ -144,26 +213,23 @@ function depotSheets(classeur) {
       var plage = f.getRange(debut, 1, lignes.length, ent.length);
       plage.setNumberFormat('@');
       plage.setValues(lignes);
-      delete memo[onglet];
-      mesure.ecritures++;
+      ecrit(onglet);
     },
     modifier: function (onglet, filtre, champs) {
+      var aModifier = objetsIndexes(valeursFraiches(onglet)).filter(function (l) { return filtre(l.objet); });
+      if (!aModifier.length) return 0;
       var f = feuille(onglet);
       var ent = entetes(onglet);
-      var n = 0;
-      objetsIndexes(valeurs(onglet)).forEach(function (l) {
-        if (!filtre(l.objet)) return;
-        reecrire(f, ent, l.rang, Object.assign({}, l.objet, champs));
-        n++;
-      });
-      if (n) { delete memo[onglet]; mesure.ecritures++; }
-      return n;
+      aModifier.forEach(function (l) { reecrire(f, ent, l.rang, Object.assign({}, l.objet, champs)); });
+      ecrit(onglet);
+      return aModifier.length;
     },
     supprimer: function (onglet, filtre) {
+      var rangs = objetsIndexes(valeursFraiches(onglet)).filter(function (l) { return filtre(l.objet); }).map(function (l) { return l.rang; });
+      if (!rangs.length) return 0;
       var f = feuille(onglet);
-      var rangs = objetsIndexes(valeurs(onglet)).filter(function (l) { return filtre(l.objet); }).map(function (l) { return l.rang; });
       rangs.sort(function (a, b) { return b - a; }).forEach(function (r) { f.deleteRow(r); });
-      if (rangs.length) { delete memo[onglet]; mesure.ecritures++; }
+      ecrit(onglet);
       return rangs.length;
     },
   };
@@ -191,10 +257,12 @@ function oublierAdherentsEnCache() {
 function contexteGoogle(options) {
   options = options || {};
   var mesure = { adherents: 'non lus' };
-  var t0 = Date.now();
   var props = proprietesScript();
-  var depot = depotSheets(classeurAppli());
-  mesure.ouverture_classeur_ms = Date.now() - t0;
+  var depot = depotSheets(classeurAppli, {
+    id: props.getProperty('CLASSEUR_ID'),
+    cacheDonnees: !!options.cacheDonnees,
+    peuplerCache: !!options.peuplerCache,
+  });
   var adherentsMemo = null;
   function adherents() {
     if (adherentsMemo) return adherentsMemo;

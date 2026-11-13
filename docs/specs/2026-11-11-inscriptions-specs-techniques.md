@@ -231,7 +231,14 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
   - Requête : `{action, jeton, ...}`.
   - Réponse : `{ok, data}` ou `{ok:false, erreur, message}`.
 - **Verrou** : toutes les écritures prennent `LockService.getScriptLock()` (attente maximale de 10 s) et restent courtes. Une écriture ajoute ou supprime des lignes ciblées ; elle ne réécrit jamais un onglet entier.
-- **Cache** : l'objet « calendrier » (14 jours) est mis en cache dans `CacheService` et invalidé à chaque écriture. Comme `CacheService` limite chaque clé à 100 Ko, le contenu est découpé par jour si nécessaire. Un compteur de version global (`PropertiesService`) permet au front de demander « quoi de neuf depuis la version N » à faible coût.
+- **Cache (réalisé)** : ce sont les **données du classeur** qui sont mises en cache, et non l'objet calendrier.
+  - Une requête lit d'un coup les onglets courants (`Sheets.Spreadsheets.Values.batchGet`), c'est-à-dire tous sauf `Journal` et `Bilan`, qui ne servent qu'à la purge et aux statistiques. Mesuré en production : environ 2 s pour cette seule lecture, quel que soit le volume.
+  - Cette lecture est gardée 5 minutes dans `CacheService` (clé `donnees`, limite de 100 Ko ; au-delà, pas de cache). Une requête qui la trouve n'ouvre même pas le classeur.
+  - Seules les requêtes qui tiennent le verrou remplissent le cache, et **toute écriture le vide**. Une lecture sans verrou (`discussion_lire`, `trace_lire`) ne peut donc pas y remettre des données d'avant une écriture.
+  - Avant de modifier ou de supprimer des lignes (repérées par leur rang), l'onglet concerné est relu dans la feuille, pour ne jamais écrire sur la mauvaise ligne après une modification à la main.
+  - Une modification faite **à la main dans le classeur** est vue au plus 5 minutes après.
+  - `tic()` lit toujours le classeur directement.
+  - Avec `mesure: true`, la réponse de l'API détaille le temps serveur : total, verrou, ouverture du classeur, lecture groupée (`ok`, `cache` ou cause de l'échec), lignes par onglet, écritures, origine de la liste des adhérents.
 - **Droits** : à **chaque appel**, le jeton est vérifié, puis `actif` et `admin` sont relus dans `Adherents` (cache de 5 minutes). Un adhérent désactivé est donc bloqué dans les 5 minutes, sans attendre la purge.
 
 | Action | Rôle | Effet |

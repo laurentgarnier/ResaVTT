@@ -79,18 +79,18 @@ test("tic lit la liste des adhérents à la source (la purge ne se fie pas au ca
   assert.ok((g.stats.ouvertures[g.proprietes.ADHERENTS_ID] || 0) >= 1);
 });
 
-test("classeur d'avant l'onglet Bilan : l'onglet manquant est créé tout seul, la lecture groupée reprend dès l'appel suivant", () => {
-  const { g, post, remettreAZero } = installer({ sheetsAvance: true });
+test("classeur d'une version précédente : un onglet manquant est créé tout seul, la lecture groupée reprend dès l'appel suivant", () => {
+  const { g, post } = installer({ sheetsAvance: true });
+  g.classeurActif.deleteSheet(g.classeurActif.getSheetByName('Fermetures'));
   g.classeurActif.deleteSheet(g.classeurActif.getSheetByName('Bilan'));
   const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
   assert.equal(post({ action: 'calendrier', jeton }).ok, true);
-  const bilan = g.classeurActif.getSheetByName('Bilan');
-  assert.ok(bilan, 'onglet Bilan recréé');
-  assert.deepEqual(bilan.getRange(1, 1, 1, 5).getValues()[0], ['sortie_id', 'date', 'heure', 'statut', 'participants']);
-  remettreAZero();
-  assert.equal(post({ action: 'calendrier', jeton }).ok, true);
-  assert.equal(g.stats.batchGet, 1);
-  assert.ok(g.stats.getValues <= 1, `lectures feuille à feuille : ${g.stats.getValues}`);
+  const fermetures = g.classeurActif.getSheetByName('Fermetures');
+  assert.ok(fermetures, 'onglet Fermetures recréé');
+  assert.deepEqual(fermetures.getRange(1, 1, 1, 6).getValues()[0], ['id', 'debut', 'fin', 'regle_id', 'motif', 'cree_par']);
+  const r = post({ action: 'calendrier', jeton, mesure: true });
+  assert.equal(r.ok, true);
+  assert.ok(['ok', 'cache'].includes(r.mesure.lecture_groupee), r.mesure.lecture_groupee);
 });
 
 test('mesure: true → la réponse détaille le temps serveur et le mode de lecture ; sans mesure, rien de plus', () => {
@@ -101,6 +101,8 @@ test('mesure: true → la réponse détaille le temps serveur et le mode de lect
   assert.equal(r.mesure.lecture_groupee, 'ok');
   assert.equal(r.mesure.feuilles_lues_une_a_une, 0);
   assert.equal(r.mesure.adherents, 'cache');
+  assert.ok(r.mesure.lignes.Sorties > 0);
+  assert.equal(r.mesure.lignes.Bilan, undefined, 'le Bilan ne fait pas partie de la lecture groupée');
   for (const cle of ['total_ms', 'verrou_ms', 'lecture_groupee_ms', 'ouverture_classeur_ms', 'ecritures']) assert.equal(typeof r.mesure[cle], 'number', cle);
   assert.equal(post({ action: 'calendrier', jeton }).mesure, undefined);
   const sans = installer({ sheetsAvance: false }).post;
@@ -108,4 +110,68 @@ test('mesure: true → la réponse détaille le temps serveur et le mode de lect
   const m = sans({ action: 'calendrier', jeton: j2, mesure: true }).mesure;
   assert.equal(m.lecture_groupee, 'service Sheets indisponible');
   assert.ok(m.feuilles_lues_une_a_une > 0);
+});
+
+test('cache des données : le calendrier suivant ne touche plus au classeur', () => {
+  const { g, post, remettreAZero } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  post({ action: 'calendrier', jeton });
+  remettreAZero();
+  const r = post({ action: 'calendrier', jeton, mesure: true });
+  assert.equal(r.ok, true);
+  assert.equal(r.mesure.lecture_groupee, 'cache');
+  assert.equal(g.stats.batchGet, 0);
+  assert.equal(g.stats.getValues, 0);
+  assert.equal(g.stats.ouvertures[g.proprietes.CLASSEUR_ID] || 0, 0, 'classeur ouvert inutilement');
+  assert.ok(r.data.jours.some((j) => j.sorties.length >= 2));
+});
+
+test('cache des données : une écriture le vide, le calendrier suivant voit le changement', () => {
+  const { post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  const avant = post({ action: 'calendrier', jeton }).data;
+  const sortie = avant.jours.filter((j) => j.date > avant.aujourdhui).flatMap((j) => j.sorties).find((s) => s.statut !== 'annulee');
+  const moi = avant.personnes[0];
+  assert.equal(post({ action: 'inscription', jeton, sortie_id: sortie.id, personne_ids: [moi.id], inscrit: true }).ok, true);
+  const r = post({ action: 'calendrier', jeton, mesure: true });
+  assert.notEqual(r.mesure.lecture_groupee, 'cache');
+  const apres = r.data.jours.flatMap((j) => j.sorties).find((s) => s.id === sortie.id);
+  assert.equal(apres.inscrits.length, sortie.inscrits.length + 1);
+});
+
+test('cache des données : une requête sans verrou le lit mais ne le remplit pas', () => {
+  const { post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  post({ action: 'discussion_lire', jeton, sortie_id: 'inexistante' });
+  assert.notEqual(post({ action: 'calendrier', jeton, mesure: true }).mesure.lecture_groupee, 'cache');
+  assert.equal(post({ action: 'discussion_lire', jeton, sortie_id: 'inexistante', mesure: true }).mesure.lecture_groupee, 'cache');
+});
+
+test('cache des données : ni le Bilan ni le Journal n\'y sont copiés', () => {
+  const { g, post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  post({ action: 'calendrier', jeton });
+  const brut = g.cache.get('donnees');
+  assert.ok(brut, 'cache des données vide');
+  const onglets = Object.keys(JSON.parse(brut));
+  assert.ok(onglets.includes('Sorties'));
+  assert.ok(!onglets.includes('Bilan'));
+  assert.ok(!onglets.includes('Journal'));
+});
+
+test('cache des données : une modification relit la feuille, même si une ligne a été supprimée à la main entre-temps', () => {
+  const { g, contexte } = installer({ sheetsAvance: true });
+  vm.runInContext("depotSheets(classeurAppli, { cacheDonnees: true, peuplerCache: true }).lire('Personnes')", contexte);
+  assert.ok(g.cache.get('donnees'), 'cache rempli');
+  const feuille = g.classeurActif.getSheetByName('Personnes');
+  const avant = feuille.getRange(1, 1, feuille.getLastRow(), 4).getValues();
+  const cible = avant[5][0];
+  feuille.deleteRow(3); // suppression à la main dans le classeur : les lignes suivantes remontent
+  const n = vm.runInContext(`depotSheets(classeurAppli, { cacheDonnees: true }).modifier('Personnes', function (p) { return p.id === ${JSON.stringify(cible)}; }, { nom_affiche: 'Modifié' })`, contexte);
+  assert.equal(n, 1);
+  const apres = feuille.getRange(1, 1, feuille.getLastRow(), 4).getValues();
+  const modifiees = apres.filter((l) => l[2] === 'Modifié');
+  assert.deepEqual(modifiees.map((l) => l[0]), [cible]);
+  const idsAttendus = avant.slice(1).map((l) => l[0]).filter((id) => id !== avant[2][0]).sort();
+  assert.deepEqual(apres.slice(1).map((l) => l[0]).sort(), idsAttendus, 'une autre ligne a été écrasée');
 });
