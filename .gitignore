@@ -2,3 +2,4 @@ node_modules/
 .superpowers/
 backend/gas/gen/
 .clasprc.json
+backend/gas/.clasp.json
