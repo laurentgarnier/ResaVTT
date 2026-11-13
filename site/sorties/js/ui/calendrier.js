@@ -28,11 +28,11 @@ export function personnesDistinctes(sorties) {
 }
 
 // Précipitations en mm, à la française (0,4 mm).
-function mm(v) {
+export function mm(v) {
   return `${String(Number(v) || 0).replace('.', ',')} mm`;
 }
 
-function blocMeteo(meteoParDate, jour) {
+export function blocMeteo(meteoParDate, jour) {
   if (jour.passe) return '';
   if (!meteoParDate) return '<div class="meteo"><div class="indispo">Météo indisponible</div></div>';
   const m = meteoParDate[jour.date];
@@ -43,7 +43,7 @@ function blocMeteo(meteoParDate, jour) {
   return `<div class="meteo">${plage('Matin', m.matin)}${plage('Après-midi', m.apres_midi)}</div>`;
 }
 
-function encadreSortie(s, compact) {
+export function encadreSortie(s, compact) {
   const nb = s.inscrits.length;
   const moi = s.inscrits.some((i) => i.a_moi);
   const heure = s.modifie_par && s.type === 'recurrente'
@@ -89,7 +89,7 @@ function ongletsJours(cal, dateChoisie) {
   }).join('')}</nav>`;
 }
 
-function blocHeures(heures) {
+export function blocHeures(heures) {
   if (!heures || !heures.length) return '';
   return `<div class="petit mut" style="margin-top:8px">Météo heure par heure</div>
     <div class="horaire">${heures.map((h) => `<div>${h.heure}h<b>${h.emoji}</b>${h.temp}°<br>${mm(h.pluie_mm)}</div>`).join('')}</div>`;

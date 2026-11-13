@@ -1,6 +1,6 @@
 // Service worker de l'appli : portée limitée à /sorties/. Met en cache l'interface (stale-while-revalidate),
 // jamais les données : l'API, la météo et les tuiles de carte passent toujours par le réseau.
-const VERSION = 'sorties-vtt-v4';
+const VERSION = 'sorties-vtt-v5';
 const COQUILLE = [
   './',
   'index.html',
@@ -24,8 +24,10 @@ const COQUILLE = [
   'js/logique/recurrences.js',
   'js/logique/telephone.js',
   'js/ui/admin.js',
+  'js/ui/affichage.js',
   'js/ui/attente.js',
   'js/ui/calendrier.js',
+  'js/ui/calendrier-variantes.js',
   'js/ui/carte.js',
   'js/ui/connexion.js',
   'js/ui/formulaire.js',

@@ -14,6 +14,13 @@
   --blue: #4ea3ff;
   --warn: #ffb547;
   --rayon: 12px;
+  --sur-acc: #16210a;
+  --fond-bleu: #23324f;
+  --fond-orange: #3a2f1b;
+  --fond-rouge: #3d1f25;
+  --fond-neutre: #3a4560;
+  --fond-trace: #141c2e;
+  --ombre: none;
 }
 
 * { box-sizing: border-box; }
@@ -69,7 +76,7 @@ a { color: var(--acc); }
   font-family: inherit;
 }
 
-.btn.p { background: var(--acc); color: #16210a; }
+.btn.p { background: var(--acc); color: var(--sur-acc); }
 .btn.s { background: var(--acc-dk); color: var(--acc-txt); }
 .btn.o { background: transparent; border: 1px solid var(--line); color: var(--mut); }
 .btn.d { background: transparent; border: 1px solid var(--red); color: var(--red); }

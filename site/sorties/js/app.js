@@ -4,6 +4,8 @@ import { appeler, lireJeton, enregistrerJeton, effacerJeton } from './api.js';
 import { echapper } from './logique/html.js';
 import { renderConnexion, brancherConnexion } from './ui/connexion.js';
 import { renderGrille, renderJour } from './ui/calendrier.js';
+import { renderFrise, renderAgenda } from './ui/calendrier-variantes.js';
+import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, THEMES } from './ui/affichage.js';
 import { renderSortie, brancherSortie, arreterDiscussion } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
@@ -16,6 +18,40 @@ import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from 
 import { aujourdhuiLocal } from './logique/dates.js';
 
 const etat = { cal: null, calRecuA: 0 };
+
+// Affichage à l'essai : mise en page du calendrier et thème, propres à l'appareil.
+const stockageLocal = (() => {
+  try { return window.localStorage; } catch (e) { return { getItem: () => null, setItem: () => {} }; }
+})();
+let affichage = lireAffichage(stockageLocal);
+
+function appliquerTheme() {
+  document.documentElement.dataset.theme = affichage.theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = THEMES.find((t) => t.id === affichage.theme).couleur;
+}
+appliquerTheme();
+
+function basculerSelecteur(ouvrir) {
+  const existant = document.querySelector('.selecteur-affichage');
+  if (existant) existant.remove();
+  if (!ouvrir) return;
+  document.getElementById('barre').insertAdjacentHTML('afterend', renderSelecteurAffichage(affichage));
+  document.querySelector('.selecteur-affichage').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    affichage = { ...affichage, ...(b.dataset.disposition ? { disposition: b.dataset.disposition } : { theme: b.dataset.themeChoix }) };
+    enregistrerAffichage(stockageLocal, affichage);
+    appliquerTheme();
+    basculerSelecteur(true);
+    if (b.dataset.disposition && etat.cal) router();
+  });
+}
+
+document.addEventListener('click', (ev) => {
+  if (ev.target.closest('#bouton-affichage')) basculerSelecteur(!document.querySelector('.selecteur-affichage'));
+  else if (!ev.target.closest('.selecteur-affichage')) basculerSelecteur(false);
+});
 const attente = creerAttente();
 
 // Ces écritures demandent le calendrier à jour dans leur réponse : pas de second aller-retour pour réafficher.
@@ -62,6 +98,7 @@ function afficherBarre() {
   const b = document.getElementById('barre');
   const cal = etat.cal;
   b.innerHTML = `<a class="logo" href="#/">🚵 Sorties <span>VTT</span></a><span class="sp"></span>
+    <button type="button" class="chip" id="bouton-affichage" aria-label="Affichage">🎨<span class="optionnel"> Affichage</span></button>
     ${cal ? `<span class="chip optionnel">Connecté : ${echapper(cal.moi.nom)}</span>
       <a class="chip" href="#/personnes">👪 Personnes</a>
       ${cal.est_admin ? '<a class="chip" href="#/admin">⚙ Admin</a>' : ''}
@@ -111,9 +148,25 @@ function premierJourUtile() {
   return etat.cal.aujourdhui;
 }
 
+// Frise et agenda : un seul écran pour l'accueil et pour un jour donné, qu'on fait défiler jusqu'à ce jour.
+function afficherVariante(racine, date, meteo) {
+  const heures = heuresDuJour(meteo.hourly, etat.cal.aujourdhui);
+  racine.innerHTML = affichage.disposition === 'frise' ? renderFrise(etat.cal, meteo.parDate) : renderAgenda(etat.cal, meteo.parDate, heures);
+  const cible = racine.querySelector(`#jour-${date}`);
+  if (!cible) return;
+  if (affichage.disposition === 'frise') {
+    const frise = racine.querySelector('.frise');
+    frise.scrollLeft = cible.offsetLeft - frise.offsetLeft - 8;
+  } else if (date !== etat.cal.aujourdhui) {
+    cible.scrollIntoView({ block: 'start' });
+  }
+}
+
 async function afficherCalendrier(racine) {
   const meteo = await meteoCourante();
-  if (window.matchMedia(ECRAN_LARGE).matches) {
+  if (affichage.disposition !== 'classique') {
+    afficherVariante(racine, etat.cal.aujourdhui, meteo);
+  } else if (window.matchMedia(ECRAN_LARGE).matches) {
     racine.innerHTML = renderGrille(etat.cal, meteo.parDate);
   } else {
     afficherJour(racine, premierJourUtile(), meteo);
@@ -146,6 +199,7 @@ function afficherEncartInstallation(racine) {
 }
 
 function afficherJour(racine, date, meteo) {
+  if (affichage.disposition !== 'classique') return afficherVariante(racine, date, meteo);
   racine.innerHTML = renderJour(etat.cal, date, meteo.parDate, date === etat.cal.aujourdhui ? heuresDuJour(meteo.hourly, date) : null);
   const onglet = racine.querySelector('.onglet.on');
   if (onglet) onglet.scrollIntoView({ inline: 'center', block: 'nearest' });
