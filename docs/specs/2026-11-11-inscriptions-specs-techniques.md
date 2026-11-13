@@ -234,11 +234,12 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 - **Cache (réalisé)** : ce sont les **données du classeur** qui sont mises en cache, et non l'objet calendrier.
   - Une requête lit d'un coup les onglets courants (`Sheets.Spreadsheets.Values.batchGet`), c'est-à-dire tous sauf `Journal` et `Bilan`, qui ne servent qu'à la purge et aux statistiques. Mesuré en production : environ 2 s pour cette seule lecture, quel que soit le volume.
   - Cette lecture est gardée 5 minutes dans `CacheService` (clé `donnees`, limite de 100 Ko ; au-delà, pas de cache). Une requête qui la trouve n'ouvre même pas le classeur.
-  - Seules les requêtes qui tiennent le verrou remplissent le cache, et **toute écriture le vide**. Une lecture sans verrou (`discussion_lire`, `trace_lire`) ne peut donc pas y remettre des données d'avant une écriture.
+  - Seules les requêtes qui tiennent le verrou remplissent le cache, et **toute écriture le vide**. En fin de requête, une écriture le reconstruit aussitôt en ne relisant que les onglets modifiés, pour que l'appel suivant n'ait pas à relire tout le classeur. Le cache n'est jamais prolongé plus de 5 minutes après la dernière lecture complète du classeur. Une lecture sans verrou (`discussion_lire`, `trace_lire`) ne peut donc pas y remettre des données d'avant une écriture.
   - Avant de modifier ou de supprimer des lignes (repérées par leur rang), l'onglet concerné est relu dans la feuille, pour ne jamais écrire sur la mauvaise ligne après une modification à la main.
   - Une modification faite **à la main dans le classeur** est vue au plus 5 minutes après.
   - `tic()` lit toujours le classeur directement.
-  - Avec `mesure: true`, la réponse de l'API détaille le temps serveur : total, verrou, ouverture du classeur, lecture groupée (`ok`, `cache` ou cause de l'échec), lignes par onglet, écritures, origine de la liste des adhérents.
+  - Avec `mesure: true`, la réponse de l'API détaille le temps serveur : total, verrou, ouverture du classeur, lecture groupée (`ok`, `cache` ou cause de l'échec), lignes par onglet, écritures, état du cache, origine de la liste des adhérents.
+  - Mesuré en production : environ 4,5 s par appel avant le cache, 1,3 à 1,7 s après, dont environ 1,3 s de délai propre à Google.
 - **Droits** : à **chaque appel**, le jeton est vérifié, puis `actif` et `admin` sont relus dans `Adherents` (cache de 5 minutes). Un adhérent désactivé est donc bloqué dans les 5 minutes, sans attendre la purge.
 
 | Action | Rôle | Effet |

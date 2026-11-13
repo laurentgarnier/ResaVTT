@@ -37,6 +37,7 @@ function doPost(e) {
 function traiterEtMesurer(requete, options, debut, attenteVerrou) {
   var ctx = contexteGoogle(options);
   var reponse = traiter(requete, ctx);
+  try { ctx.depot.finaliser(); } catch (e) { Logger.log('Cache des données non reconstruit : ' + e); }
   if (requete.mesure) {
     reponse.mesure = Object.assign({ total_ms: Date.now() - debut, verrou_ms: attenteVerrou }, ctx.mesure, ctx.depot.mesure);
   }
@@ -105,6 +106,9 @@ function depotSheets(source, options) {
   var memo = {};
   var venuDuCache = {}; // onglets dont la mémoire vient du cache : relus avant toute modification
   var groupeTente = false;
+  var groupeCharge = false; // tous les onglets courants sont en mémoire (cache ou lecture groupée)
+  var luA = 0; // date de la dernière lecture complète du classeur dont viennent ces données
+  var NOMS_GROUPE = Object.keys(ONGLETS).filter(function (n) { return ONGLETS_HORS_LECTURE_GROUPEE.indexOf(n) < 0; });
   var mesure = { lecture_groupee: 'non tentée', lecture_groupee_ms: 0, ouverture_classeur_ms: 0, feuilles_lues_une_a_une: 0, ecritures: 0 };
   function classeur() {
     if (!classeurOuvert) {
@@ -133,19 +137,26 @@ function depotSheets(source, options) {
     var cache = options.cacheDonnees ? cacheScript() : null;
     var brut = cache ? cache.get(CLE_CACHE_DONNEES) : null;
     if (!brut) return false;
-    try { memo = JSON.parse(brut); } catch (e) { memo = {}; return false; }
+    var lu;
+    try { lu = JSON.parse(brut); } catch (e) { return false; }
+    if (!lu || !lu.onglets || !lu.lu_a) return false;
+    memo = lu.onglets;
+    luA = lu.lu_a;
     Object.keys(memo).forEach(function (n) { venuDuCache[n] = true; });
+    groupeCharge = true;
     mesure.lecture_groupee = 'cache';
     return true;
   }
-  function remplirCache(noms) {
+  function remplirCache() {
     var cache = options.cacheDonnees && options.peuplerCache ? cacheScript() : null;
     if (!cache) return;
+    var restant = DUREE_CACHE_DONNEES - Math.floor((Date.now() - luA) / 1000);
+    if (restant <= 0) { mesure.cache = 'trop ancien'; return; }
     var copie = {};
-    noms.forEach(function (n) { copie[n] = memo[n]; });
-    var brut = JSON.stringify(copie);
+    NOMS_GROUPE.forEach(function (n) { copie[n] = memo[n]; });
+    var brut = JSON.stringify({ lu_a: luA, onglets: copie });
     if (brut.length > TAILLE_MAX_CACHE) { mesure.cache = 'trop gros (' + brut.length + ' car.)'; return; }
-    try { cache.put(CLE_CACHE_DONNEES, brut, DUREE_CACHE_DONNEES); mesure.cache = 'rempli'; } catch (e) { mesure.cache = 'refusé'; }
+    try { cache.put(CLE_CACHE_DONNEES, brut, restant); mesure.cache = 'rempli'; } catch (e) { mesure.cache = 'refusé'; }
   }
   function precharger() {
     if (groupeTente) return;
@@ -153,8 +164,9 @@ function depotSheets(source, options) {
     var t0 = Date.now();
     if (lireCache()) { mesure.lecture_groupee_ms = Date.now() - t0; return; }
     if (typeof Sheets === 'undefined') { mesure.lecture_groupee = 'service Sheets indisponible'; return; }
-    var noms = Object.keys(ONGLETS).filter(function (n) { return ONGLETS_HORS_LECTURE_GROUPEE.indexOf(n) < 0; });
+    var noms = NOMS_GROUPE;
     try {
+      luA = Date.now();
       var rep = Sheets.Spreadsheets.Values.batchGet(idClasseur(), {
         ranges: noms.map(function (n) { return "'" + n.replace(/'/g, "''") + "'"; }),
         valueRenderOption: 'UNFORMATTED_VALUE',
@@ -164,7 +176,8 @@ function depotSheets(source, options) {
       mesure.lecture_groupee = 'ok';
       mesure.lignes = {};
       noms.forEach(function (n) { mesure.lignes[n] = Math.max(0, memo[n].length - 1); });
-      remplirCache(noms);
+      groupeCharge = true;
+      remplirCache();
     } catch (e) {
       mesure.lecture_groupee = 'échec : ' + String(e && e.message ? e.message : e).slice(0, 200);
       Logger.log('Lecture groupée impossible, lecture onglet par onglet : ' + e);
@@ -200,6 +213,13 @@ function depotSheets(source, options) {
   }
   return {
     mesure: mesure,
+    // Fin de requête : si elle a écrit, le cache vidé par l'écriture est reconstruit en relisant seulement les onglets
+    // modifiés, pour que l'appel suivant n'ait pas à relire tout le classeur. Jamais au-delà de 5 min après luA.
+    finaliser: function () {
+      if (!mesure.ecritures || !groupeCharge || !options.cacheDonnees || !options.peuplerCache) return;
+      NOMS_GROUPE.forEach(function (n) { valeurs(n); });
+      remplirCache();
+    },
     lire: function (onglet) { return lignesEnObjets(valeurs(onglet)); },
     ajouter: function (onglet, objets) {
       if (!objets.length) return;

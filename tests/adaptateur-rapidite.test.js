@@ -21,6 +21,7 @@ function installer(options) {
 test('calendrier : le classeur est lu en un seul appel groupé, le fichier Adhérents ouvert au plus une fois', () => {
   const { g, post, remettreAZero } = installer({ sheetsAvance: true });
   const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  g.cache.delete('donnees'); // cache des données vide : on mesure la vraie lecture
   remettreAZero();
   const cal = post({ action: 'calendrier', jeton });
   assert.equal(cal.ok, true, JSON.stringify(cal));
@@ -94,8 +95,9 @@ test("classeur d'une version précédente : un onglet manquant est créé tout s
 });
 
 test('mesure: true → la réponse détaille le temps serveur et le mode de lecture ; sans mesure, rien de plus', () => {
-  const { post } = installer({ sheetsAvance: true });
+  const { g, post } = installer({ sheetsAvance: true });
   const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  g.cache.delete('donnees');
   const r = post({ action: 'calendrier', jeton, mesure: true });
   assert.equal(r.ok, true);
   assert.equal(r.mesure.lecture_groupee, 'ok');
@@ -134,14 +136,41 @@ test('cache des données : une écriture le vide, le calendrier suivant voit le 
   const moi = avant.personnes[0];
   assert.equal(post({ action: 'inscription', jeton, sortie_id: sortie.id, personne_ids: [moi.id], inscrit: true }).ok, true);
   const r = post({ action: 'calendrier', jeton, mesure: true });
-  assert.notEqual(r.mesure.lecture_groupee, 'cache');
   const apres = r.data.jours.flatMap((j) => j.sorties).find((s) => s.id === sortie.id);
   assert.equal(apres.inscrits.length, sortie.inscrits.length + 1);
 });
 
-test('cache des données : une requête sans verrou le lit mais ne le remplit pas', () => {
-  const { post } = installer({ sheetsAvance: true });
+test("cache des données : après une écriture, la même requête le remet à jour ; l'appel suivant le lit directement", () => {
+  const { g, post, remettreAZero } = installer({ sheetsAvance: true });
   const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  const avant = post({ action: 'calendrier', jeton }).data;
+  const sortie = avant.jours.filter((j) => j.date > avant.aujourdhui).flatMap((j) => j.sorties).find((s) => s.statut !== 'annulee');
+  const ecriture = post({ action: 'inscription', jeton, sortie_id: sortie.id, personne_ids: [avant.personnes[0].id], inscrit: true, mesure: true });
+  assert.equal(ecriture.mesure.cache, 'rempli');
+  remettreAZero();
+  const r = post({ action: 'calendrier', jeton, mesure: true });
+  assert.equal(r.mesure.lecture_groupee, 'cache');
+  assert.equal(g.stats.batchGet + g.stats.getValues, 0);
+  assert.equal(r.data.jours.flatMap((j) => j.sorties).find((s) => s.id === sortie.id).inscrits.length, sortie.inscrits.length + 1);
+});
+
+test('cache des données : jamais prolongé plus de 5 min après la dernière lecture complète du classeur', () => {
+  const { g, post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  const avant = post({ action: 'calendrier', jeton }).data;
+  const copie = JSON.parse(g.cache.get('donnees'));
+  copie.lu_a = Date.now() - 6 * 60 * 1000; // lecture complète d'il y a 6 min
+  g.cache.set('donnees', JSON.stringify(copie));
+  const sortie = avant.jours.filter((j) => j.date > avant.aujourdhui).flatMap((j) => j.sorties).find((s) => s.statut !== 'annulee');
+  post({ action: 'inscription', jeton, sortie_id: sortie.id, personne_ids: [avant.personnes[0].id], inscrit: true });
+  assert.equal(g.cache.has('donnees'), false, 'cache prolongé au-delà de 5 min');
+  assert.equal(post({ action: 'calendrier', jeton, mesure: true }).mesure.lecture_groupee, 'ok');
+});
+
+test('cache des données : une requête sans verrou le lit mais ne le remplit pas', () => {
+  const { g, post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  g.cache.delete('donnees');
   post({ action: 'discussion_lire', jeton, sortie_id: 'inexistante' });
   assert.notEqual(post({ action: 'calendrier', jeton, mesure: true }).mesure.lecture_groupee, 'cache');
   assert.equal(post({ action: 'discussion_lire', jeton, sortie_id: 'inexistante', mesure: true }).mesure.lecture_groupee, 'cache');
@@ -153,7 +182,7 @@ test('cache des données : ni le Bilan ni le Journal n\'y sont copiés', () => {
   post({ action: 'calendrier', jeton });
   const brut = g.cache.get('donnees');
   assert.ok(brut, 'cache des données vide');
-  const onglets = Object.keys(JSON.parse(brut));
+  const onglets = Object.keys(JSON.parse(brut).onglets);
   assert.ok(onglets.includes('Sorties'));
   assert.ok(!onglets.includes('Bilan'));
   assert.ok(!onglets.includes('Journal'));
