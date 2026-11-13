@@ -3,7 +3,7 @@
 // - agenda : une liste qui part d'aujourd'hui, mes sorties en tête, l'heure en premier, les jours vides sur une ligne.
 import { echapper } from '../logique/html.js';
 import { libelleJour, jourSemaine } from '../logique/dates.js';
-import { mm, blocMeteo, encadreSortie, blocHeures, pastilles, badgeSortie, lienSortie } from './calendrier.js';
+import { mm, vent, blocMeteo, encadreSortie, blocHeures, pastilles, badgeSortie, lienSortie } from './calendrier.js';
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -44,8 +44,8 @@ export function renderFrise(cal, meteoParDate) {
 function meteoMini(meteoParDate, jour) {
   const m = meteoParDate && meteoParDate[jour.date];
   if (!m) return '';
-  const plage = (p) => (p ? `${p.emoji} ${p.tmin === p.tmax ? p.tmin : `${p.tmin}–${p.tmax}`}° · 💧${mm(p.pluie_mm)}` : '—');
-  return `<span class="meteo-mini" title="Matin · après-midi">${plage(m.matin)}<i>|</i>${plage(m.apres_midi)}</span>`;
+  const plage = (p) => (p ? `${p.emoji} ${p.tmin === p.tmax ? p.tmin : `${p.tmin}–${p.tmax}`}° · 💧${mm(p.pluie_mm)} · ${vent(p.vent_max, p.vent_dir, p.vent_cardinal)}` : '—');
+  return `<span class="meteo-mini"><span class="plage"><small>Matin</small> ${plage(m.matin)}</span><span class="plage"><small>Ap.-midi</small> ${plage(m.apres_midi)}</span></span>`;
 }
 
 function ligneSortie(s) {

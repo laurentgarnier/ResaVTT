@@ -8,8 +8,8 @@ function calendrierBen() {
   return t.appel('calendrier', { jeton: t.connecter('0600000002') }).data;
 }
 
-const METEO = { matin: { tmin: 4, tmax: 6, pluie_proba: 0, pluie_mm: 0, vent_max: 10, code: 0, emoji: '☀️', libelle: 'Ensoleillé' },
-  apres_midi: { tmin: 10, tmax: 12, pluie_proba: 20, pluie_mm: 0.2, vent_max: 15, code: 2, emoji: '⛅', libelle: 'Éclaircies' } };
+const METEO = { matin: { tmin: 4, tmax: 6, pluie_proba: 0, pluie_mm: 0, vent_max: 10, vent_dir: 225, vent_cardinal: 'SO', code: 0, emoji: '☀️', libelle: 'Ensoleillé' },
+  apres_midi: { tmin: 10, tmax: 12, pluie_proba: 20, pluie_mm: 0.2, vent_max: 15, vent_dir: 0, vent_cardinal: 'N', code: 2, emoji: '⛅', libelle: 'Éclaircies' } };
 
 function meteoPartout(cal) {
   return Object.fromEntries(cal.jours.map((j) => [j.date, METEO]));
@@ -85,4 +85,13 @@ test('météo : les précipitations sont affichées en mm, plus en %', () => {
   const heures = [{ heure: '06', temp: 3, pluie_proba: 10, pluie_mm: 1.5, code: 61, emoji: '🌧' }];
   const jour = renderJour(cal, '2026-11-12', meteoPartout(cal), heures);
   assert.match(jour, /06h<b>🌧<\/b>3°<br>1,5 mm/);
+});
+
+test('météo : vent en km/h avec son orientation (secteur et flèche dans le sens où il souffle)', () => {
+  const cal = calendrierBen();
+  const grille = blocJour(renderGrille(cal, meteoPartout(cal)), '2026-11-14');
+  assert.match(grille, /🌬 10 km\/h <span class="vent-dir" title="Vent de secteur SO"><i style="transform:rotate\(225deg\)">↓<\/i>SO<\/span>/);
+  assert.match(grille, /🌬 15 km\/h <span class="vent-dir" title="Vent de secteur N">/);
+  const heures = [{ heure: '06', temp: 3, pluie_proba: 10, pluie_mm: 0, vent: 12, vent_dir: 90, vent_cardinal: 'E', code: 0, emoji: '☀️' }];
+  assert.match(renderJour(cal, '2026-11-12', meteoPartout(cal), heures), /12 km\/h<br><span class="vent-dir" title="Vent de secteur E"><i style="transform:rotate\(90deg\)">↓<\/i>E<\/span>/);
 });

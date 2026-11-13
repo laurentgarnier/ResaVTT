@@ -10,8 +10,8 @@ function calendrierMarie() {
   return t.appel('calendrier', { jeton: t.connecter('0600000001') }).data;
 }
 
-const METEO = { matin: { tmin: 4, tmax: 6, pluie_proba: 0, pluie_mm: 0, vent_max: 10, code: 0, emoji: '☀️', libelle: 'Ensoleillé' },
-  apres_midi: { tmin: 10, tmax: 12, pluie_proba: 20, pluie_mm: 0.2, vent_max: 15, code: 2, emoji: '⛅', libelle: 'Éclaircies' } };
+const METEO = { matin: { tmin: 4, tmax: 6, pluie_proba: 0, pluie_mm: 0, vent_max: 10, vent_dir: 225, vent_cardinal: 'SO', code: 0, emoji: '☀️', libelle: 'Ensoleillé' },
+  apres_midi: { tmin: 10, tmax: 12, pluie_proba: 20, pluie_mm: 0.2, vent_max: 15, vent_dir: 0, vent_cardinal: 'N', code: 2, emoji: '⛅', libelle: 'Éclaircies' } };
 const meteoPartout = (cal) => Object.fromEntries(cal.jours.map((j) => [j.date, METEO]));
 
 function stockage(initial = {}) {
@@ -87,4 +87,10 @@ test('sélecteur : trois mises en page et trois thèmes, le choix courant est ma
   assert.match(html, /data-disposition="agenda" aria-pressed="true"/);
   assert.match(html, /data-disposition="classique" aria-pressed="false"/);
   assert.match(html, /data-theme-choix="clair" aria-pressed="true"/);
+});
+
+test('agenda : le résumé météo d\'un jour donne aussi le vent en km/h et son orientation', () => {
+  const cal = calendrierMarie();
+  const html = renderAgenda(cal, meteoPartout(cal));
+  assert.match(html, /class="meteo-mini"><span class="plage"><small>Matin<\/small> ☀️ 4–6° · 💧0 mm · 🌬 10 km\/h <span class="vent-dir" title="Vent de secteur SO">/);
 });

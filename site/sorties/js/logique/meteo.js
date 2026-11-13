@@ -29,6 +29,19 @@ export function picto(code) {
   return { emoji: g.emoji, libelle: g.libelle };
 }
 
+const SECTEURS = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+
+// Secteur d'où vient le vent (convention météo : 0° = vent du nord).
+export function cardinal(degres) {
+  if (degres == null || Number.isNaN(Number(degres))) return '';
+  return SECTEURS[Math.round((((Number(degres) % 360) + 360) % 360) / 45) % 8];
+}
+
+function directionA(hourly, i) {
+  const d = hourly.wind_direction_10m ? hourly.wind_direction_10m[i] : null;
+  return d == null ? null : Math.round(d);
+}
+
 function indicesDuJour(hourly, date, hDebut, hFin) {
   const res = [];
   hourly.time.forEach((t, i) => {
@@ -37,6 +50,13 @@ function indicesDuJour(hourly, date, hDebut, hFin) {
     if (h >= hDebut && h <= hFin) res.push(i);
   });
   return res;
+}
+
+// Orientation du vent à l'heure où il souffle le plus fort dans la plage.
+function ventLePlusFort(hourly, idx) {
+  const i = idx.reduce((m, j) => ((hourly.wind_speed_10m[j] ?? -1) > (hourly.wind_speed_10m[m] ?? -1) ? j : m), idx[0]);
+  const vent_dir = directionA(hourly, i);
+  return { vent_dir, vent_cardinal: cardinal(vent_dir) };
 }
 
 function synthesePlage(hourly, date, hDebut, hFin) {
@@ -51,6 +71,7 @@ function synthesePlage(hourly, date, hDebut, hFin) {
     pluie_proba: Math.round(Math.max(0, ...v('precipitation_probability'))),
     pluie_mm: Math.round(v('precipitation').reduce((a, b) => a + b, 0) * 10) / 10,
     vent_max: Math.round(Math.max(0, ...v('wind_speed_10m'))),
+    ...ventLePlusFort(hourly, idx),
     code,
     ...picto(code),
   };
@@ -66,6 +87,9 @@ export function heureParHeure(hourly, date) {
     temp: Math.round(hourly.temperature_2m[i]),
     pluie_proba: hourly.precipitation_probability[i],
     pluie_mm: Math.round((hourly.precipitation[i] || 0) * 10) / 10,
+    vent: Math.round(hourly.wind_speed_10m ? hourly.wind_speed_10m[i] || 0 : 0),
+    vent_dir: directionA(hourly, i),
+    vent_cardinal: cardinal(directionA(hourly, i)),
     code: hourly.weather_code[i],
     emoji: picto(hourly.weather_code[i]).emoji,
   }));

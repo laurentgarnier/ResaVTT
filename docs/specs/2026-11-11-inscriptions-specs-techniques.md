@@ -282,6 +282,7 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
   - température minimale et maximale ;
   - probabilité de pluie maximale ;
   - cumul de pluie, affiché en mm (aussi heure par heure) ;
+  - vent maximal en km/h, avec son orientation (secteur d'où il vient : N, NE… et flèche dans le sens où il souffle) prise à l'heure du vent le plus fort ; heure par heure aussi ;
   - vent maximal ;
   - `weather_code` le plus défavorable, traduit en pictogramme et en libellé français. Les codes WMO ne sont **pas** classés par gravité : le plus défavorable se choisit avec une table de gravité explicite (par exemple orage > neige forte > pluie forte > averses > pluie faible > bruine > brouillard > couvert > éclaircies > clair), pas avec le code numérique le plus élevé.
 - **Jour courant** : un tableau heure par heure de 6 h à 21 h.

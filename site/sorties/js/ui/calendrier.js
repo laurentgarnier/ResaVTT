@@ -32,13 +32,23 @@ export function mm(v) {
   return `${String(Number(v) || 0).replace('.', ',')} mm`;
 }
 
+// Orientation du vent : secteur d'où il vient, flèche dans le sens où il souffle.
+export function orientationVent(deg, secteur) {
+  if (!secteur) return '';
+  return `<span class="vent-dir" title="Vent de secteur ${secteur}"><i style="transform:rotate(${deg}deg)">↓</i>${secteur}</span>`;
+}
+
+export function vent(kmh, deg, secteur) {
+  return `🌬 ${kmh} km/h ${orientationVent(deg, secteur)}`.trim();
+}
+
 export function blocMeteo(meteoParDate, jour) {
   if (jour.passe) return '';
   if (!meteoParDate) return '<div class="meteo"><div class="indispo">Météo indisponible</div></div>';
   const m = meteoParDate[jour.date];
   if (!m || (!m.matin && !m.apres_midi)) return '<div class="meteo"><div class="indispo">Prévision indisponible</div></div>';
   const plage = (titre, p) => (p
-    ? `<div>${titre}<br><b>${p.emoji} ${p.tmin === p.tmax ? p.tmin : `${p.tmin}–${p.tmax}`}°</b><br>💧${mm(p.pluie_mm)} · 🌬 ${p.vent_max}</div>`
+    ? `<div>${titre}<br><b>${p.emoji} ${p.tmin === p.tmax ? p.tmin : `${p.tmin}–${p.tmax}`}°</b><br>💧${mm(p.pluie_mm)}<br>${vent(p.vent_max, p.vent_dir, p.vent_cardinal)}</div>`
     : `<div>${titre}<br>—</div>`);
   return `<div class="meteo">${plage('Matin', m.matin)}${plage('Après-midi', m.apres_midi)}</div>`;
 }
@@ -92,7 +102,7 @@ function ongletsJours(cal, dateChoisie) {
 export function blocHeures(heures) {
   if (!heures || !heures.length) return '';
   return `<div class="petit mut" style="margin-top:8px">Météo heure par heure</div>
-    <div class="horaire">${heures.map((h) => `<div>${h.heure}h<b>${h.emoji}</b>${h.temp}°<br>${mm(h.pluie_mm)}</div>`).join('')}</div>`;
+    <div class="horaire">${heures.map((h) => `<div>${h.heure}h<b>${h.emoji}</b>${h.temp}°<br>${mm(h.pluie_mm)}<br>${h.vent ?? 0} km/h${h.vent_cardinal ? `<br>${orientationVent(h.vent_dir, h.vent_cardinal)}` : ''}</div>`).join('')}</div>`;
 }
 
 export function renderJour(cal, date, meteoParDate, heures) {

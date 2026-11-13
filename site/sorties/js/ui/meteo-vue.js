@@ -2,11 +2,11 @@
 import { synthetiser, heureParHeure } from '../logique/meteo.js';
 
 const DUREE_CACHE_MS = 3600 * 1000;
-const VARIABLES = 'temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m';
+const VARIABLES = 'temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m';
 
 export async function chargerMeteo(lat, lon, fetchImpl = (...a) => globalThis.fetch(...a)) {
   if (!lat || !lon) return null;
-  const cle = `meteo:${lat},${lon}`;
+  const cle = `meteo2:${lat},${lon}`; // meteo2 : avec la direction du vent
   try {
     const cache = JSON.parse(localStorage.getItem(cle) || 'null');
     if (cache && Date.now() - cache.t < DUREE_CACHE_MS) return cache.data;

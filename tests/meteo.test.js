@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pire, picto, synthetiser, heureParHeure } from '../site/sorties/js/logique/meteo.js';
+import { pire, picto, synthetiser, heureParHeure, cardinal } from '../site/sorties/js/logique/meteo.js';
 import { fabriquerHoraire } from './aides/meteo.js';
 
 test('le pire code suit la gravité, pas le numéro', () => {
@@ -47,4 +47,29 @@ test('heureParHeure : précipitations de chaque heure en mm, arrondies au dixiè
   const l = heureParHeure(fabriquerHoraire('2026-11-14', { 7: { t: 1, p: 60, c: 61, mm: 1.26 } }), '2026-11-14');
   assert.equal(l[1].pluie_mm, 1.3);
   assert.equal(l[0].pluie_mm, 0);
+});
+
+test('cardinal : direction d\'où vient le vent, en 8 secteurs à la française', () => {
+  assert.deepEqual([0, 44, 46, 90, 135, 180, 225, 250, 270, 315, 350].map(cardinal), ['N', 'NE', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'O', 'NO', 'N']);
+});
+
+test('synthèse : orientation du vent prise à l\'heure du vent le plus fort de la plage', () => {
+  const h = fabriquerHoraire('2026-11-14', { 9: { t: 5, p: 0, c: 0, v: 8, d: 90 }, 10: { t: 5, p: 0, c: 0, v: 21, d: 225 }, 11: { t: 5, p: 0, c: 0, v: 12, d: 180 } });
+  const s = synthetiser(h, '2026-11-14');
+  assert.equal(s.matin.vent_max, 21);
+  assert.equal(s.matin.vent_dir, 225);
+  assert.equal(s.matin.vent_cardinal, 'SO');
+});
+
+test('heureParHeure : vent de chaque heure en km/h avec son orientation', () => {
+  const l = heureParHeure(fabriquerHoraire('2026-11-14', { 6: { t: 1, p: 0, c: 0, v: 14.6, d: 315 } }), '2026-11-14');
+  assert.deepEqual([l[0].vent, l[0].vent_dir, l[0].vent_cardinal], [15, 315, 'NO']);
+});
+
+test('ancienne météo en cache sans direction : pas d\'orientation, pas d\'erreur', () => {
+  const h = fabriquerHoraire('2026-11-14', { 9: { t: 5, p: 0, c: 0, v: 8 } });
+  delete h.wind_direction_10m;
+  const s = synthetiser(h, '2026-11-14');
+  assert.equal(s.matin.vent_cardinal, '');
+  assert.equal(heureParHeure(h, '2026-11-14')[0].vent_cardinal, '');
 });

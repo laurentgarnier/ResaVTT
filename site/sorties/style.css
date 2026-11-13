@@ -298,8 +298,9 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
 .agenda-jour.passe { opacity: .55; }
 .agenda-tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px; }
 .agenda-tete .date { font-weight: 800; font-size: 16px; }
-.meteo-mini { font-size: 12px; color: var(--mut); background: var(--card2); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-.meteo-mini i { font-style: normal; opacity: .4; margin: 0 6px; }
+.meteo-mini { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--mut); background: var(--card2); border-radius: 12px; padding: 4px 10px; }
+.meteo-mini .plage { white-space: nowrap; }
+.meteo-mini small { opacity: .7; }
 .ligne-sortie {
   display: flex; gap: 12px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
   padding: 10px; margin-top: 8px; color: var(--txt); text-decoration: none;
@@ -350,3 +351,5 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
 :root[data-theme="clair"] .selecteur-affichage { box-shadow: 0 16px 40px rgba(20, 40, 25, .18); }
 :root[data-theme="clair"] .attente-barre { filter: none; }
 .ligne-sortie .heure.modifie { color: var(--warn); }
+.vent-dir { white-space: nowrap; }
+.vent-dir i { display: inline-block; font-style: normal; font-weight: 700; margin-right: 2px; color: var(--blue); }
