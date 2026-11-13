@@ -66,7 +66,9 @@ export function traiter(requete, ctx) {
     const reponse = { ok: true, data: data === undefined ? null : data };
     // Après une écriture, le calendrier à jour part dans la même réponse : l'appli évite un second aller-retour.
     if (requete.avec_calendrier && requete.action !== 'calendrier') {
-      const apres = utilisateurCourant(requete, ctx);
+      // À la connexion, le jeton vient d'être créé : c'est lui qui désigne l'utilisateur.
+      const jeton = requete.action === 'connexion' && data ? data.jeton : requete.jeton;
+      const apres = utilisateurCourant({ ...requete, jeton }, ctx);
       if (apres) reponse.calendrier = actionCalendrier(ctx, apres);
     }
     return reponse;

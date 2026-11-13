@@ -36,3 +36,15 @@ test("avec_calendrier après validation du code admin : le calendrier joint refl
   assert.equal(r.ok, true, JSON.stringify(r));
   assert.equal(r.calendrier.admin_verifie, true);
 });
+
+test('connexion avec_calendrier : le calendrier de la personne connectée arrive dans la même réponse', () => {
+  const t = contexteTest();
+  const r = t.appel('connexion', { telephone: '0600000002', avec_calendrier: true });
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.ok(r.data.jeton);
+  assert.ok(r.calendrier, 'calendrier absent de la réponse');
+  assert.equal(r.calendrier.moi.nom, 'Ben');
+  assert.equal(r.calendrier.jours.length, 14);
+  assert.deepEqual(r.calendrier, t.appel('calendrier', { jeton: r.data.jeton }).data);
+  assert.equal(t.appel('connexion', { telephone: '0699999999', avec_calendrier: true }).calendrier, undefined);
+});

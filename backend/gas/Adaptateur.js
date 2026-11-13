@@ -20,15 +20,26 @@ function doPost(e) {
   } catch (err) {
     return repondreJson({ ok: false, erreur: 'requete_invalide', message: 'Requête invalide.' });
   }
+  var debut = Date.now();
   var options = { cacheAdherents: requete.action !== 'connexion' };
-  if (ACTIONS_SANS_VERROU.indexOf(requete.action) >= 0) return repondreJson(traiter(requete, contexteGoogle(options)));
+  if (ACTIONS_SANS_VERROU.indexOf(requete.action) >= 0) return repondreJson(traiterEtMesurer(requete, options, debut, 0));
   var verrou = LockService.getScriptLock();
   if (!verrou.tryLock(10000)) return repondreJson({ ok: false, erreur: 'occupe', message: 'Serveur occupé, réessayez.' });
   try {
-    return repondreJson(traiter(requete, contexteGoogle(options)));
+    return repondreJson(traiterEtMesurer(requete, options, debut, Date.now() - debut));
   } finally {
     verrou.releaseLock();
   }
+}
+
+// Avec « mesure: true » dans la requête, la réponse détaille où le serveur a passé son temps.
+function traiterEtMesurer(requete, options, debut, attenteVerrou) {
+  var ctx = contexteGoogle(options);
+  var reponse = traiter(requete, ctx);
+  if (requete.mesure) {
+    reponse.mesure = Object.assign({ total_ms: Date.now() - debut, verrou_ms: attenteVerrou }, ctx.mesure, ctx.depot.mesure);
+  }
+  return reponse;
 }
 
 function tic() {
@@ -73,6 +84,7 @@ function valeursFeuille(feuille) {
 function depotSheets(classeur) {
   var memo = {};
   var groupeTente = false;
+  var mesure = { lecture_groupee: 'non tentée', lecture_groupee_ms: 0, feuilles_lues_une_a_une: 0, ecritures: 0 };
   function feuille(onglet) {
     var f = classeur.getSheetByName(onglet);
     if (f) return f;
@@ -83,8 +95,9 @@ function depotSheets(classeur) {
   function precharger() {
     if (groupeTente) return;
     groupeTente = true;
-    if (typeof Sheets === 'undefined') return;
+    if (typeof Sheets === 'undefined') { mesure.lecture_groupee = 'service Sheets indisponible'; return; }
     var noms = Object.keys(ONGLETS).filter(function (n) { return n !== 'Journal'; });
+    var t0 = Date.now();
     try {
       var rep = Sheets.Spreadsheets.Values.batchGet(classeur.getId(), {
         ranges: noms.map(function (n) { return "'" + n.replace(/'/g, "''") + "'"; }),
@@ -92,15 +105,22 @@ function depotSheets(classeur) {
         dateTimeRenderOption: 'FORMATTED_STRING',
       });
       rep.valueRanges.forEach(function (vr, i) { memo[noms[i]] = vr.values || []; });
+      mesure.lecture_groupee = 'ok';
     } catch (e) {
+      mesure.lecture_groupee = 'échec : ' + String(e && e.message ? e.message : e).slice(0, 200);
       Logger.log('Lecture groupée impossible, lecture onglet par onglet : ' + e);
       // Cause la plus probable : un onglet manquant. On le crée pour que la lecture groupée marche à l'appel suivant.
       noms.forEach(function (n) { feuille(n); });
+    } finally {
+      mesure.lecture_groupee_ms = Date.now() - t0;
     }
   }
   function valeurs(onglet) {
     precharger();
-    if (!Object.prototype.hasOwnProperty.call(memo, onglet)) memo[onglet] = valeursFeuille(feuille(onglet));
+    if (!Object.prototype.hasOwnProperty.call(memo, onglet)) {
+      memo[onglet] = valeursFeuille(feuille(onglet));
+      mesure.feuilles_lues_une_a_une++;
+    }
     return memo[onglet];
   }
   function entetes(onglet) {
@@ -110,6 +130,7 @@ function depotSheets(classeur) {
     f.getRange(rang, 1, 1, ent.length).setValues([objetEnLigne(ent, objet)]);
   }
   return {
+    mesure: mesure,
     lire: function (onglet) { return lignesEnObjets(valeurs(onglet)); },
     ajouter: function (onglet, objets) {
       if (!objets.length) return;
@@ -124,6 +145,7 @@ function depotSheets(classeur) {
       plage.setNumberFormat('@');
       plage.setValues(lignes);
       delete memo[onglet];
+      mesure.ecritures++;
     },
     modifier: function (onglet, filtre, champs) {
       var f = feuille(onglet);
@@ -134,14 +156,14 @@ function depotSheets(classeur) {
         reecrire(f, ent, l.rang, Object.assign({}, l.objet, champs));
         n++;
       });
-      if (n) delete memo[onglet];
+      if (n) { delete memo[onglet]; mesure.ecritures++; }
       return n;
     },
     supprimer: function (onglet, filtre) {
       var f = feuille(onglet);
       var rangs = objetsIndexes(valeurs(onglet)).filter(function (l) { return filtre(l.objet); }).map(function (l) { return l.rang; });
       rangs.sort(function (a, b) { return b - a; }).forEach(function (r) { f.deleteRow(r); });
-      if (rangs.length) delete memo[onglet];
+      if (rangs.length) { delete memo[onglet]; mesure.ecritures++; }
       return rangs.length;
     },
   };
@@ -168,8 +190,11 @@ function oublierAdherentsEnCache() {
 // options.cacheAdherents : la liste des adhérents peut venir du cache (5 min). Jamais pour la connexion ni pour tic (purge).
 function contexteGoogle(options) {
   options = options || {};
+  var mesure = { adherents: 'non lus' };
+  var t0 = Date.now();
   var props = proprietesScript();
   var depot = depotSheets(classeurAppli());
+  mesure.ouverture_classeur_ms = Date.now() - t0;
   var adherentsMemo = null;
   function adherents() {
     if (adherentsMemo) return adherentsMemo;
@@ -178,8 +203,11 @@ function contexteGoogle(options) {
     var brut = options.cacheAdherents && cache ? cache.get(CLE_CACHE_ADHERENTS) : null;
     if (brut) {
       adherentsMemo = JSON.parse(brut);
+      mesure.adherents = 'cache';
     } else {
+      var t1 = Date.now();
       adherentsMemo = lireAdherentsSource();
+      mesure.adherents = 'fichier (' + (Date.now() - t1) + ' ms)';
       if (cache) {
         try { cache.put(CLE_CACHE_ADHERENTS, JSON.stringify(adherentsMemo), DUREE_CACHE_ADHERENTS); } catch (e) { /* trop gros ou indisponible */ }
       }
@@ -187,6 +215,7 @@ function contexteGoogle(options) {
     return adherentsMemo;
   }
   return {
+    mesure: mesure,
     depot: depot,
     adherents: {
       lire: function () { return adherents().map(function (a) { return Object.assign({}, a); }); },

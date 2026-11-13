@@ -92,3 +92,20 @@ test("classeur d'avant l'onglet Bilan : l'onglet manquant est créé tout seul, 
   assert.equal(g.stats.batchGet, 1);
   assert.ok(g.stats.getValues <= 1, `lectures feuille à feuille : ${g.stats.getValues}`);
 });
+
+test('mesure: true → la réponse détaille le temps serveur et le mode de lecture ; sans mesure, rien de plus', () => {
+  const { post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  const r = post({ action: 'calendrier', jeton, mesure: true });
+  assert.equal(r.ok, true);
+  assert.equal(r.mesure.lecture_groupee, 'ok');
+  assert.equal(r.mesure.feuilles_lues_une_a_une, 0);
+  assert.equal(r.mesure.adherents, 'cache');
+  for (const cle of ['total_ms', 'verrou_ms', 'lecture_groupee_ms', 'ouverture_classeur_ms', 'ecritures']) assert.equal(typeof r.mesure[cle], 'number', cle);
+  assert.equal(post({ action: 'calendrier', jeton }).mesure, undefined);
+  const sans = installer({ sheetsAvance: false }).post;
+  const j2 = sans({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  const m = sans({ action: 'calendrier', jeton: j2, mesure: true }).mesure;
+  assert.equal(m.lecture_groupee, 'service Sheets indisponible');
+  assert.ok(m.feuilles_lues_une_a_une > 0);
+});

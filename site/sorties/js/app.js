@@ -55,7 +55,7 @@ document.addEventListener('click', (ev) => {
 const attente = creerAttente();
 
 // Ces écritures demandent le calendrier à jour dans leur réponse : pas de second aller-retour pour réafficher.
-const ECRITURES = ['inscription', 'sortie_creer', 'sortie_modifier', 'sortie_horaire', 'sortie_annuler', 'trace_ajouter',
+const ECRITURES = ['connexion', 'inscription', 'sortie_creer', 'sortie_modifier', 'sortie_horaire', 'sortie_annuler', 'trace_ajouter',
   'trace_supprimer', 'personnes_enregistrer', 'admin_code_verifier', 'admin_enregistrer'];
 // Appels de fond (rafraîchissement de la discussion) : pas d'indicateur d'attente.
 const SILENCIEUSES = ['discussion_lire'];
@@ -90,7 +90,13 @@ const actions = {
     if (Date.now() - etat.calRecuA > FRAICHEUR) await chargerCalendrier();
     router();
   },
-  connecte: async (jeton) => { enregistrerJeton(jeton); await chargerCalendrier(); aller(destinationApresConnexion(location.hash)); },
+  // La réponse de connexion apporte déjà le calendrier : il n'est redemandé que s'il manque.
+  connecte: async (jeton) => {
+    enregistrerJeton(jeton);
+    if (etat.cal && Date.now() - etat.calRecuA <= FRAICHEUR) enregistrerCalendrier(etat.cal, jeton);
+    else await chargerCalendrier();
+    aller(destinationApresConnexion(location.hash));
+  },
   afficherConnexion,
 };
 
