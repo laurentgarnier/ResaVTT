@@ -1,6 +1,6 @@
 # Appli de sorties du club de VTT : spécifications fonctionnelles
 
-*Version 0.2, du 12/11/2026. Remplace la version 0.1, qui portait sur 3 sessions fixes à 3 niveaux.*
+*Version 0.3, du 13/11/2026. Intègre les évolutions demandées pendant la réalisation du prototype : liens directs vers le week-end, météo en mm et km/h, conservation d'un mois, statistiques, mises en page et thèmes à l'essai. Remplace la version 0.2.*
 
 Légende des marquages :
 - **[décidé]** : validé par l'association.
@@ -77,6 +77,8 @@ Source d'inspiration **[décidé]** : une appli de padel montrant les jours de l
 - Sur **Android**, le lien ouvre en général directement l'appli installée. Sinon il ouvre la version web dans le navigateur, où l'adhérent est déjà connecté.
 - Sur **iPhone et iPad**, le lien ouvre toujours la **version web** dans le navigateur, jamais l'appli installée, qui ne partage pas sa connexion. Quand la version web s'ouvre sans connexion, l'écran de connexion affiche d'abord un bandeau : « Vous avez installé l'appli ? Ouvrez-la depuis votre écran d'accueil. Sinon, saisissez votre numéro ci-dessous. »
 
+**Lien vers un jour précis [décidé] :** un lien vers un jour (par exemple celui du samedi dans le rappel) ouvre ce jour. Si l'adhérent doit d'abord se connecter, il arrive sur ce jour juste après la connexion, et non sur l'accueil.
+
 Les numéros sont normalisés : « 06 12… », « +33 6 12… » et « 0612… » sont reconnus comme le même numéro.
 
 ### 4.2 Personnes du compte (familles) **[décidé]**
@@ -91,7 +93,7 @@ Il reprend la mise en page de la capture d'inspiration :
 - **Une carte par jour.** Les jours passés sont grisés mais restent consultables jusqu'à la fin de la semaine.
 - **En haut de chaque carte :**
   - la date ;
-  - la **météo** : un pictogramme, la température et le risque de pluie pour le **matin** et pour l'**après-midi** ;
+  - la **météo** pour le **matin** et pour l'**après-midi** : un pictogramme, la température, la pluie en **mm** et le vent (voir 4.7) ;
   - le résumé « N sortie(s) · N inscription(s) ».
 - **Un encadré par sortie du jour** (voir 4.4), trié par heure de rendez-vous. Replié, il montre le titre, l'heure, le point de rendez-vous, quelques pastilles d'inscrits et leur **nombre**, et le nombre de messages.
 - **Bouton « + Créer une sortie »** (voir 4.5).
@@ -100,6 +102,20 @@ Il reprend la mise en page de la capture d'inspiration :
 Sur téléphone, la vue du jour regroupe les sorties en « Matin » et « Après-midi » et affiche le nombre de personnes distinctes qui roulent ce jour-là **[choix du rédacteur]**.
 
 Sur téléphone, les cartes s'affichent les unes sous les autres et l'appli ouvre directement sur le jour courant **[choix du rédacteur]**.
+
+**Mises en page et thèmes à l'essai [décidé : à tester avant de choisir]**
+Un bouton **🎨** dans l'en-tête permet à chacun de choisir, pour son appareil uniquement, une mise en page du calendrier et un thème. Le choix est mémorisé sur l'appareil. Par défaut, l'appli garde la mise en page **Classique** et le thème **Nuit** décrits ci-dessus.
+- **Classique** : la grille des deux semaines (une carte par jour) ; sur téléphone, un jour à la fois avec les onglets de jours.
+- **Frise** (horizontale) : les 14 jours en colonnes côte à côte, qu'on fait glisser du doigt, avec un repère entre les deux semaines. L'appli s'ouvre sur aujourd'hui, ou sur le jour visé par un lien. Sur téléphone, une colonne occupe presque tout l'écran et laisse voir le bord du jour suivant. Chaque jour à venir propose la météo heure par heure, dépliée pour aujourd'hui et repliée pour les autres jours.
+- **Agenda** : une liste qui part d'aujourd'hui.
+  - En tête, **« Mes prochaines sorties »** : les sorties à venir où l'une des personnes du compte est inscrite, avec un accès direct.
+  - Chaque sortie commence par **son heure**, en gros, suivie du titre, du lieu, des distances et des inscrits.
+  - Chaque jour donne sa météo résumée sur une ligne pour le matin et une pour l'après-midi ; aujourd'hui donne aussi la météo heure par heure.
+  - Les jours sans sortie tiennent sur une ligne, avec « + Créer ».
+  - Les jours passés de la quinzaine sont repliés sous « Jours passés ».
+- **Thèmes** : **Nuit** (sombre, l'actuel), **Clair** (fond clair, accent vert, lisible en plein soleil) et **Forêt** (sombre aux tons verts). Le thème s'applique à toute l'appli.
+
+Une fois les essais faits, le club pourra garder une seule mise en page et un seul thème, ou laisser le choix à chacun.
 
 ### 4.4 Une sortie
 **Ce qui est affiché :**
@@ -153,8 +169,11 @@ Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de 
 
 ### 4.7 Météo **[décidé]**
 - Les prévisions concernent la **commune du club**, paramétrée par les administrateurs.
-- **Pour chaque jour affiché :** une synthèse du **matin** (8 h–12 h) et une de l'**après-midi** (13 h–18 h) **[choix du rédacteur pour les plages]**. Chaque synthèse donne un pictogramme, la température, la probabilité et la quantité de pluie, et le vent.
-- **Pour le jour courant :** la météo **heure par heure** (de 6 h à 21 h), dépliable depuis la carte du jour.
+- **Pour chaque jour affiché :** une synthèse du **matin** (8 h–12 h) et une de l'**après-midi** (13 h–18 h) **[choix du rédacteur pour les plages]**. Chaque synthèse donne :
+  - un pictogramme et la température ;
+  - la **quantité de pluie en mm** **[décidé]**, cumulée sur la plage ;
+  - le **vent en km/h** et son **orientation** **[décidé]** : le secteur d'où il vient (N, NE, E, SE, S, SO, O, NO) et une flèche dans le sens où il souffle. L'orientation retenue est celle de l'heure où le vent est le plus fort.
+- **Pour le jour courant :** la météo **heure par heure** (de 6 h à 21 h) : pictogramme, température, pluie en mm, vent en km/h et orientation. En mise en page Frise, elle est aussi proposée pour les autres jours à venir (voir 4.3).
 - Au-delà de l'horizon de prévision fiable, l'appli affiche « Prévision indisponible ».
 - **Pas de météo pour les jours passés** **[décidé]**.
 
@@ -172,6 +191,7 @@ Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de 
   - **Dimanche matin**, 9 h, même structure.
 - *Le nombre de sorties par règle (3 groupes de niveau) n'est pas tranché pour le samedi après-midi et le dimanche. Je l'ai supposé identique au samedi matin.*
 - Les sorties issues des règles apparaissent automatiquement **au plus tard au début de la « semaine prochaine »** affichée, c'est-à-dire avec environ 2 semaines d'avance.
+- La création et la modification d'une règle se font sur un **écran dédié**, comme la création d'une sortie, et non sous la liste des règles **[décidé]**. Enregistrer ou annuler ramène à la liste.
 - Modifier une règle ne change que les sorties **qui n'ont pas encore été générées**. Les sorties déjà visibles se modifient une par une **[choix du rédacteur]**.
 
 **Annuler une sortie ou fermer une période**
@@ -188,17 +208,29 @@ Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de 
 - Le jour et l'heure du rappel hebdomadaire. Par défaut : **le jeudi à 18 h**.
 - Les destinataires du rappel WhatsApp et l'email qui reçoit les alertes en cas d'erreur.
 - Les **modèles de textes** : rappel par mail, rappel WhatsApp, annulation par mail, annulation WhatsApp.
-- La durée de conservation des données.
+- La durée de conservation des sorties : **1 mois** par défaut **[décidé]** (voir 5).
 
-**La liste des adhérents** et la désignation des administrateurs restent dans le **tableau Google** tenu par le secrétaire **[choix du rédacteur]**. Une gestion des adhérents dans l'appli serait une évolution ultérieure.
+**Statistiques [décidé]**
+Un onglet « Statistiques » donne, pour une **année civile** au choix (l'année en cours par défaut) :
+- le nombre de **sorties proposées**, et à part le nombre de sorties annulées ;
+- le nombre **total de participants**, c'est-à-dire d'inscriptions (une personne venue à 10 sorties compte 10 fois), et la moyenne par sortie ;
+- les **participants et les sorties par mois** ;
+- les **participants par demi-journée de la semaine** : pour chaque jour du lundi au dimanche, le matin (départ avant 13 h) et l'après-midi.
+
+Seules les sorties déjà parties sont comptées ; les sorties annulées ne le sont pas. Les chiffres restent disponibles après la suppression des sorties (voir 5). *Compter des personnes distinctes sur l'année demanderait de conserver qui a participé, ce qui irait contre la conservation d'un mois.*
+
+**La liste des adhérents** et la désignation des administrateurs restent dans le **tableau Google** tenu par le secrétaire **[choix du rédacteur]**. Une gestion des adhérents dans l'appli serait une évolution ultérieure. Le club peut avoir **plusieurs administrateurs** : il suffit de cocher la case « admin » et de renseigner l'**email** de chacun, qui reçoit sur sa propre adresse le code d'accès à l'administration.
 
 ### 4.9 Rappel hebdomadaire **[décidé]**
 Chaque jeudi à l'heure paramétrée, sans intervention :
-- **Mail** à la **liste de diffusion du club**, qui est un Google Groupe à adresse unique. C'est un rappel avec le **lien de l'appli**.
+- **Mail** à la **liste de diffusion du club**, qui est un Google Groupe à adresse unique. C'est un rappel avec le **lien de l'appli** et des **liens directs vers le samedi et le dimanche qui suivent** **[décidé]**.
 - **Ordre du message [décidé]** : le rappel, mail comme WhatsApp, invite **d'abord à ouvrir l'appli installée** depuis l'écran d'accueil, **puis** donne le lien vers la version web pour ceux qui ne l'ont pas installée. Le modèle par défaut :
   > Les sorties du week-end sont ouvertes !
+  > 🚵 Samedi : {{lien_samedi}}
+  > 🚵 Dimanche : {{lien_dimanche}}
   > 📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.
   > 🌐 Pas encore installée : {{lien}}
+- `{{lien_samedi}}` et `{{lien_dimanche}}` mènent à la page du premier samedi et du premier dimanche à partir du jour d'envoi (un rappel envoyé un samedi désigne ce samedi-là). Les administrateurs les placent où ils veulent dans les textes.
 - La même consigne s'applique aux messages d'annulation.
 - **Mail au secrétaire et aux suppléants** contenant un bouton qui ouvre WhatsApp avec le rappel déjà rédigé. Il suffit de choisir le groupe et d'appuyer sur Envoyer.
 - Si l'envoi échoue, les destinataires des alertes sont prévenus.
@@ -214,7 +246,8 @@ Chaque jeudi à l'heure paramétrée, sans intervention :
   - **les numéros de téléphone ne sont jamais affichés** ;
   - l'appli n'est pas accessible sans connexion.
 - **Conservation :**
-  - les sorties, inscriptions, intérêts, messages et traces de plus de **12 mois** sont supprimés automatiquement (durée paramétrable) **[choix du rédacteur]** ;
+  - les sorties, inscriptions, intérêts, messages et traces de plus d'**1 mois** sont supprimés automatiquement (durée paramétrable) **[décidé]** ;
+  - avant suppression, chaque sortie laisse un **bilan anonyme** pour les statistiques : sa date, son heure, si elle a été annulée et son nombre d'inscrits, sans aucun nom ni numéro. Ce bilan est conservé ;
   - un adhérent désactivé ne peut plus se connecter, et son compte est purgé.
 - **Information :**
   - une page « Confidentialité » dans l'appli, avec un contact pour exercer ses droits ;
@@ -224,7 +257,7 @@ Chaque jeudi à l'heure paramétrée, sans intervention :
   - activer la double authentification sur le compte Google du club.
 
 ## 6. Exigences générales
-- **Mobile d'abord** : en français, avec de grands boutons, dans un **thème sombre** inspiré de la capture **[choix du rédacteur]**.
+- **Mobile d'abord** : en français, avec de grands boutons, dans un **thème sombre** inspiré de la capture **[choix du rédacteur]**. Deux autres thèmes, Clair et Forêt, sont proposés à l'essai (voir 4.3).
 - **Installable** comme une appli sur Android et iPhone.
 - **Coût : 0 €.**
 - **Maintenance minimale** : aucun serveur à surveiller.

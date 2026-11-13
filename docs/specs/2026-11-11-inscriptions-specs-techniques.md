@@ -270,6 +270,12 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 - **Sur PC** : une grille de 7 colonnes.
 - **Sur téléphone** : une colonne, avec défilement automatique jusqu'au jour courant.
 
+**Mises en page et thèmes à l'essai** (spec fonctionnelle §4.3)
+- `ui/affichage.js` : listes `DISPOSITIONS` (`classique`, `frise`, `agenda`) et `THEMES` (`nuit`, `clair`, `foret`), lecture et écriture du choix dans `localStorage` sous la clé `sorties-vtt-affichage` (`{disposition, theme}`). Une valeur inconnue ou un stockage illisible retombe sur `classique` et `nuit`. Le bouton 🎨 de l'en-tête ouvre le panneau de choix (`renderSelecteurAffichage`).
+- `ui/calendrier-variantes.js` : `renderFrise(cal, meteoParDate, heuresDe)` et `renderAgenda(cal, meteoParDate, heures)`. Elles réutilisent les briques de `ui/calendrier.js` (encadré de sortie, météo, bande heure par heure). Chaque jour porte l'ancre `id="jour-AAAA-MM-JJ"`.
+- Avec Frise ou Agenda, les routes `#/` et `#/jour/AAAA-MM-JJ` affichent le même écran, qui défile jusqu'au jour visé : défilement horizontal de la frise, ou défilement de la page pour l'agenda.
+- **Thèmes** : l'attribut `data-theme` sur `<html>` redéfinit les variables de couleur (`--bg`, `--card`, `--acc`, `--sur-acc`, `--fond-bleu`, `--ombre`…). Le thème Nuit correspond aux valeurs de `commun/theme.css`. Les fonds des badges, encarts et traces passent par ces variables ; seuls restent écrits en dur le blanc des pastilles d’initiales et les dégradés propres aux thèmes Clair et Forêt. La balise `theme-color` suit le thème choisi.
+
 ### Rafraîchissement
 - Le calendrier est rechargé à l'ouverture, au retour au premier plan (`visibilitychange`) et après chaque action.
 - Une discussion ouverte est interrogée toutes les 30 s (`discussion_lire` avec `depuis`). L'interrogation s'arrête quand l'onglet est masqué.
@@ -277,7 +283,7 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 ### Météo (`meteo.js`) **[décidé : commune du club]**
 - **Appel direct** du navigateur vers `https://api.open-meteo.com/v1/forecast`. Le service est gratuit, sans clé, et autorise le CORS.
   - Paramètres : `latitude`, `longitude`, `timezone=Europe/Paris`, `forecast_days=14`. Les jours passés n'affichent pas de météo **[décidé]**.
-  - Données horaires : `temperature_2m`, `precipitation_probability`, `precipitation`, `weather_code`, `wind_speed_10m`.
+  - Données horaires : `temperature_2m`, `precipitation_probability`, `precipitation`, `weather_code`, `wind_speed_10m` (km/h, unité par défaut d'Open-Meteo), `wind_direction_10m` (degrés, d'où vient le vent). Le cache local d'une heure est rangé sous la clé `meteo2:<lat>,<lon>`, pour ne pas relire une ancienne réponse sans direction du vent.
 - **Synthèse du matin (8–12 h) et de l'après-midi (13–18 h)** :
   - température minimale et maximale ;
   - probabilité de pluie maximale ;
@@ -305,7 +311,7 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 - **Avertissement à l'envoi** : « Évitez les traces qui partent de votre domicile ».
 
 ### Stockage local et installation
-- **Stockage** : le jeton et le numéro de téléphone sont gardés dans `localStorage`.
+- **Stockage** : le jeton et le numéro de téléphone sont gardés dans `localStorage`, ainsi que le dernier calendrier reçu (affiché aussitôt à l'ouverture), la météo de l'heure et le choix d'affichage.
 - **Particularités iOS** :
   - une appli installée sur l'écran d'accueil a un stockage séparé de Safari, il faut donc se reconnecter une fois après l'installation ;
   - dans Safari sans installation, les données peuvent être purgées après 7 jours sans visite ;
