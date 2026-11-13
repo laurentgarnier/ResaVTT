@@ -48,6 +48,14 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus { outline: 2px solid var(--acc); outline-offset: 0; }
 textarea { min-height: 70px; resize: vertical; }
+/* Safari iOS : les champs date et heure natifs imposent leur propre largeur minimale et débordent sur le champ
+   voisin d'une ligne à deux colonnes. Sans l'apparence native, ils suivent la largeur de leur colonne ;
+   le sélecteur (roue ou calendrier) s'ouvre toujours au toucher. */
+input[type="date"], input[type="time"] {
+  -webkit-appearance: none; appearance: none;
+  display: block; min-width: 0; max-width: 100%; min-height: 45px;
+}
+input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; }
 .ligne2 { display: flex; gap: 10px; }
 .ligne2 > div { flex: 1; min-width: 0; }
 
