@@ -143,3 +143,11 @@ test('sans jeton → non_connecte ; déconnexion invalide le jeton ; action inco
   assert.equal(t.appel('deconnexion', { jeton }).ok, true);
   assert.equal(t.appel('calendrier', { jeton }).erreur, 'non_connecte');
 });
+
+test("calendrier : le modèle du message de partage arrive avec le calendrier, et suit celui réglé par l'admin", () => {
+  const t = contexteTest();
+  const jeton = t.connecter('0600000002');
+  assert.equal(t.appel('calendrier', { jeton }).data.modele_partage, 'Nouvelle sortie : {{titre}}\n{{date}} {{heure}} – {{point_rdv}}\n{{distances}}\n{{meteo}}\nInscriptions : {{lien_sortie}}');
+  t.depot.ajouter('Modeles', [{ cle: 'partage_whatsapp', valeur: 'Roulez avec {{createur}} ! {{lien_sortie}}' }]);
+  assert.equal(t.appel('calendrier', { jeton }).data.modele_partage, 'Roulez avec {{createur}} ! {{lien_sortie}}');
+});

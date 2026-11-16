@@ -223,14 +223,15 @@ async function afficherSortie(racine, id) {
   const urlAppli = location.href.split('#')[0];
   const nouvelle = etat.sortieCreee === id;
   etat.sortieCreee = null;
-  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes, { partage: { texte: messagePartageSortie(sortie, null, urlAppli) }, nouvelle });
+  const modele = etat.cal.modele_partage;
+  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes, { partage: { texte: messagePartageSortie(sortie, null, urlAppli, modele) }, nouvelle });
   brancherSortie(racine, actions, sortie);
   window.scrollTo(0, 0);
   const bouton = racine.querySelector('a.btn.whatsapp');
   if (bouton) {
     meteoCourante().then((m) => {
       const plage = m.parDate && m.parDate[sortie.date] ? m.parDate[sortie.date][creneauDe(sortie.heure)] : null;
-      if (plage) bouton.href = lienWhatsApp(messagePartageSortie(sortie, plage, urlAppli));
+      if (plage) bouton.href = lienWhatsApp(messagePartageSortie(sortie, plage, urlAppli, modele));
     }).catch(() => {});
   }
 }

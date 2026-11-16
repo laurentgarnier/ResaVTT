@@ -1,21 +1,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { messagePartageSortie } from '../site/sorties/js/logique/partage.js';
+import { MODELES_DEFAUT } from '../site/sorties/js/logique/modeles.js';
 
-const SORTIE = { id: 'libre-etangs', titre: 'Boucle des étangs', date: '2026-11-20', heure: '13:30', point_rdv: 'PDL', km: '35', dplus: '450' };
-const PLAGE = { emoji: '☀️', tmin: 8, tmax: 11, pluie_mm: 0, vent_max: 10, vent_cardinal: 'NE' };
+const SORTIE = { id: 'libre-etangs', titre: 'Boucle des étangs', date: '2026-11-20', heure: '13:30', point_rdv: 'PDL', km: '35', dplus: '450', createur_nom: 'Ludo' };
+const PLAGE = { emoji: '☀️', libelle: 'Ensoleillé', tmin: 8, tmax: 11, pluie_mm: 0, vent_max: 10, vent_cardinal: 'NE' };
+const URL_APPLI = 'https://club.example.org/sorties/';
 
-test('message de partage : sortie, météo de la demi-journée et lien d\'inscription', () => {
-  assert.equal(messagePartageSortie(SORTIE, PLAGE, 'https://club.example.org/sorties/'), [
-    '🚵 Nouvelle sortie : Boucle des étangs',
+test("message de partage par défaut : sortie, météo en mots et lien d'inscription", () => {
+  assert.equal(messagePartageSortie(SORTIE, PLAGE, URL_APPLI), [
+    'Nouvelle sortie : Boucle des étangs',
     'Vendredi 20 novembre 13:30 – PDL',
     '35 km · 450 m D+',
-    '☀️ 8–11° · 💧0 mm · 🌬 10 km/h NE',
-    '👉 Inscriptions : https://club.example.org/sorties/#/sortie/libre-etangs',
+    '☀️ Ensoleillé, 8–11°, pluie 0 mm, vent 10 km/h NE',
+    'Inscriptions : https://club.example.org/sorties/#/sortie/libre-etangs',
   ].join('\n'));
 });
 
-test('message de partage : sans distances ni météo, adresse sans « / » final', () => {
+test("message de partage : sans distances ni météo, la ligne vide disparaît ; adresse sans « / » final", () => {
   const m = messagePartageSortie({ ...SORTIE, id: 'a b', km: '', dplus: '' }, null, 'https://club.example.org/sorties');
-  assert.equal(m, '🚵 Nouvelle sortie : Boucle des étangs\nVendredi 20 novembre 13:30 – PDL\nMétéo pas encore disponible\n👉 Inscriptions : https://club.example.org/sorties/#/sortie/a%20b');
+  assert.equal(m, 'Nouvelle sortie : Boucle des étangs\nVendredi 20 novembre 13:30 – PDL\nMétéo pas encore disponible\nInscriptions : https://club.example.org/sorties/#/sortie/a%20b');
+});
+
+test("message de partage : modèle choisi par l'admin, avec {{createur}} et {{lien}} ; une ligne de texte vide est gardée", () => {
+  const modele = 'Salut ! {{createur}} propose {{titre}} le {{date}}.\n\n{{distances}}\nInfos : {{lien_sortie}} ({{lien}})';
+  const m = messagePartageSortie({ ...SORTIE, km: '', dplus: '' }, PLAGE, URL_APPLI, modele);
+  assert.equal(m, 'Salut ! Ludo propose Boucle des étangs le Vendredi 20 novembre.\n\nInfos : https://club.example.org/sorties/#/sortie/libre-etangs (https://club.example.org/sorties/)');
+  assert.equal(messagePartageSortie(SORTIE, PLAGE, URL_APPLI, ''), messagePartageSortie(SORTIE, PLAGE, URL_APPLI, MODELES_DEFAUT.partage_whatsapp));
 });

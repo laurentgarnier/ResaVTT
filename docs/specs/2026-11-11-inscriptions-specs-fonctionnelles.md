@@ -160,12 +160,14 @@ Deux touchers suffisent donc pour publier une sortie. Si une sortie existe déj�
 
 Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de récurrence **[décidé]**.
 
-**Prévenir le club sur WhatsApp [décidé]** : juste après « Publier », la fiche de la sortie affiche un encart « Prévenir le club » avec un bouton **« 📲 Partager sur WhatsApp »**. Un toucher ouvre WhatsApp avec un message prêt, que l'adhérent envoie lui-même au groupe du club :
-> 🚵 Nouvelle sortie : Boucle des étangs
+**Prévenir le club sur WhatsApp [décidé]** : juste après « Publier », la fiche de la sortie affiche un encart « Prévenir le club » avec un bouton **« 📲 Partager sur WhatsApp »**. Un toucher ouvre WhatsApp avec un message prêt, que l'adhérent envoie lui-même au groupe du club. Son contenu est un **modèle réglé par l'admin** (Admin → Messages), sans nouvelle version de l'appli ; par défaut :
+> Nouvelle sortie : Boucle des étangs
 > Vendredi 20 novembre 13:30 – PDL
 > 35 km · 450 m D+
-> ☀️ 8–11° · 💧0 mm · 🌬 10 km/h NE
-> 👉 Inscriptions : lien vers la sortie
+> Ensoleillé, 8–11°, pluie 0 mm, vent 10 km/h NE
+> Inscriptions : lien vers la sortie
+
+Repères du modèle : `{{titre}}`, `{{date}}`, `{{heure}}`, `{{point_rdv}}`, `{{distances}}`, `{{meteo}}`, `{{lien_sortie}}`, `{{createur}}`, `{{lien}}`. Une ligne faite seulement de repères vides disparaît.
 
 La météo est celle de la demi-journée de la sortie, déjà connue du téléphone (pas d'appel au serveur). Le bouton reste ensuite sur la fiche, pour le créateur (et les administrateurs), tant que la sortie n'est pas annulée. Les sorties récurrentes n'en ont pas : elles ont leurs rappels (§4.9).
 
@@ -235,16 +237,17 @@ Le rappel unique du jeudi est remplacé par des rappels réglés **par récurren
 - **Rappel individuel** : dans l'écran de chaque récurrence, l'admin choisit s'il y a un rappel, son **jour** et son **heure** d'envoi, ses **canaux** (mail à la liste, WhatsApp, ou les deux), son **objet** et son **texte**. Par défaut : 2 jours avant la sortie, à 18 h, par mail et WhatsApp.
 - **Rappels groupés** (onglet Admin « Rappels ») : un rappel nommé (ex. « Week-end ») annonce en un seul message les prochaines sorties de plusieurs récurrences, avec ses propres jour, heure, canaux et texte. Il **remplace les rappels individuels** des récurrences qu'il couvre. Une récurrence n'appartient qu'à un rappel groupé ; le désactiver ou le supprimer rend leur rappel individuel à ses récurrences.
 - **Sorties annoncées** : pour chaque récurrence couverte, sa prochaine date dans les 7 jours qui suivent l'envoi, sans les sorties annulées. Sans sortie à annoncer, rien ne part.
-- **Contenu par défaut** : chaque sortie annoncée avec la **météo prévue** pour sa demi-journée (pictogramme, températures, pluie en mm, vent en km/h et secteur) et le **lien direct vers la sortie**, où l'on s'inscrit :
+- **Contenu par défaut** : chaque sortie annoncée avec la **météo prévue** pour sa demi-journée (pictogramme, état du ciel en mots, températures, pluie en mm, vent en km/h et secteur) et le **lien direct vers la sortie**, où l'on s'inscrit :
   > Les inscriptions sont ouvertes !
   > 🚵 Samedi 21 novembre 09:00 – Samedi matin (PDL)
-  >    ☀️ 2–9° · 💧0 mm · 🌬 12 km/h NE
+  >    ☀️ Ensoleillé, 2–9°, pluie 0 mm, vent 12 km/h NE
   >    👉 lien vers la sortie
   > 📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.
   > 🌐 Pas encore installée : {{lien}}
 - **Ordre du message [décidé]** : le message invite d'abord à ouvrir l'appli installée, puis donne le lien de la version web. La même consigne s'applique aux messages d'annulation.
 - **« Envoyer maintenant »** sur chaque rappel l'envoie tout de suite, même désactivé ou couvert par un groupe (tests, démonstrations).
 - **Canal WhatsApp** : un mail au secrétaire et aux suppléants contient un bouton qui ouvre WhatsApp avec le message déjà rédigé ; il suffit de choisir le groupe et d'appuyer sur Envoyer.
+- **Pas d'emojis sur WhatsApp [décidé]** : ils s'affichent en caractères inconnus chez certains. Tout message destiné à WhatsApp (rappels, annulations, partage d'une sortie) en est débarrassé automatiquement, y compris ceux saisis dans les textes ; les mails à la liste les gardent.
 - **Mise en service** : l'ancien rappel du jeudi devient le rappel groupé « Week-end » (récurrences du samedi et du dimanche, mêmes jour et heure).
 - **Doubles annonces** : si l'admin modifie les rappels en cours de semaine, une sortie peut être annoncée deux fois ; accepté, car cela ne suit qu'une modification.
 - Si l'envoi échoue, les destinataires des alertes sont prévenus.

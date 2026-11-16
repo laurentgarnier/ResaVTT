@@ -68,7 +68,7 @@ test('sortie libre, vue par son créateur : bouton « Partager sur WhatsApp » a
   const { sortie, messages, personnes } = donnees('libre-etangs', '0600000003'); // Ludo, créateur
   const partage = { texte: '🚵 Nouvelle sortie : Boucle des étangs\n👉 lien' };
   const html = renderSortie(sortie, messages, personnes, { partage });
-  assert.match(html, /<a class="btn whatsapp" href="https:\/\/wa\.me\/\?text=%F0%9F%9A%B5%20Nouvelle%20sortie[^"]*" target="_blank" rel="noopener">📲 Partager sur WhatsApp<\/a>/);
+  assert.match(html, /<a class="btn whatsapp" href="https:\/\/wa\.me\/\?text=Nouvelle%20sortie[^"]*" target="_blank" rel="noopener">📲 Partager sur WhatsApp<\/a>/);
   assert.doesNotMatch(html, /Prévenir le club/);
   assert.match(renderSortie(sortie, messages, personnes, { partage, nouvelle: true }), /Prévenir le club[\s\S]*📲 Partager sur WhatsApp/);
 });

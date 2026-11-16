@@ -4,6 +4,7 @@ import { fenetre, aujourdhuiLocal, estPasse } from '../../site/sorties/js/logiqu
 import { genererSorties } from '../../site/sorties/js/logique/recurrences.js';
 import { peutModifier, peutChangerHoraire, inscriptionsOuvertes } from '../../site/sorties/js/logique/droits.js';
 import { estVrai, lireCleValeur, erreurMetier } from './schema.js';
+import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 
 export function horodatage(ctx) {
   return ctx.services.maintenant().toISOString();
@@ -114,6 +115,8 @@ export function actionCalendrier(ctx, u) {
       commune_nom: parametres.commune_nom, commune_lat: parametres.commune_lat, commune_lon: parametres.commune_lon,
       point_rdv_defaut: parametres.point_rdv_defaut,
     },
+    // Message WhatsApp de partage d'une nouvelle sortie, réglé par l'admin : composé dans le téléphone.
+    modele_partage: lireCleValeur(ctx.depot.lire('Modeles')).partage_whatsapp || MODELES_DEFAUT.partage_whatsapp,
     jours: dates.map((date) => ({
       date,
       passe: date < aujourdhui,

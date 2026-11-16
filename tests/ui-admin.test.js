@@ -185,3 +185,10 @@ test('noms des récurrences et des rappels échappés', () => {
   assert.doesNotMatch(renderAdmin(d, 'rappels'), /<b>x/);
   assert.doesNotMatch(renderAdmin(d, 'recurrences', { regleEditee: d.regles[0].id }), /<script>z/);
 });
+
+test('onglet Messages : le message WhatsApp de partage d\'une nouvelle sortie se règle, avec ses repères', () => {
+  const html = renderAdmin(donneesAdmin(), 'messages');
+  assert.match(html, /Nouvelle sortie : message WhatsApp de l'adhérent<\/label><textarea name="partage_whatsapp">Nouvelle sortie : \{\{titre\}\}/);
+  assert.match(html, /\{\{createur\}\}/);
+  assert.match(html, /\{\{lien_sortie\}\}/);
+});

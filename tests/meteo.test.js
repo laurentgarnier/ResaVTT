@@ -74,8 +74,8 @@ test('ancienne météo en cache sans direction : pas d\'orientation, pas d\'erre
   assert.equal(heureParHeure(h, '2026-11-14')[0].vent_cardinal, '');
 });
 
-test('ligneMeteoTexte : synthèse en texte, secteur du vent seul ; null → « Météo pas encore disponible »', () => {
-  assert.equal(ligneMeteoTexte({ emoji: '☀️', tmin: 2, tmax: 9, pluie_mm: 0, vent_max: 12, vent_cardinal: 'NE' }), '☀️ 2–9° · 💧0 mm · 🌬 12 km/h NE');
-  assert.equal(ligneMeteoTexte({ emoji: '🌧', tmin: 7, tmax: 7, pluie_mm: 2.4, vent_max: 30, vent_cardinal: '' }), '🌧 7° · 💧2,4 mm · 🌬 30 km/h');
+test('ligneMeteoTexte : synthèse en mots (lisible sans pictogramme), secteur du vent seul ; null → « Météo pas encore disponible »', () => {
+  assert.equal(ligneMeteoTexte({ emoji: '☀️', libelle: 'Ensoleillé', tmin: 2, tmax: 9, pluie_mm: 0, vent_max: 12, vent_cardinal: 'NE' }), '☀️ Ensoleillé, 2–9°, pluie 0 mm, vent 12 km/h NE');
+  assert.equal(ligneMeteoTexte({ emoji: '🌧', libelle: 'Pluie', tmin: 7, tmax: 7, pluie_mm: 2.4, vent_max: 30, vent_cardinal: '' }), '🌧 Pluie, 7°, pluie 2,4 mm, vent 30 km/h');
   assert.equal(ligneMeteoTexte(null), 'Météo pas encore disponible');
 });

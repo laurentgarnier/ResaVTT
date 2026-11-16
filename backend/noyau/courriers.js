@@ -1,12 +1,13 @@
 // Construction des mails : mail « liste » (texte) et mail « À poster sur WhatsApp » avec un bouton wa.me.
 import { echapper } from '../../site/sorties/js/logique/html.js';
-import { lienWhatsApp } from '../../site/sorties/js/logique/modeles.js';
+import { lienWhatsApp, sansEmojis } from '../../site/sorties/js/logique/modeles.js';
 
 export function courrierListe(objet, texte) {
   return { objet, texte };
 }
 
-export function courrierWhatsApp(texte, numero) {
+export function courrierWhatsApp(texteBrut, numero) {
+  const texte = sansEmojis(texteBrut);
   const lien = lienWhatsApp(texte, numero);
   const html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1a2338">'
     + '<p>Message prêt à poster sur WhatsApp :</p>'

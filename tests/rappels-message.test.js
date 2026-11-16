@@ -29,10 +29,10 @@ test('composerMessage : liste des sorties avec la météo de leur demi-journée 
   assert.equal(m.texte, [
     'Les inscriptions sont ouvertes !',
     '🚵 Samedi 14 novembre 09:30 – Samedi matin (PDL)',
-    '   ☀️ 2–6° · 💧0 mm · 🌬 12 km/h NE',
+    '   ☀️ Ensoleillé, 2–6°, pluie 0 mm, vent 12 km/h NE',
     '   👉 https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-14%3A1',
     '🚵 Samedi 14 novembre 14:00 – Samedi après-midi (PDL)',
-    '   ⛅ 8–11° · 💧1,2 mm · 🌬 9 km/h O',
+    '   ⛅ Éclaircies, 8–11°, pluie 1,2 mm, vent 9 km/h O',
     '   👉 https://club.example.org/sorties/#/sortie/R%3Asa%3A2026-11-14%3A1',
     `🌐 ${URL_APPLI}`,
   ].join('\n'));
@@ -42,7 +42,7 @@ test("composerMessage : repères d'une seule sortie, et ceux de la première qua
   const rappel = groupe({ type: 'R', nom: 'Samedi matin', objet: '{{titre}} {{date}}', texte: '{{heure}}|{{point_rdv}}|{{meteo}}|{{lien_sortie}}' });
   const m = composerMessage(rappel, SORTIES, horaire(), URL_APPLI);
   assert.equal(m.objet, 'Samedi matin Samedi 14 novembre');
-  assert.equal(m.texte, '09:30|PDL|☀️ 2–6° · 💧0 mm · 🌬 12 km/h NE|https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-14%3A1');
+  assert.equal(m.texte, '09:30|PDL|☀️ Ensoleillé, 2–6°, pluie 0 mm, vent 12 km/h NE|https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-14%3A1');
 });
 
 test("composerMessage : sans météo ni adresse de l'appli, les lignes restent lisibles", () => {
@@ -96,4 +96,15 @@ test('météo injoignable : le rappel part avec « Météo pas encore disponible
   envoyerRappelProgramme(t.ctx, groupe(), 'rappel:G:g:2026-11-12', null);
   assert.equal(t.mails.length, 2);
   assert.match(t.mails[0].texte, /Météo pas encore disponible/);
+});
+
+test('rappel sur WhatsApp : le message à poster ne contient aucun emoji ; le mail à la liste les garde', () => {
+  const t = contexteRappel();
+  envoyerRappelProgramme(t.ctx, groupe(), 'rappel:G:g:2026-11-12', horaire());
+  const [liste, whatsapp] = t.mails;
+  assert.match(liste.texte, /🚵 Samedi 14 novembre 09:30/);
+  assert.doesNotMatch(whatsapp.texte, /\p{Extended_Pictographic}/u);
+  assert.match(whatsapp.texte, /^Les inscriptions sont ouvertes !\nSamedi 14 novembre 09:30 – Samedi matin \(PDL\)\n   Ensoleillé, 2–6°, pluie 0 mm, vent 12 km\/h NE\n   https:/);
+  const texteLien = decodeURIComponent(whatsapp.html.match(/wa\.me\/[^?]*\?text=([^"&]*)/)[1]);
+  assert.doesNotMatch(texteLien, /\p{Extended_Pictographic}/u);
 });

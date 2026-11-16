@@ -6,6 +6,7 @@ import { MODELES_DEFAUT } from '../logique/modeles.js';
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['rappels', 'Rappels'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
 const LIBELLES_MODELES = {
+  partage_whatsapp: "Nouvelle sortie : message WhatsApp de l'adhérent",
   annulation_mail_objet: 'Annulation : objet du mail',
   annulation_mail_corps: 'Annulation : texte du mail',
   annulation_whatsapp: 'Annulation : message WhatsApp',
@@ -210,8 +211,9 @@ function ongletMessages(d) {
       ${d.envois.length ? d.envois.map((e) => `<div class="envoi"><span>${echapper(e.cle)}<br><small class="mut">${echapper(e.horodatage)}</small>${e.derniere_erreur ? `<br><small class="ko">${echapper(e.derniere_erreur)} (${echapper(e.tentatives)} essai·s)</small>` : ''}</span><span>${etape('mail', e.etape_mail)}<br>${etape('WhatsApp', e.etape_whatsapp)}</span></div>`).join('') : '<p class="mut">Aucun envoi pour l\'instant.</p>'}
     </div>
     <form class="bloc" id="form-modeles">
-      <h3>Textes des annulations</h3>
-      <p class="meta">{{lien}} est remplacé par l'adresse de l'appli ; {{liste_annulations}} par la liste des sorties annulées.</p>
+      <h3>Textes des messages</h3>
+      <p class="meta">Message de l'adhérent qui crée une sortie (il l'envoie lui-même sur WhatsApp) : {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{distances}}, {{meteo}}, {{lien_sortie}} (lien d'inscription), {{createur}}, {{lien}}. Une ligne faite seulement de repères vides disparaît. Les emojis ne passent pas sur WhatsApp : ils sont retirés.</p>
+      <p class="meta">Annulations : {{lien}} est remplacé par l'adresse de l'appli ; {{liste_annulations}} par la liste des sorties annulées.</p>
       ${Object.entries(LIBELLES_MODELES).map(([cle, libelle]) => `<label>${libelle}</label><textarea name="${cle}">${echapper(d.modeles[cle])}</textarea>`).join('')}
       <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les textes</button>
     </form>`;
