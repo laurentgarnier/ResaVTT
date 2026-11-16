@@ -123,3 +123,65 @@ test('onglet statistiques : année sans sortie', () => {
   assert.match(html, /Aucune sortie passée en 2026/);
   assert.doesNotMatch(html, /NaN|Infinity/);
 });
+
+test("écran d'une récurrence : section Rappel remplie, et bandeau quand un groupe actif la couvre", () => {
+  const d = donneesAdmin();
+  const html = renderAdmin(d, 'recurrences', { regleEditee: 'sm' });
+  assert.match(html, /Couverte par le rappel « Week-end » : ce rappel individuel ne part pas\./);
+  assert.match(html, /href="#\/admin\/rappels\/g-weekend"/);
+  assert.match(html, /name="rappel_actif" type="checkbox" checked/);
+  assert.match(html, /<select name="rappel_jour">[\s\S]*?<option value="3" selected>Jeudi<\/option>/);
+  assert.match(html, /name="rappel_heure" type="time" value="18:00"/);
+  assert.match(html, /name="rappel_mail" type="checkbox" checked/);
+  assert.match(html, /name="rappel_whatsapp" type="checkbox" checked/);
+  assert.match(html, /name="rappel_objet" value="Sorties VTT : \{\{nom\}\}"/);
+  assert.match(html, /<textarea name="rappel_texte">Les inscriptions sont ouvertes !/);
+  assert.match(html, /data-envoyer="R:sm"/);
+  d.rappels[0].actif = false;
+  assert.match(renderAdmin(d, 'recurrences', { regleEditee: 'sm' }), /Dans le rappel « Week-end », désactivé : ce rappel individuel part\./);
+});
+
+test('nouvelle récurrence : rappel par défaut annoncé, sans champs ni bouton d\'envoi', () => {
+  const html = renderAdmin(donneesAdmin(), 'recurrences', { regleEditee: 'nouvelle' });
+  assert.match(html, /Rappel : 2 jours avant la sortie, à 18 h, par mail et WhatsApp/);
+  assert.doesNotMatch(html, /name="rappel_jour"|data-envoyer=/);
+});
+
+test("onglet Rappels : liste des groupes, lien vers leur écran, bouton d'envoi et de création", () => {
+  const html = renderAdmin(donneesAdmin(), 'rappels');
+  assert.match(html, /class="on"[^>]*>Rappels/);
+  assert.match(html, /href="#\/admin\/rappels\/nouveau"[^>]*>\+ Nouveau rappel groupé/);
+  assert.match(html, /Week-end/);
+  assert.match(html, /Jeudi · 18:00 · mail et WhatsApp/);
+  assert.match(html, /Samedi matin, Samedi après-midi, Dimanche matin/);
+  assert.match(html, /href="#\/admin\/rappels\/g-weekend"/);
+  assert.match(html, /data-envoyer="G:g-weekend"/);
+  assert.match(html, /\{\{liste_sorties\}\}/);
+});
+
+test("écran d'un rappel groupé : formulaire rempli ; nouveau : récurrences d'un autre groupe désactivées", () => {
+  const d = donneesAdmin();
+  const edition = renderAdmin(d, 'rappels', { rappelEdite: 'g-weekend' });
+  assert.match(edition, /id="form-rappel" data-id="g-weekend"/);
+  assert.match(edition, /name="nom" value="Week-end"/);
+  assert.match(edition, /name="regle_ids" value="sm" checked>/);
+  assert.match(edition, /data-supprimer-rappel="g-weekend"/);
+  assert.match(edition, /href="#\/admin\/rappels"[^>]*>‹ Rappels/);
+  const nouveau = renderAdmin(d, 'rappels', { rappelEdite: 'nouveau' });
+  assert.match(nouveau, /id="form-rappel" data-id=""/);
+  assert.match(nouveau, /name="regle_ids" value="sm" disabled> Samedi matin <small class="mut">\(rappel Week-end\)<\/small>/);
+  assert.match(nouveau, /<textarea name="texte">Les inscriptions sont ouvertes !/);
+  assert.match(renderAdmin(d, 'rappels', { rappelEdite: 'inconnu' }), /Ce rappel n'existe plus/);
+});
+
+test('Paramètres : plus de réglage du rappel du jeudi', () => {
+  assert.doesNotMatch(renderAdmin(donneesAdmin(), 'parametres'), /name="rappel_jour"|name="rappel_heure"/);
+});
+
+test('noms des récurrences et des rappels échappés', () => {
+  const d = donneesAdmin();
+  d.rappels[0].nom = '<b>x</b>';
+  d.regles[0].rappel_texte = '</textarea><script>z</script>';
+  assert.doesNotMatch(renderAdmin(d, 'rappels'), /<b>x/);
+  assert.doesNotMatch(renderAdmin(d, 'recurrences', { regleEditee: d.regles[0].id }), /<script>z/);
+});

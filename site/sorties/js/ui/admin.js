@@ -1,9 +1,10 @@
-// Page d'administration : code par email, récurrences, fermetures, paramètres, messages et envois.
+// Page d'administration : code par email, récurrences, fermetures, rappels, paramètres, messages et envois.
 import { echapper } from '../logique/html.js';
 import { aujourdhuiLocal } from '../logique/dates.js';
+import { MODELES_DEFAUT } from '../logique/modeles.js';
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
+const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['rappels', 'Rappels'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
 const LIBELLES_MODELES = {
   annulation_mail_objet: 'Annulation : objet du mail',
   annulation_mail_corps: 'Annulation : texte du mail',
@@ -37,7 +38,43 @@ function optionsJours(choisi) {
   return JOURS.map((j, i) => `<option value="${i}"${String(i) === String(choisi) ? ' selected' : ''}>${j}</option>`).join('');
 }
 
-function formulaireRegle(regle, sorties) {
+const REPERES_RAPPEL = '{{liste_sorties}} : les sorties annoncées, chacune avec sa météo et son lien ; {{nom}} : nom de la récurrence ou du rappel ; '
+  + '{{lien}} : adresse de l\'appli ; pour la première sortie : {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{meteo}}, {{lien_sortie}}.';
+
+const case_ = (nom, coche, libelle) => `<label class="case"><input name="${nom}" type="checkbox"${coche ? ' checked' : ''}> ${libelle}</label>`;
+
+function canaux(mail, whatsapp) {
+  return [mail && 'mail', whatsapp && 'WhatsApp'].filter(Boolean).join(' et ') || 'aucun canal';
+}
+
+// Groupe qui couvre une récurrence (actif ou non), s'il y en a un.
+function groupeDe(d, regleId) {
+  return (d.rappels || []).find((g) => g.regle_ids.includes(regleId));
+}
+
+function sectionRappel(d, regle) {
+  if (!regle) return '<div class="rappel-regle"><h3>Rappel</h3><p class="meta">Rappel : 2 jours avant la sortie, à 18 h, par mail et WhatsApp. Modifiable une fois la récurrence créée.</p></div>';
+  const g = groupeDe(d, regle.id);
+  const bandeau = !g ? ''
+    : g.actif ? `<p class="encart">Couverte par le rappel « ${echapper(g.nom)} » : ce rappel individuel ne part pas. <a href="${echapper(lienRappel(g.id))}">Voir ce rappel</a></p>`
+      : `<p class="meta">Dans le rappel « ${echapper(g.nom)} », désactivé : ce rappel individuel part. <a href="${echapper(lienRappel(g.id))}">Voir ce rappel</a></p>`;
+  return `<div class="rappel-regle">
+    <h3>Rappel</h3>
+    ${bandeau}
+    ${case_('rappel_actif', regle.rappel_actif, 'Envoyer un rappel')}
+    <div class="ligne2">
+      <div><label>Jour d'envoi</label><select name="rappel_jour">${optionsJours(regle.rappel_jour)}</select></div>
+      <div><label>Heure</label><input name="rappel_heure" type="time" value="${echapper(regle.rappel_heure)}"></div>
+    </div>
+    <div class="cases">${case_('rappel_mail', regle.rappel_mail, 'Mail à la liste')}${case_('rappel_whatsapp', regle.rappel_whatsapp, 'WhatsApp')}</div>
+    <label>Objet du mail</label><input name="rappel_objet" value="${echapper(regle.rappel_objet)}" maxlength="150">
+    <label>Texte</label><textarea name="rappel_texte">${echapper(regle.rappel_texte)}</textarea>
+    <p class="meta">${REPERES_RAPPEL}</p>
+    <button class="btn o" type="button" data-envoyer="R:${echapper(regle.id)}">📨 Envoyer maintenant</button>
+  </div>`;
+}
+
+function formulaireRegle(regle, sorties, d = {}) {
   const r = regle || { nom: '', jour: '1', heure: '18:30', point_rdv: '', frequence_semaines: '1', date_depart: aujourdhuiLocal(), active: true };
   return `<form class="bloc" id="form-regle" data-id="${echapper(regle ? regle.id : '')}">
     <h3>${regle ? `✎ Modifier « ${echapper(regle.nom)} »` : '+ Nouvelle récurrence'}</h3>
@@ -53,6 +90,7 @@ function formulaireRegle(regle, sorties) {
     </div>
     <label>Sorties créées (une par ligne, par exemple les groupes de niveau)</label>
     <textarea name="titres" required>${echapper(sorties.map((s) => s.titre).join('\n'))}</textarea>
+    ${sectionRappel(d, regle)}
     <div class="actions"><button class="btn p" type="submit">Enregistrer</button><a class="btn o" href="#/admin/recurrences">Annuler</a></div>
   </form>`;
 }
@@ -62,11 +100,11 @@ const lienRegle = (id) => `#/admin/recurrences/${encodeURIComponent(id)}`;
 // Écran dédié à une récurrence (création ou modification), comme la création d'une sortie.
 function ecranRegle(d, regleEditee) {
   const retour = '<a class="retour" href="#/admin/recurrences">‹ Récurrences</a>';
-  if (regleEditee === 'nouvelle') return `${retour}${formulaireRegle(null, [])}`;
+  if (regleEditee === 'nouvelle') return `${retour}${formulaireRegle(null, [], d)}`;
   const regle = d.regles.find((r) => r.id === regleEditee);
   if (!regle) return `${retour}<p class="mut">Cette récurrence n'existe plus.</p>`;
   const sorties = d.regle_sorties.filter((s) => s.regle_id === regle.id).sort((a, b) => Number(a.ordre) - Number(b.ordre));
-  return `${retour}${formulaireRegle(regle, sorties)}`;
+  return `${retour}${formulaireRegle(regle, sorties, d)}`;
 }
 
 function ongletRecurrences(d) {
@@ -79,6 +117,49 @@ function ongletRecurrences(d) {
       <div class="actions"><a class="btn o" href="${echapper(lienRegle(r.id))}">✎ Modifier</a><button class="btn d" data-supprimer-regle="${echapper(r.id)}">Supprimer</button></div>
     </div>`).join('')
     + '<p class="meta">Les sorties apparaissent automatiquement jusqu\'à la fin de la semaine prochaine. Modifier une règle ne change pas les sorties déjà affichées.</p>';
+}
+
+const lienRappel = (id) => `#/admin/rappels/${encodeURIComponent(id)}`;
+
+function ongletRappels(d) {
+  const nomsRegles = (ids) => ids.map((id) => (d.regles.find((r) => r.id === id) || {}).nom).filter(Boolean).map(echapper).join(', ') || 'aucune récurrence';
+  return `<a class="btn p nouvelle-regle" href="#/admin/rappels/nouveau">+ Nouveau rappel groupé</a>
+    ${(d.rappels || []).length ? d.rappels.map((g) => `<div class="bloc">
+      <h3><span>${echapper(g.nom)}</span>${g.actif ? '' : '<span class="badge b-an">Désactivé</span>'}</h3>
+      <div class="meta">${JOURS[Number(g.jour)]} · ${echapper(g.heure)} · ${canaux(g.mail, g.whatsapp)}</div>
+      <div class="meta">${nomsRegles(g.regle_ids)}</div>
+      <div class="actions"><a class="btn o" href="${echapper(lienRappel(g.id))}">✎ Modifier</a><button class="btn o" type="button" data-envoyer="G:${echapper(g.id)}">📨 Envoyer maintenant</button></div>
+    </div>`).join('') : '<p class="mut">Aucun rappel groupé : chaque récurrence envoie son propre rappel.</p>'}
+    <p class="meta">Un rappel groupé annonce en un seul message les prochaines sorties de plusieurs récurrences, et remplace leurs rappels individuels. ${REPERES_RAPPEL}</p>`;
+}
+
+function ecranRappel(d, rappelEdite) {
+  const retour = '<a class="retour" href="#/admin/rappels">‹ Rappels</a>';
+  const nouveau = rappelEdite === 'nouveau';
+  const g = nouveau
+    ? { id: '', nom: '', regle_ids: [], jour: '3', heure: '18:00', mail: true, whatsapp: true, actif: true, objet: MODELES_DEFAUT.rappel_groupe_objet, texte: MODELES_DEFAUT.rappel_groupe_texte }
+    : (d.rappels || []).find((x) => x.id === rappelEdite);
+  if (!g) return `${retour}<p class="mut">Ce rappel n'existe plus.</p>`;
+  const cases = d.regles.map((r) => {
+    const autre = (d.rappels || []).find((x) => x.id !== g.id && x.regle_ids.includes(r.id));
+    return `<label class="case"><input type="checkbox" name="regle_ids" value="${echapper(r.id)}"${g.regle_ids.includes(r.id) ? ' checked' : ''}${autre ? ' disabled' : ''}> ${echapper(r.nom)}${autre ? ` <small class="mut">(rappel ${echapper(autre.nom)})</small>` : ''}</label>`;
+  }).join('');
+  return `${retour}<form class="bloc" id="form-rappel" data-id="${echapper(g.id)}">
+    <h3>${nouveau ? '+ Nouveau rappel groupé' : `✎ Modifier « ${echapper(g.nom)} »`}</h3>
+    <label>Nom</label><input name="nom" value="${echapper(g.nom)}" required maxlength="60" placeholder="Week-end">
+    ${case_('actif', g.actif, 'Actif')}
+    <label>Récurrences annoncées</label><div class="cases">${cases}</div>
+    <div class="ligne2">
+      <div><label>Jour d'envoi</label><select name="jour">${optionsJours(g.jour)}</select></div>
+      <div><label>Heure</label><input name="heure" type="time" value="${echapper(g.heure)}" required></div>
+    </div>
+    <div class="cases">${case_('mail', g.mail, 'Mail à la liste')}${case_('whatsapp', g.whatsapp, 'WhatsApp')}</div>
+    <label>Objet du mail</label><input name="objet" value="${echapper(g.objet)}" maxlength="150">
+    <label>Texte</label><textarea name="texte">${echapper(g.texte)}</textarea>
+    <p class="meta">${REPERES_RAPPEL}</p>
+    <div class="actions"><button class="btn p" type="submit">Enregistrer</button><a class="btn o" href="#/admin/rappels">Annuler</a></div>
+    ${nouveau ? '' : `<div class="actions"><button class="btn o" type="button" data-envoyer="G:${echapper(g.id)}">📨 Envoyer maintenant</button><button class="btn d" type="button" data-supprimer-rappel="${echapper(g.id)}">Supprimer</button></div>`}
+  </form>`;
 }
 
 function ongletFermetures(d) {
@@ -109,10 +190,6 @@ function ongletParametres(d) {
     <input type="hidden" name="commune_lat" value="${echapper(p.commune_lat)}"><input type="hidden" name="commune_lon" value="${echapper(p.commune_lon)}">
     <div id="resultats-commune" class="meta">Coordonnées : ${echapper(p.commune_lat)}, ${echapper(p.commune_lon)}</div>
     ${c('point_rdv_defaut', 'Point de rendez-vous par défaut', 'maxlength="120"')}
-    <div class="ligne2">
-      <div><label>Jour du rappel</label><select name="rappel_jour">${optionsJours(p.rappel_jour)}</select></div>
-      <div>${c('rappel_heure', 'Heure du rappel', 'type="time"')}</div>
-    </div>
     ${c('adresse_liste', 'Adresse de la liste de diffusion (Google Groupe)', 'type="email"')}
     ${c('destinataires_whatsapp', 'Qui reçoit le message WhatsApp à poster (emails, séparés par des virgules)')}
     ${c('whatsapp_numero', 'Numéro WhatsApp à ouvrir directement (facultatif, sinon choix du groupe)')}
@@ -175,9 +252,10 @@ function ongletStats(s) {
     </div>`;
 }
 
-export function renderAdmin(d, onglet, { regleEditee } = {}) {
+export function renderAdmin(d, onglet, { regleEditee, rappelEdite } = {}) {
   if (onglet === 'recurrences' && regleEditee) return `<section class="admin">${ecranRegle(d, regleEditee)}</section>`;
-  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) }[onglet] || (() => ongletRecurrences(d));
+  if (onglet === 'rappels' && rappelEdite) return `<section class="admin">${ecranRappel(d, rappelEdite)}</section>`;
+  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), rappels: () => ongletRappels(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) }[onglet] || (() => ongletRecurrences(d));
   return `<section class="admin">
     <a class="retour" href="#/">‹ Calendrier</a>
     <h1 style="font-size:20px;margin:0">⚙ Administration</h1>
@@ -238,6 +316,18 @@ export function brancherAdmin(racine, actions, d, reafficher) {
     if (b.dataset.supprimerRegle && confirm('Supprimer cette récurrence ? Les sorties déjà affichées restent.')) {
       enregistrer({ regles: d.regles.filter((r) => r.id !== b.dataset.supprimerRegle), regle_sorties: d.regle_sorties.filter((s) => s.regle_id !== b.dataset.supprimerRegle) }, 'Récurrence supprimée.');
     }
+    if (b.dataset.supprimerRappel && confirm('Supprimer ce rappel groupé ? Ses récurrences retrouvent leur rappel individuel.')) {
+      enregistrer({ rappels: d.rappels.filter((g) => g.id !== b.dataset.supprimerRappel) }, 'Rappel supprimé.', '#/admin/rappels');
+    }
+    if (b.dataset.envoyer) {
+      const [type, ...reste] = b.dataset.envoyer.split(':');
+      b.disabled = true;
+      try {
+        const r = await actions.appeler('rappel_envoyer_maintenant', { type, id: reste.join(':') });
+        actions.toast(r.nb_sorties ? `Rappel envoyé (${r.nb_sorties} sortie${r.nb_sorties > 1 ? 's' : ''}) : vérifiez vos mails.` : 'Aucune sortie à annoncer dans les 7 jours : rien n\'est parti.');
+      } catch (e) { actions.toast(e.message); }
+      b.disabled = false;
+    }
     if (b.dataset.supprimerFermeture) enregistrer({ fermetures: d.fermetures.filter((f) => f.id !== b.dataset.supprimerFermeture) }, 'Fermeture retirée (les sorties déjà annulées le restent).');
     if (b.dataset.action === 'geocoder') {
       const form = racine.querySelector('#form-parametres');
@@ -263,6 +353,10 @@ export function brancherAdmin(racine, actions, d, reafficher) {
     if (f.id === 'form-regle') {
       const id = f.dataset.id;
       const regle = { nom: f.nom.value, jour: f.jour.value, heure: f.heure.value, point_rdv: f.point_rdv.value, frequence_semaines: f.frequence_semaines.value, date_depart: f.date_depart.value, active: true };
+      if (f.rappel_jour) {
+        Object.assign(regle, { rappel_actif: f.rappel_actif.checked, rappel_jour: f.rappel_jour.value, rappel_heure: f.rappel_heure.value,
+          rappel_mail: f.rappel_mail.checked, rappel_whatsapp: f.rappel_whatsapp.checked, rappel_objet: f.rappel_objet.value, rappel_texte: f.rappel_texte.value });
+      }
       if (id) {
         const regles = d.regles.map((r) => (r.id === id ? { ...r, ...regle, active: r.active } : r));
         const autres = d.regle_sorties.filter((s) => s.regle_id !== id);
@@ -270,6 +364,13 @@ export function brancherAdmin(racine, actions, d, reafficher) {
       } else {
         enregistrer({ regles: d.regles.concat([regle]), regle_sorties: d.regle_sorties.concat(titresVersSorties('__nouvelle_0', f.titres.value, [])) }, 'Récurrence créée.', '#/admin/recurrences');
       }
+    }
+    if (f.id === 'form-rappel') {
+      const id = f.dataset.id;
+      const rappel = { id, nom: f.nom.value, actif: f.actif.checked, regle_ids: [...f.querySelectorAll('input[name="regle_ids"]:checked')].map((c) => c.value),
+        jour: f.jour.value, heure: f.heure.value, mail: f.mail.checked, whatsapp: f.whatsapp.checked, objet: f.objet.value, texte: f.texte.value };
+      const rappels = id ? d.rappels.map((g) => (g.id === id ? rappel : g)) : (d.rappels || []).concat([rappel]);
+      enregistrer({ rappels }, id ? 'Rappel modifié.' : 'Rappel créé.', '#/admin/rappels');
     }
     if (f.id === 'form-fermeture') {
       const fermeture = { debut: f.debut.value, fin: f.fin.value || f.debut.value, regle_id: f.regle_id.value, motif: f.motif.value };

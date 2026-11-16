@@ -356,3 +356,11 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
 details.heures { margin: 2px 0 6px; }
 details.heures summary { cursor: pointer; color: var(--acc); font-weight: 700; font-size: 12.5px; padding: 2px 0; }
 details.heures .horaire { overscroll-behavior-x: contain; }
+
+/* Rappels (admin) */
+.rappel-regle { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 6px; }
+.rappel-regle h3 { margin: 6px 0; font-size: 15px; }
+.cases { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0; }
+label.case { display: inline-flex; align-items: center; gap: 6px; margin: 8px 0 4px; color: var(--txt); font-size: 14px; }
+label.case input { width: auto; }
+label.case input:disabled + * , label.case:has(input:disabled) { color: var(--mut); }
