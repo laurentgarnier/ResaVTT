@@ -18,6 +18,7 @@ import { reaffichageAutomatiquePermis, destinationApresConnexion } from './ui/na
 import { creerAttente } from './ui/attente.js';
 import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from './cache-calendrier.js';
 import { aujourdhuiLocal } from './logique/dates.js';
+import { libelleVersion } from './version.js';
 
 const etat = { cal: null, calRecuA: 0 };
 
@@ -33,6 +34,7 @@ function appliquerTheme() {
   if (meta) meta.content = THEMES.find((t) => t.id === affichage.theme).couleur;
 }
 appliquerTheme();
+document.getElementById('version-appli').textContent = libelleVersion();
 
 function basculerSelecteur(ouvrir) {
   const existant = document.querySelector('.selecteur-affichage');

@@ -31,3 +31,11 @@ test('la page déclare le manifeste et l\'icône Apple', () => {
   assert.match(html, /<link rel="manifest" href="manifest.webmanifest">/);
   assert.match(html, /<link rel="apple-touch-icon" href="icones\/apple-touch-icon.png">/);
 });
+
+test('version affichée en pied de page : la même que celle du service worker, et une place prévue dans la page', async () => {
+  const { VERSION_APPLI, libelleVersion } = await import('../site/sorties/js/version.js');
+  const sw = readFileSync('site/sorties/sw.js', 'utf8');
+  assert.match(sw, new RegExp(`const VERSION = 'sorties-vtt-v${VERSION_APPLI}';`));
+  assert.equal(libelleVersion(), `Version ${VERSION_APPLI}`);
+  assert.match(readFileSync('site/sorties/index.html', 'utf8'), /<span id="version-appli"><\/span>/);
+});

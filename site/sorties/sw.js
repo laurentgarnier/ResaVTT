@@ -1,6 +1,6 @@
 // Service worker de l'appli : portée limitée à /sorties/. Met en cache l'interface (stale-while-revalidate),
 // jamais les données : l'API, la météo et les tuiles de carte passent toujours par le réseau.
-const VERSION = 'sorties-vtt-v12';
+const VERSION = 'sorties-vtt-v13'; // à garder égal à js/version.js
 const COQUILLE = [
   './',
   'index.html',
@@ -36,6 +36,7 @@ const COQUILLE = [
   'js/ui/meteo-vue.js',
   'js/ui/navigation.js',
   'js/ui/sortie.js',
+  'js/version.js',
 ];
 const HOTES_RESEAU = ['script.google.com', 'script.googleusercontent.com', 'api.open-meteo.com', 'geocoding-api.open-meteo.com', 'tile.openstreetmap.org'];
 
