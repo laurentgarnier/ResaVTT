@@ -90,7 +90,7 @@ function notifierAnnulations(ctx, aujourdhui) {
   const cle = 'annulation:' + ctx.services.hacher(ids.join(',')).slice(0, 12);
   const { parametres, modeles } = reglagesEnvoi(ctx);
   const valeurs = { lien: parametres.url_appli, liste_annulations: listeAnnulations(aNotifier) };
-  const etat = envoyerEtapes(ctx, cle, etapesMessage(ctx, modeles.annulation_mail_objet,
+  const etat = envoyerEtapes(ctx, cle, etapesMessage(ctx, remplirModele(modeles.annulation_mail_objet, valeurs),
     remplirModele(modeles.annulation_mail_corps, valeurs), remplirModele(modeles.annulation_whatsapp, valeurs)));
   if (etat.etape_mail === 'ok' && etat.etape_whatsapp === 'ok') {
     ctx.depot.modifier('Sorties', (s) => ids.includes(s.id), { annulation_notifiee: true });

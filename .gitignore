@@ -3,3 +3,6 @@ node_modules/
 backend/gas/gen/
 .clasprc.json
 backend/gas/.clasp.json
+backend/gas/Installation.js
+backend/gas/.deploiement.json
+backend/gas/.clasp.ancien.json

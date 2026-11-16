@@ -1,17 +1,22 @@
 // Page d'administration : code par email, récurrences, fermetures, rappels, paramètres, messages et envois.
 import { echapper } from '../logique/html.js';
 import { aujourdhuiLocal } from '../logique/dates.js';
-import { MODELES_DEFAUT } from '../logique/modeles.js';
+import { MODELES_DEFAUT, REPERES, SENS_REPERES } from '../logique/modeles.js';
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['rappels', 'Rappels'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
+// Textes de l'onglet Messages : libellé et liste de repères (REPERES) de chacun.
 const LIBELLES_MODELES = {
-  partage_whatsapp: "Nouvelle sortie : message WhatsApp de l'adhérent",
-  annulation_partage_whatsapp: "Annulation par l'adhérent : message WhatsApp",
-  annulation_mail_objet: 'Annulation : objet du mail',
-  annulation_mail_corps: 'Annulation : texte du mail',
-  annulation_whatsapp: 'Annulation : message WhatsApp',
+  partage_whatsapp: ["Nouvelle sortie : message WhatsApp de l'adhérent", 'partage_whatsapp'],
+  annulation_partage_whatsapp: ["Annulation par l'adhérent : message WhatsApp", 'annulation_partage_whatsapp'],
+  annulation_mail_objet: ['Annulation automatique : objet du mail', 'annulation'],
+  annulation_mail_corps: ['Annulation automatique : texte du mail', 'annulation'],
+  annulation_whatsapp: ['Annulation automatique : message WhatsApp', 'annulation'],
 };
+
+function listeReperes(groupe) {
+  return REPERES[groupe].map((r) => `{{${r}}} : ${SENS_REPERES[r]}`).join(' ; ');
+}
 
 export function renderCode({ envoye = false, erreur = '', essais_restants: essais } = {}) {
   return `<section class="admin">
@@ -40,8 +45,8 @@ function optionsJours(choisi) {
   return JOURS.map((j, i) => `<option value="${i}"${String(i) === String(choisi) ? ' selected' : ''}>${j}</option>`).join('');
 }
 
-const REPERES_RAPPEL = '{{liste_sorties}} : les sorties annoncées, chacune avec sa météo et son lien ; {{nom}} : nom de la récurrence ou du rappel ; '
-  + '{{lien}} : adresse de l\'appli ; pour la première sortie : {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{meteo}}, {{lien_sortie}}.';
+const REPERES_RAPPEL = `Repères : ${REPERES.rappel.map((r) => `{{${r}}} : ${SENS_REPERES[r]}`).join(' ; ')}. `
+  + 'Avec plusieurs sorties, {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{meteo}} et {{lien_sortie}} sont ceux de la première.';
 
 const case_ = (nom, coche, libelle) => `<label class="case"><input name="${nom}" type="checkbox"${coche ? ' checked' : ''}> ${libelle}</label>`;
 
@@ -207,15 +212,15 @@ function etape(nom, valeur) {
 }
 
 function ongletMessages(d) {
-  return `<p class="meta">Les rappels se règlent dans chaque récurrence et dans l'onglet Rappels.</p>
+  return `<div class="bloc"><h3>Rappels</h3><p class="meta">Les rappels se règlent dans chaque récurrence et dans l'onglet Rappels. ${REPERES_RAPPEL}</p></div>
     <div class="bloc"><h3>Derniers envois</h3>
       ${d.envois.length ? d.envois.map((e) => `<div class="envoi"><span>${echapper(e.cle)}<br><small class="mut">${echapper(e.horodatage)}</small>${e.derniere_erreur ? `<br><small class="ko">${echapper(e.derniere_erreur)} (${echapper(e.tentatives)} essai·s)</small>` : ''}</span><span>${etape('mail', e.etape_mail)}<br>${etape('WhatsApp', e.etape_whatsapp)}</span></div>`).join('') : '<p class="mut">Aucun envoi pour l\'instant.</p>'}
     </div>
     <form class="bloc" id="form-modeles">
       <h3>Textes des messages</h3>
-      <p class="meta">Message de l'adhérent qui crée une sortie (il l'envoie lui-même sur WhatsApp) : {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{distances}}, {{meteo}}, {{lien_sortie}} (lien d'inscription), {{createur}}, {{lien}} ; pour l'annulation, {{motif}} en plus (sans {{meteo}} ni {{distances}}). Une ligne dont tous les repères sont vides disparaît (ex. « Motif : {{motif}} » sans motif). Les emojis ne passent pas sur WhatsApp : ils sont retirés.</p>
-      <p class="meta">Annulations : {{lien}} est remplacé par l'adresse de l'appli ; {{liste_annulations}} par la liste des sorties annulées.</p>
-      ${Object.entries(LIBELLES_MODELES).map(([cle, libelle]) => `<label>${libelle}</label><textarea name="${cle}">${echapper(d.modeles[cle])}</textarea>`).join('')}
+      <p class="meta">Les messages de l'adhérent (nouvelle sortie, annulation) sont envoyés par lui sur WhatsApp ; dans ces deux messages, une ligne dont tous les repères sont vides disparaît (ex. « Motif : {{motif}} » sans motif). Les annulations automatiques partent quand un administrateur annule une sortie ou ferme une période. Les emojis ne passent pas sur WhatsApp : ils y sont retirés.</p>
+      ${Object.entries(LIBELLES_MODELES).map(([cle, [libelle, groupe]]) => `<label>${libelle}</label><textarea name="${cle}">${echapper(d.modeles[cle])}</textarea>
+      <p class="meta reperes">Repères : ${listeReperes(groupe)}.</p>`).join('')}
       <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les textes</button>
     </form>`;
 }

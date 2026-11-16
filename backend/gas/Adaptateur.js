@@ -381,6 +381,21 @@ function completerCleValeur(depot, onglet, defauts) {
   depot.ajouter(onglet, manquantes.map(function (k) { return { cle: k, valeur: defauts[k] }; }));
 }
 
+// Vérifie que le fichier adhérents a bien, en première ligne de sa première feuille, les colonnes attendues
+// (nom, telephone, email, actif, admin), puis le retient comme fichier des adhérents.
+function brancherAdherents(id) {
+  var feuille = SpreadsheetApp.openById(id).getSheets()[0];
+  var entete = feuille.getLastColumn() ? feuille.getRange(1, 1, 1, feuille.getLastColumn()).getValues()[0] : [];
+  var noms = entete.map(function (e) { return String(e).trim(); });
+  var manquantes = ENTETES_ADHERENTS.filter(function (c) { return noms.indexOf(c) < 0; });
+  if (manquantes.length) {
+    throw new Error('Fichier adhérents : colonnes manquantes en ligne 1 de la première feuille : ' + manquantes.join(', ')
+      + ' (attendu : ' + ENTETES_ADHERENTS.join(', ') + ').');
+  }
+  proprietesScript().setProperty('ADHERENTS_ID', id);
+  oublierAdherentsEnCache();
+}
+
 function initialiser() {
   var props = proprietesScript();
   var classeur = SpreadsheetApp.getActiveSpreadsheet();
@@ -394,6 +409,10 @@ function initialiser() {
   completerCleValeur(depot, 'Parametres', PARAMETRES_DEFAUT);
   completerCleValeur(depot, 'Modeles', MODELES_DEFAUT);
 
+  // Installation de l'association (npm run installer) : branchement sur le fichier adhérents existant.
+  if (!props.getProperty('ADHERENTS_ID') && typeof INSTALLATION_ADHERENTS_ID !== 'undefined' && INSTALLATION_ADHERENTS_ID) {
+    brancherAdherents(INSTALLATION_ADHERENTS_ID);
+  }
   if (!props.getProperty('ADHERENTS_ID')) {
     var adh = SpreadsheetApp.create('Adhérents du club (démo)');
     var f = adh.getSheets()[0];

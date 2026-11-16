@@ -13,6 +13,31 @@ export const MODELES_DEFAUT = {
   annulation_whatsapp: "Sortie(s) annulée(s) :\n{{liste_annulations}}\n📱 Détails dans l'appli (écran d'accueil).\n🌐 Pas encore installée : {{lien}}",
 };
 
+// Repères ({{…}}) que chaque message sait remplacer. Référence unique pour l'aide de l'admin ; un test vérifie que le
+// code remplace exactement ceux-là.
+export const REPERES = {
+  partage_whatsapp: ['titre', 'date', 'heure', 'point_rdv', 'distances', 'meteo', 'lien_sortie', 'createur', 'lien'],
+  annulation_partage_whatsapp: ['titre', 'date', 'heure', 'point_rdv', 'distances', 'motif', 'lien_sortie', 'createur', 'lien'],
+  rappel: ['liste_sorties', 'nom', 'titre', 'date', 'heure', 'point_rdv', 'meteo', 'lien_sortie', 'lien'],
+  annulation: ['liste_annulations', 'lien'],
+};
+
+export const SENS_REPERES = {
+  titre: 'titre de la sortie',
+  date: 'jour, ex. Samedi 21 novembre',
+  heure: 'heure de rendez-vous',
+  point_rdv: 'point de rendez-vous',
+  distances: 'km et dénivelé',
+  meteo: 'météo de la demi-journée',
+  lien_sortie: "lien vers la sortie (inscription)",
+  createur: 'qui propose la sortie',
+  lien: "adresse de l'appli",
+  motif: "motif de l'annulation",
+  liste_sorties: 'les sorties annoncées, chacune avec sa météo et son lien',
+  nom: 'nom de la récurrence ou du rappel groupé',
+  liste_annulations: 'une ligne par sortie annulée (jour, heure, titre, motif)',
+};
+
 export function remplirModele(texte, valeurs) {
   return String(texte).replace(/\{\{(\w+)\}\}/g, (m, cle) => (cle in valeurs ? String(valeurs[cle]) : m));
 }

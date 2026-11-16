@@ -8,13 +8,14 @@ import { remplirModele, MODELES_DEFAUT } from './modeles.js';
 
 const REPERE = /\{\{(\w+)\}\}/g;
 
-// Une ligne qui contient des repères, tous vides (ex. « Motif : {{motif}} » sans motif), disparaît.
-// Une ligne sans repère, même vide, est gardée.
+// Une ligne qui contient des repères, tous vides (ex. « Motif : {{motif}} » sans motif), disparaît. Une ligne sans
+// repère, même vide, est gardée ; une ligne avec un repère inconnu (faute de frappe) aussi, pour qu'on la voie.
 function remplirLignes(modele, valeurs) {
   return String(modele).split('\n')
     .filter((ligne) => {
       const reperes = [...ligne.matchAll(REPERE)].map((m) => m[1]);
-      return !reperes.length || reperes.some((cle) => String(valeurs[cle] ?? '').trim());
+      if (!reperes.length || reperes.some((cle) => !(cle in valeurs))) return true;
+      return reperes.some((cle) => String(valeurs[cle] ?? '').trim());
     })
     .map((ligne) => remplirModele(ligne, valeurs))
     .join('\n');

@@ -1,8 +1,42 @@
-# Mise en place pas à pas
+# Mise en place
 
-Ce guide installe la chaîne complète sur **votre** compte Google et **votre** compte GitHub. Il faut environ 30 minutes la première fois. Aucune carte bancaire n'est demandée.
+Deux façons d'installer l'appli :
 
-Pour le club, on refera la même chose avec le compte Google et le compte GitHub du club.
+- **Installation de l'association (production)** : `npm run installer`, décrit juste dessous. On part de zéro, seul le fichier des adhérents existe ; récurrences, rappels, paramètres et textes se règlent ensuite dans l'appli.
+- **Installation de démonstration**, pas à pas (sections A à C) : avec des données fictives, pour essayer l'appli sur un compte personnel.
+
+Aucune carte bancaire n'est demandée.
+
+## Installation de l'association (production)
+
+**Avant de commencer**
+- Sur le poste : Node.js 22 et git, ce dépôt à jour.
+- Un compte Google et un compte GitHub (de préférence une organisation) au nom de l'association.
+- Le fichier Google Sheets des adhérents, appartenant au compte de l'association ou partagé avec lui en modification. En ligne 1 de sa première feuille : `nom`, `telephone`, `email`, `actif`, `admin` (en minuscules). Au moins un adhérent `actif` et `admin` coché, avec son `email` : c'est lui qui ouvrira l'administration.
+- Sur github.com, avec le compte de l'association : un dépôt **public vide** (sans README).
+
+**Lancer**, à la racine du dépôt :
+
+```bash
+npm run installer
+```
+
+Le script guide pas à pas et s'arrête à la moindre erreur (on peut le relancer et sauter les étapes déjà faites) :
+
+1. connexion au compte Google de l'association (une fenêtre de navigateur s'ouvre) ;
+2. lien du fichier adhérents ;
+3. création du classeur « Sorties VTT » et de son script dans ce compte, envoi du code ;
+4. dans l'éditeur Apps Script qui s'ouvre : exécuter **`initialiser`** puis **`installer`**, en acceptant les autorisations. `initialiser` se branche sur le fichier adhérents (il vérifie ses colonnes) et crée le dossier des traces ; **ne pas lancer `chargerDonneesDemo`**, qui remplacerait les adhérents par des membres fictifs ;
+5. mise en ligne de l'API ; son adresse est écrite dans `site/sorties/config.js` ;
+6. bascule vers le dépôt GitHub de l'association (l'ancien reste accessible sous le nom `perso`) et envoi du code.
+
+**Ensuite, une fois :**
+- sur GitHub : **Settings → Pages → Source : GitHub Actions**, puis vérifier que « Publication du site » passe au vert dans l'onglet **Actions** ;
+- dans l'appli, avec le numéro d'un administrateur : **⚙ Admin → Paramètres** (adresse de l'appli donnée par le script, commune, point de rendez-vous, liste de diffusion, destinataires WhatsApp, email des alertes), puis **Récurrences**, **Rappels** et **Messages**.
+
+**Mises à jour par la suite :**
+- serveur : `npm run gas:publier` (envoie le code et publie une nouvelle version, même adresse) ;
+- site : `git push` (publication automatique après les tests). Augmenter ensemble le numéro de `site/sorties/js/version.js` et celui de `site/sorties/sw.js` pour que les téléphones prennent la nouvelle version.
 
 ## A. Côté Google (données, serveur, mails)
 
@@ -60,11 +94,11 @@ Résultat attendu :
 3. **Déployer**, puis copier l'**URL de l'application Web** (elle se termine par `/exec`).
 4. Vérifier : ouvrir cette URL dans le navigateur doit afficher « API Sorties VTT : OK ».
 
-Après chaque `npm run gas:pousser`, publier la nouvelle version : **Déployer → Gérer les déploiements → ✎ → Version : Nouvelle version → Déployer** (l'URL ne change pas).
+Après chaque `npm run gas:pousser`, publier la nouvelle version : **Déployer → Gérer les déploiements → ✎ → Version : Nouvelle version → Déployer** (l'URL ne change pas). Plus simple : noter l'identifiant du déploiement dans `backend/gas/.deploiement.json` (`{ "deploymentId": "<id>" }`), puis utiliser `npm run gas:publier`.
 
 ### A6. Brancher l'appli sur l'API
 
-Dans `site/sorties/config.js`, remplacer `A_RENSEIGNER_URL_APPS_SCRIPT` par l'URL `/exec`. Cette URL n'est pas un secret : l'accès aux données est protégé par la connexion de chaque adhérent.
+Dans `site/sorties/config.js`, mettre l'URL `/exec` à la place de celle qui y figure (`urlApi`). Cette URL n'est pas un secret : l'accès aux données est protégé par la connexion de chaque adhérent.
 
 Pour tester sur votre poste avec la vraie API avant publication : ouvrir http://localhost:8080/sorties/, puis dans la console du navigateur `localStorage.setItem('sorties-vtt-api', '<URL /exec>')` et recharger.
 
@@ -89,7 +123,7 @@ git push -u origin main
 
 1. Sur votre téléphone, ouvrir l'adresse de l'appli, se connecter avec votre numéro, installer l'appli (encart en haut du calendrier).
 2. **⚙ Admin** → **Recevoir un code par email** : le code arrive dans votre boîte mail.
-3. **Messages → Envoyer le rappel maintenant** : vous recevez 2 mails, le rappel et « À poster sur WhatsApp ». Le bouton vert de ce dernier ouvre **votre** conversation WhatsApp avec le message prérempli.
+3. **Rappels → Week-end → 📨 Envoyer maintenant** : vous recevez 2 mails, le rappel (avec la météo et le lien de chaque sortie) et « À poster sur WhatsApp ». Le bouton vert de ce dernier ouvre **votre** conversation WhatsApp avec le message prérempli.
 4. **Fermetures** : fermer un samedi. À l'heure suivante (ou en exécutant `tic` dans l'éditeur), vous recevez un seul mail listant les sorties annulées, plus le message WhatsApp correspondant.
 
 ## Désigner d'autres administrateurs
@@ -98,6 +132,8 @@ Dans le fichier **Adhérents**, cocher la colonne `admin` et renseigner l'`email
 
 ## En cas de souci
 
-- **« Onglet manquant »** : relancer `initialiser`.
+- **« Onglet manquant »** : relancer `initialiser` (les onglets et colonnes ajoutés par une nouvelle version sont normalement créés tout seuls).
+- **`initialiser` signale des colonnes manquantes** dans le fichier adhérents : corriger la ligne 1 (`nom`, `telephone`, `email`, `actif`, `admin`) puis relancer.
+- **L'appli est lente** : `mesure: true` dans une requête à l'API détaille le temps passé côté serveur (voir la spec technique, §4 cache).
 - **L'appli affiche « Erreur technique »** : voir l'onglet `Journal` du classeur et, dans l'éditeur Apps Script, **Exécutions**.
 - **Les mails n'arrivent pas** : vérifier les paramètres `adresse_liste`, `destinataires_whatsapp` et l'onglet `Envois` (colonne `derniere_erreur`). Pour un vrai Google Groupe, autoriser l'adresse du compte à publier dans le groupe.

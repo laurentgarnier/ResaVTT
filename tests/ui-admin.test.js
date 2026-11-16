@@ -198,3 +198,16 @@ test("onglet Messages : le message WhatsApp d'annulation de l'adhérent se règl
   assert.match(html, /Annulation par l'adhérent : message WhatsApp<\/label><textarea name="annulation_partage_whatsapp">Sortie annulée : \{\{titre\}\}/);
   assert.match(html, /\{\{motif\}\}/);
 });
+
+test('onglet Messages : sous chaque texte, la liste complète de ses repères ; les repères des rappels sont rappelés', async () => {
+  const { REPERES } = await import('../site/sorties/js/logique/modeles.js');
+  const html = renderAdmin(donneesAdmin(), 'messages');
+  const sous = (cle) => html.slice(html.indexOf(`name="${cle}"`), html.indexOf('</p>', html.indexOf(`name="${cle}"`)));
+  for (const r of REPERES.partage_whatsapp) assert.match(sous('partage_whatsapp'), new RegExp(`\{\{${r}\}\}`), r);
+  for (const r of REPERES.annulation_partage_whatsapp) assert.match(sous('annulation_partage_whatsapp'), new RegExp(`\{\{${r}\}\}`), r);
+  for (const cle of ['annulation_mail_objet', 'annulation_mail_corps', 'annulation_whatsapp']) {
+    for (const r of REPERES.annulation) assert.match(sous(cle), new RegExp(`\{\{${r}\}\}`), `${cle} ${r}`);
+  }
+  const rappels = html.slice(html.indexOf('Rappels'));
+  for (const r of REPERES.rappel) assert.match(rappels, new RegExp(`\{\{${r}\}\}`), r);
+});
