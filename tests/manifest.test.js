@@ -9,7 +9,8 @@ test('manifest : portée limitée à /sorties/, icônes 192 et 512', () => {
   assert.equal(m.display, 'standalone');
   assert.equal(m.lang, 'fr');
   assert.equal(m.theme_color, '#121a2b');
-  assert.deepEqual(m.icons.map((i) => i.sizes).sort(), ['192x192', '512x512']);
+  // Icône normale (« any ») et icône découpable par Android (« maskable », logo dans le cercle central).
+  assert.deepEqual(m.icons.map((i) => `${i.sizes} ${i.purpose}`).sort(), ['192x192 any', '192x192 maskable', '512x512 any', '512x512 maskable']);
   for (const i of m.icons) assert.ok(existsSync(`site/sorties/${i.src}`), i.src);
   assert.ok(existsSync('site/sorties/icones/apple-touch-icon.png'));
 });
@@ -48,6 +49,9 @@ test("icônes : une seule image source (logo.png, carrée) d'où viennent toutes
   assert.deepEqual(taille('site/sorties/icones/icone-192.png'), [192, 192]);
   assert.deepEqual(taille('site/sorties/icones/icone-512.png'), [512, 512]);
   assert.deepEqual(taille('site/sorties/icones/apple-touch-icon.png'), [180, 180]);
+  assert.deepEqual(taille('site/sorties/icones/logo-maskable.png'), [l, l]);
+  assert.deepEqual(taille('site/sorties/icones/icone-maskable-192.png'), [192, 192]);
+  assert.deepEqual(taille('site/sorties/icones/icone-maskable-512.png'), [512, 512]);
   assert.match(readFileSync('site/sorties/index.html', 'utf8'), /<link rel="icon" href="icones\/icone-192\.png" type="image\/png">/);
   assert.match(JSON.parse(readFileSync('package.json', 'utf8')).scripts.icones, /generer-icones\.ps1/);
 });

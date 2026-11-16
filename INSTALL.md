@@ -34,7 +34,12 @@ Le script guide pas à pas et s'arrête à la moindre erreur (on peut le relance
 - sur GitHub : **Settings → Pages → Source : GitHub Actions**, puis vérifier que « Publication du site » passe au vert dans l'onglet **Actions** ;
 - dans l'appli, avec le numéro d'un administrateur : **⚙ Admin → Paramètres** (adresse de l'appli donnée par le script, commune, point de rendez-vous, liste de diffusion, destinataires WhatsApp, email des alertes), puis **Récurrences**, **Rappels** et **Messages**.
 
-**Logo du club** : remplacer `site/sorties/icones/logo.png` par une image **carrée d'au moins 1024 × 1024 px**, à fond uni (sans transparence), logo centré dans les 80 % du milieu. Puis `npm run icones` (sous Windows) pour produire toutes les tailles (Android, iPhone, onglet, bandeau, page de connexion), et publier le site. Une appli déjà installée garde son ancienne icône jusqu'à réinstallation.
+**Logo du club** : le logo vectoriel est `docs/logo/corbas-vtt.svg` (modifiable dans Inkscape). Après une modification :
+1. `"C:\Program Files\Inkscapein\python.exe" outils\composer-icone.py docs\logo\corbas-vtt.svg` compose les deux images sources carrées (fond blanc) : `site/sorties/icones/logo.png` (logo en grand) et `logo-maskable.png` (logo dans le cercle central, qu'Android peut découper) ;
+2. `npm run icones` (sous Windows) en tire toutes les tailles (Android, iPhone, onglet, bandeau, page de connexion) ;
+3. publier le site.
+
+On peut aussi remplacer directement `site/sorties/icones/logo.png` par une image **carrée d'au moins 1024 × 1024 px**, à fond uni, logo centré, puis `npm run icones`. Une appli déjà installée garde son ancienne icône jusqu'à réinstallation.
 
 **Mises à jour par la suite :**
 - serveur : `npm run gas:publier` (envoie le code et publie une nouvelle version, même adresse) ;

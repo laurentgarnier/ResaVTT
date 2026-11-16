@@ -7,6 +7,9 @@
 #
 # Produit : icone-192.png et icone-512.png (Android, onglet du navigateur, bandeau, page de connexion) et
 # apple-touch-icon.png (iPhone, 180 px). Si logo.png n'existe pas, il est d'abord dessiné (vélo stylisé vert).
+# logo-maskable.png (facultatif, même format) : version où le logo tient dans le cercle central, qu'Android découpe
+# sans rien rogner ; elle donne icone-maskable-192.png et icone-maskable-512.png (sinon logo.png sert aussi).
+# Les deux sources se composent depuis le logo vectoriel : python outils/composer-icone.py docs/logo/<logo>.svg
 Add-Type -AssemblyName System.Drawing
 
 $dossier = Join-Path $PSScriptRoot '..\site\sorties\icones'
@@ -60,14 +63,29 @@ if (-not (Test-Path $source)) {
     Write-Output "logo.png absent : vélo dessiné dans $source"
 }
 
-$image = [System.Drawing.Image]::FromFile((Resolve-Path $source))
+function Ouvrir([string]$chemin) {
+    $image = [System.Drawing.Image]::FromFile((Resolve-Path $chemin))
+    if ($image.Width -ne $image.Height) { $image.Dispose(); throw "$chemin doit être carré (actuellement $($image.Width) x $($image.Height) px)." }
+    if ($image.Width -lt 512) { Write-Warning "$chemin ne fait que $($image.Width) px : 1024 px ou plus conseillés." }
+    return $image
+}
+
+$image = Ouvrir $source
 try {
-    if ($image.Width -ne $image.Height) { throw "logo.png doit être carré (actuellement $($image.Width) x $($image.Height) px)." }
-    if ($image.Width -lt 512) { Write-Warning "logo.png ne fait que $($image.Width) px : 1024 px ou plus conseillés." }
     Reduire $image 512 'icone-512.png'
     Reduire $image 192 'icone-192.png'
     Reduire $image 180 'apple-touch-icon.png'
 } finally {
     $image.Dispose()
 }
-Write-Output "Icônes écrites dans $dossier (icone-512.png, icone-192.png, apple-touch-icon.png)"
+
+$sourceDecoupable = Join-Path $dossier 'logo-maskable.png'
+if (-not (Test-Path $sourceDecoupable)) { $sourceDecoupable = $source }
+$image = Ouvrir $sourceDecoupable
+try {
+    Reduire $image 512 'icone-maskable-512.png'
+    Reduire $image 192 'icone-maskable-192.png'
+} finally {
+    $image.Dispose()
+}
+Write-Output "Icônes écrites dans $dossier (icone-512/192, apple-touch-icon, icone-maskable-512/192)"

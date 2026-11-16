@@ -65,7 +65,7 @@ test("service worker : le manifeste d'installation porte le nom de l'association
   assert.equal(m.name, 'VTT Club Bellifontain');
   assert.equal(m.short_name, 'VTT Club Bellifontain');
   assert.equal(m.start_url, './');
-  assert.equal(m.icons.length, 2);
+  assert.equal(m.icons.length, 4);
 });
 
 test("service worker : sans nom enregistré, le manifeste d'origine ; une nouvelle version ne vide pas le cache du nom", async () => {
