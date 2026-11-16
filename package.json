@@ -7,6 +7,7 @@
     "gas:copier": "node outils/copier-vers-gas.js",
     "gas:pousser": "npm run gas:copier && cd backend/gas && npx --yes @google/clasp push -f",
     "gas:publier": "npm run gas:pousser && node outils/publier-gas.js",
-    "installer": "node outils/installer.js"
+    "installer": "node outils/installer.js",
+    "icones": "powershell -NoProfile -ExecutionPolicy Bypass -File outils/generer-icones.ps1"
   }
 }

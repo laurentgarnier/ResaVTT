@@ -10,9 +10,7 @@ export function nomAppliAffiche(cal, nomStocke) {
   return duServeur || String(nomStocke || '').trim() || NOM_APPLI_DEFAUT;
 }
 
-// Logo du bandeau : le dernier mot en couleur d'accent, comme « Sorties VTT ».
+// Bandeau : le logo du club (icones/icone-192.png, tirée de icones/logo.png) puis le nom, d'une seule couleur.
 export function logoAppli(nom) {
-  const mots = String(nom).trim().split(/\s+/);
-  const dernier = mots.pop();
-  return `🚵 ${mots.length ? `${echapper(mots.join(' '))} ` : ''}<span>${echapper(dernier)}</span>`;
+  return `<img class="logo-img" src="icones/icone-192.png" alt="" width="28" height="28"><span class="logo-nom">${echapper(String(nom).trim())}</span>`;
 }

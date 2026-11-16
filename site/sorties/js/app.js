@@ -134,7 +134,7 @@ function afficherConnexion(erreur = '') {
   etat.cal = null;
   oublierCalendrier();
   afficherBarre();
-  vue().innerHTML = renderConnexion({ modeNavigateur: modeNavigateur(), indiceDemo: CONFIG.indiceDemo, erreur });
+  vue().innerHTML = renderConnexion({ modeNavigateur: modeNavigateur(), indiceDemo: CONFIG.indiceDemo, erreur, nom: nomAppli });
   brancherConnexion(vue(), actions);
 }
 

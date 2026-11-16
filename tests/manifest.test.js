@@ -39,3 +39,15 @@ test('version affichée en pied de page : la même que celle du service worker, 
   assert.equal(libelleVersion(), `Version ${VERSION_APPLI}`);
   assert.match(readFileSync('site/sorties/index.html', 'utf8'), /<span id="version-appli"><\/span>/);
 });
+
+test("icônes : une seule image source (logo.png, carrée) d'où viennent toutes les tailles ; l'onglet utilise l'icône de l'appli", () => {
+  const taille = (f) => { const d = readFileSync(f); return [d.readUInt32BE(16), d.readUInt32BE(20)]; };
+  const [l, h] = taille('site/sorties/icones/logo.png');
+  assert.equal(l, h, 'logo.png doit être carré');
+  assert.ok(l >= 1024, `logo.png trop petit : ${l} px`);
+  assert.deepEqual(taille('site/sorties/icones/icone-192.png'), [192, 192]);
+  assert.deepEqual(taille('site/sorties/icones/icone-512.png'), [512, 512]);
+  assert.deepEqual(taille('site/sorties/icones/apple-touch-icon.png'), [180, 180]);
+  assert.match(readFileSync('site/sorties/index.html', 'utf8'), /<link rel="icon" href="icones\/icone-192\.png" type="image\/png">/);
+  assert.match(JSON.parse(readFileSync('package.json', 'utf8')).scripts.icones, /generer-icones\.ps1/);
+});

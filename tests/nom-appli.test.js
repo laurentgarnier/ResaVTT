@@ -16,11 +16,10 @@ test("nom de l'association : réglage par défaut « Sorties VTT », renvoyé av
   assert.equal(t.appel('calendrier', { jeton }).data.parametres.nom_appli, 'VTT Club Bellifontain');
 });
 
-test("logo du bandeau : le nom, dernier mot en couleur d'accent, échappé", () => {
-  assert.equal(logoAppli('Sorties VTT'), '🚵 Sorties <span>VTT</span>');
-  assert.equal(logoAppli('VTT Club Bellifontain'), '🚵 VTT Club <span>Bellifontain</span>');
-  assert.equal(logoAppli('Club'), '🚵 <span>Club</span>');
-  assert.equal(logoAppli('<b>A</b> & B'), '🚵 &lt;b&gt;A&lt;/b&gt; &amp; <span>B</span>');
+test("bandeau : le logo du club puis le nom, d'une seule couleur, échappé", () => {
+  const LOGO = '<img class="logo-img" src="icones/icone-192.png" alt="" width="28" height="28">';
+  assert.equal(logoAppli('VTT Club Bellifontain'), `${LOGO}<span class="logo-nom">VTT Club Bellifontain</span>`);
+  assert.equal(logoAppli('<b>A</b> & B'), `${LOGO}<span class="logo-nom">&lt;b&gt;A&lt;/b&gt; &amp; B</span>`);
 });
 
 test("nom affiché : celui du serveur, sinon le dernier connu sur l'appareil, sinon le défaut", () => {

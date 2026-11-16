@@ -21,3 +21,10 @@ test('message d\'erreur affiché', () => {
 test('champ téléphone adapté au mobile', () => {
   assert.match(renderConnexion({}), /<input[^>]+type="tel"[^>]+autocomplete="tel"/);
 });
+
+test("page de connexion : logo du club et nom de l'association (sinon le nom par défaut), échappé", () => {
+  const html = renderConnexion({ nom: 'VTT Club <Bellifontain>' });
+  assert.match(html, /<img class="logo-connexion" src="icones\/icone-512\.png" alt="" width="96" height="96">\s*<h1>VTT Club &lt;Bellifontain&gt;<\/h1>/);
+  assert.doesNotMatch(html, /🚵/);
+  assert.match(renderConnexion({}), /<h1>Sorties VTT<\/h1>/);
+});

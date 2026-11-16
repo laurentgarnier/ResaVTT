@@ -7,8 +7,9 @@ body { background: var(--fond); min-height: 100vh; }
   padding: 10px 16px; padding-top: max(10px, env(safe-area-inset-top));
   background: var(--bg); border-bottom: 1px solid var(--line);
 }
-.barre .logo { font-weight: 800; font-size: 17px; color: var(--txt); text-decoration: none; }
-.barre .logo span { color: var(--acc); }
+.barre .logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; color: var(--txt); text-decoration: none; min-width: 0; }
+.barre .logo-img { border-radius: 7px; flex: none; }
+.barre .logo-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .barre .sp { flex: 1; }
 .chip {
   background: var(--card2); border: 1px solid var(--line); border-radius: 999px;
@@ -36,7 +37,8 @@ a.chip:hover { color: var(--txt); }
 
 /* Connexion */
 .connexion { max-width: 420px; margin: 24px auto; }
-.connexion h1 { font-size: 26px; margin: 18px 0 6px; }
+.connexion h1 { font-size: 26px; margin: 10px 0 6px; }
+.logo-connexion { display: block; border-radius: 22px; margin-top: 12px; }
 .carte-form { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 14px 0; }
 .carte-form .btn { width: 100%; margin-top: 12px; }
 

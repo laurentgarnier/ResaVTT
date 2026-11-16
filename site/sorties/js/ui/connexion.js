@@ -1,13 +1,15 @@
 // Écran de connexion par numéro de téléphone.
 import { echapper } from '../logique/html.js';
+import { NOM_APPLI_DEFAUT } from './nom-appli.js';
 
 const BANDEAU_NAVIGATEUR = "Vous avez installé l'appli ? Ouvrez-la depuis votre écran d'accueil. Sinon, saisissez votre numéro ci-dessous.";
 
-export function renderConnexion({ modeNavigateur = false, indiceDemo = '', erreur = '' } = {}) {
+export function renderConnexion({ modeNavigateur = false, indiceDemo = '', erreur = '', nom = NOM_APPLI_DEFAUT } = {}) {
   return `
   <section class="connexion">
     ${modeNavigateur ? `<p class="bandeau-info">${echapper(BANDEAU_NAVIGATEUR)}</p>` : ''}
-    <h1>🚵 Sorties VTT</h1>
+    <img class="logo-connexion" src="icones/icone-512.png" alt="" width="96" height="96">
+    <h1>${echapper(nom)}</h1>
     <p class="mut">Connectez-vous avec le numéro de téléphone que vous avez donné au club.</p>
     <form id="form-connexion" class="carte-form">
       <label for="tel">Votre numéro de téléphone</label>
