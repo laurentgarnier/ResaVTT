@@ -173,6 +173,10 @@ details.plus summary { color: var(--acc); font-weight: 700; margin-top: 12px; cu
 .bloc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 10px; }
 .bloc h3 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .bloc ul { margin: 6px 0 0; padding-left: 18px; color: var(--mut); font-size: 13px; }
+.modele { border: 0; border-top: 1px solid var(--line); margin: 14px 0 0; padding: 12px 0 0; min-width: 0; }
+.modele legend { padding: 0 8px 0 0; }
+.modele legend label { margin: 0; font-size: 15px; font-weight: 700; color: var(--txt); }
+.modele textarea { margin-top: 6px; }
 .envoi { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 13px; padding: 8px 0; border-top: 1px solid var(--line); }
 .envoi:first-child { border-top: 0; }
 .ok { color: var(--acc); }

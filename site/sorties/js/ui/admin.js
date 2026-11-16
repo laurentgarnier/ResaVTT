@@ -4,7 +4,7 @@ import { aujourdhuiLocal } from '../logique/dates.js';
 import { MODELES_DEFAUT, REPERES, SENS_REPERES } from '../logique/modeles.js';
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['rappels', 'Rappels'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
+const ONGLETS_ADMIN = [['parametres', 'Paramètres'], ['recurrences', 'Récurrences'], ['rappels', 'Rappels'], ['messages', 'Messages'], ['fermetures', 'Fermetures'], ['stats', 'Statistiques']];
 // Textes de l'onglet Messages : libellé et liste de repères (REPERES) de chacun.
 const LIBELLES_MODELES = {
   partage_whatsapp: ["Nouvelle sortie : message WhatsApp de l'adhérent", 'partage_whatsapp'],
@@ -220,8 +220,8 @@ function ongletMessages(d) {
     <form class="bloc" id="form-modeles">
       <h3>Textes des messages</h3>
       <p class="meta">Les messages de l'adhérent (nouvelle sortie, annulation) sont envoyés par lui sur WhatsApp ; dans ces deux messages, une ligne dont tous les repères sont vides disparaît (ex. « Motif : {{motif}} » sans motif). Les annulations automatiques partent quand un administrateur annule une sortie ou ferme une période. Les emojis ne passent pas sur WhatsApp : ils y sont retirés.</p>
-      ${Object.entries(LIBELLES_MODELES).map(([cle, [libelle, groupe]]) => `<label>${libelle}</label><textarea name="${cle}">${echapper(d.modeles[cle])}</textarea>
-      <p class="meta reperes">Repères : ${listeReperes(groupe)}.</p>`).join('')}
+      ${Object.entries(LIBELLES_MODELES).map(([cle, [libelle, groupe]]) => `<fieldset class="modele"><legend><label for="modele-${cle}">${libelle}</label></legend><textarea id="modele-${cle}" name="${cle}">${echapper(d.modeles[cle])}</textarea>
+      <p class="meta reperes">Repères : ${listeReperes(groupe)}.</p></fieldset>`).join('')}
       <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les textes</button>
     </form>`;
 }
@@ -264,7 +264,7 @@ function ongletStats(s) {
 export function renderAdmin(d, onglet, { regleEditee, rappelEdite } = {}) {
   if (onglet === 'recurrences' && regleEditee) return `<section class="admin">${ecranRegle(d, regleEditee)}</section>`;
   if (onglet === 'rappels' && rappelEdite) return `<section class="admin">${ecranRappel(d, rappelEdite)}</section>`;
-  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), rappels: () => ongletRappels(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) }[onglet] || (() => ongletRecurrences(d));
+  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), rappels: () => ongletRappels(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) }[onglet] || (() => ongletParametres(d));
   return `<section class="admin">
     <a class="retour" href="#/">‹ Calendrier</a>
     <h1 style="font-size:20px;margin:0">⚙ Administration</h1>

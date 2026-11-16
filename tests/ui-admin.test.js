@@ -44,6 +44,18 @@ test('onglet paramètres : numéro WhatsApp et URL de l\'appli', () => {
   assert.match(html, /Rechercher/);
 });
 
+test("onglets de l'administration dans l'ordre : Paramètres, Récurrences, Rappels, Messages, Fermetures, Statistiques", () => {
+  const menu = renderAdmin(donneesAdmin(), 'parametres').match(/<nav class="menu-admin">(.*?)<\/nav>/s)[1];
+  const titres = [...menu.matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1]);
+  assert.deepEqual(titres, ['Paramètres', 'Récurrences', 'Rappels', 'Messages', 'Fermetures', 'Statistiques']);
+});
+
+test('onglet messages : chaque texte a son propre cadre, titré et relié à sa zone de saisie', () => {
+  const html = renderAdmin(donneesAdmin(), 'messages');
+  assert.match(html, /<fieldset class="modele"><legend><label for="modele-partage_whatsapp">Nouvelle sortie : message WhatsApp de l'adhérent<\/label><\/legend><textarea id="modele-partage_whatsapp" name="partage_whatsapp"/);
+  assert.equal((html.match(/<fieldset class="modele">/g) || []).length, 5);
+});
+
 test("onglet messages : historique des envois et textes d'annulation, plus de rappel du jeudi", () => {
   const d = donneesAdmin((t, jeton) => t.appel('rappel_envoyer_maintenant', { jeton, type: 'G', id: 'g-weekend' }));
   const html = renderAdmin(d, 'messages');
@@ -188,14 +200,14 @@ test('noms des récurrences et des rappels échappés', () => {
 
 test('onglet Messages : le message WhatsApp de partage d\'une nouvelle sortie se règle, avec ses repères', () => {
   const html = renderAdmin(donneesAdmin(), 'messages');
-  assert.match(html, /Nouvelle sortie : message WhatsApp de l'adhérent<\/label><textarea name="partage_whatsapp">Nouvelle sortie : \{\{titre\}\}/);
+  assert.match(html, /Nouvelle sortie : message WhatsApp de l'adhérent<\/label><\/legend><textarea id="modele-partage_whatsapp" name="partage_whatsapp">Nouvelle sortie : \{\{titre\}\}/);
   assert.match(html, /\{\{createur\}\}/);
   assert.match(html, /\{\{lien_sortie\}\}/);
 });
 
 test("onglet Messages : le message WhatsApp d'annulation de l'adhérent se règle, avec ses repères", () => {
   const html = renderAdmin(donneesAdmin(), 'messages');
-  assert.match(html, /Annulation par l'adhérent : message WhatsApp<\/label><textarea name="annulation_partage_whatsapp">Sortie annulée : \{\{titre\}\}/);
+  assert.match(html, /Annulation par l'adhérent : message WhatsApp<\/label><\/legend><textarea id="modele-annulation_partage_whatsapp" name="annulation_partage_whatsapp">Sortie annulée : \{\{titre\}\}/);
   assert.match(html, /\{\{motif\}\}/);
 });
 
