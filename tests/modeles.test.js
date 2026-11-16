@@ -14,8 +14,9 @@ test('clé inconnue laissée intacte', () => {
   assert.equal(remplirModele('{{a}} {{b}}', { a: '1' }), '1 {{b}}');
 });
 
-test('les 6 modèles par défaut existent', () => {
-  assert.deepEqual(Object.keys(MODELES_DEFAUT).sort(), ['annulation_mail_corps', 'annulation_mail_objet', 'annulation_whatsapp', 'rappel_mail_corps', 'rappel_mail_objet', 'rappel_whatsapp']);
+test('les modèles par défaut existent, dont ceux des rappels individuels et groupés', () => {
+  assert.deepEqual(Object.keys(MODELES_DEFAUT).sort(), ['annulation_mail_corps', 'annulation_mail_objet', 'annulation_whatsapp', 'rappel_groupe_objet', 'rappel_groupe_texte',
+    'rappel_individuel_objet', 'rappel_individuel_texte', 'rappel_mail_corps', 'rappel_mail_objet', 'rappel_whatsapp']);
   assert.match(MODELES_DEFAUT.annulation_whatsapp, /\{\{liste_annulations\}\}/);
 });
 

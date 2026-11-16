@@ -9,13 +9,15 @@ export const ONGLETS = {
   Inscriptions: ['sortie_id', 'personne_id', 'nom_affiche', 'telephone', 'horodatage'],
   Discussions: ['id', 'sortie_id', 'auteur_nom', 'telephone', 'texte', 'trace_id', 'horodatage', 'supprime', 'systeme'],
   Traces: ['id', 'sortie_id', 'regle_id', 'nom_fichier', 'drive_id', 'km', 'dplus', 'ajoute_par_tel', 'ajoute_par_nom', 'horodatage'],
-  Regles: ['id', 'nom', 'jour', 'heure', 'point_rdv', 'frequence_semaines', 'date_depart', 'active'],
+  Regles: ['id', 'nom', 'jour', 'heure', 'point_rdv', 'frequence_semaines', 'date_depart', 'active',
+    'rappel_actif', 'rappel_jour', 'rappel_heure', 'rappel_mail', 'rappel_whatsapp', 'rappel_objet', 'rappel_texte'],
   RegleSorties: ['regle_id', 'ordre', 'titre', 'lieu', 'km', 'dplus', 'description', 'trace_id'],
   Fermetures: ['id', 'debut', 'fin', 'regle_id', 'motif', 'cree_par'],
   Parametres: ['cle', 'valeur'],
   Modeles: ['cle', 'valeur'],
   Envois: ['cle', 'etape_mail', 'etape_whatsapp', 'tentatives', 'derniere_erreur', 'horodatage'],
   Journal: ['horodatage', 'type', 'detail'],
+  Rappels: ['id', 'nom', 'regle_ids', 'jour', 'heure', 'mail', 'whatsapp', 'actif', 'objet', 'texte'],
   Bilan: ['sortie_id', 'date', 'heure', 'statut', 'participants'],
 };
 
