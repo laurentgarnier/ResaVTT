@@ -196,6 +196,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 - **`RegleSorties`** : regle_id, ordre (1, 2, 3…), titre, lieu, km, dplus, description, trace_id (facultatif).
 - **`Fermetures`** : id, debut, fin, regle_id (vide si toutes les règles sont concernées), motif, cree_par.
 - **`Parametres`** (clé / valeur) :
+  - nom_appli : nom de l'association. Renvoyé avec le calendrier ; l'appli s'en sert pour `document.title`, le bandeau et la balise `apple-mobile-web-app-title` (iPhone), le retient dans `localStorage` (affichage dès l'ouverture) et dans le cache `sorties-vtt-reglages`, d'où le service worker l'insère dans `manifest.webmanifest` (`name`, `short_name`) pour l'installation sur Android. Ce cache n'est pas vidé par une nouvelle version ;
   - commune_nom, commune_lat, commune_lon ;
   - point_rdv_defaut ;
   - rappel_jour, rappel_heure : réglage de l'ancien rappel du jeudi, lu seulement par la mise en service des rappels ; rappels_migres (`oui` une fois faite) ;

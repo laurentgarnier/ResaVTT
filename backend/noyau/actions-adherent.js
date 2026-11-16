@@ -3,7 +3,7 @@ import { normaliserTelephone } from '../../site/sorties/js/logique/telephone.js'
 import { fenetre, aujourdhuiLocal, estPasse } from '../../site/sorties/js/logique/dates.js';
 import { genererSorties } from '../../site/sorties/js/logique/recurrences.js';
 import { peutModifier, peutChangerHoraire, inscriptionsOuvertes } from '../../site/sorties/js/logique/droits.js';
-import { estVrai, lireCleValeur, erreurMetier } from './schema.js';
+import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schema.js';
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 
 export function horodatage(ctx) {
@@ -115,6 +115,7 @@ export function actionCalendrier(ctx, u) {
     moi: { telephone: u.telephone, nom: u.nom },
     personnes: personnesDuCompte(ctx, u).map((p) => ({ id: p.id, nom_affiche: p.nom_affiche })),
     parametres: {
+      nom_appli: parametres.nom_appli || PARAMETRES_DEFAUT.nom_appli,
       commune_nom: parametres.commune_nom, commune_lat: parametres.commune_lat, commune_lon: parametres.commune_lon,
       point_rdv_defaut: parametres.point_rdv_defaut,
     },

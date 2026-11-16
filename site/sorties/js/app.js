@@ -19,6 +19,7 @@ import { creerAttente } from './ui/attente.js';
 import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from './cache-calendrier.js';
 import { aujourdhuiLocal } from './logique/dates.js';
 import { libelleVersion } from './version.js';
+import { nomAppliAffiche, logoAppli, CLE_NOM_APPLI } from './ui/nom-appli.js';
 
 const etat = { cal: null, calRecuA: 0 };
 
@@ -35,6 +36,20 @@ function appliquerTheme() {
 }
 appliquerTheme();
 document.getElementById('version-appli').textContent = libelleVersion();
+
+// Nom de l'association : onglet du navigateur, bandeau, appli installée (iPhone : balise apple-mobile-web-app-title ;
+// Android : manifeste servi par le service worker avec ce nom, rangé dans le cache sorties-vtt-reglages).
+let nomAppli = nomAppliAffiche(null, stockageLocal.getItem(CLE_NOM_APPLI));
+function appliquerNomAppli(nom) {
+  document.title = nom;
+  const meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if (meta) meta.content = nom;
+  if (nom === nomAppli && stockageLocal.getItem(CLE_NOM_APPLI) === nom) return;
+  nomAppli = nom;
+  try { stockageLocal.setItem(CLE_NOM_APPLI, nom); } catch (e) { /* stockage indisponible */ }
+  if (typeof caches !== 'undefined') caches.open('sorties-vtt-reglages').then((c) => c.put('nom-appli', new Response(nom))).catch(() => {});
+}
+appliquerNomAppli(nomAppli);
 
 function basculerSelecteur(ouvrir) {
   const existant = document.querySelector('.selecteur-affichage');
@@ -107,7 +122,7 @@ const actions = {
 function afficherBarre() {
   const b = document.getElementById('barre');
   const cal = etat.cal;
-  b.innerHTML = `<a class="logo" href="#/">🚵 Sorties <span>VTT</span></a><span class="sp"></span>
+  b.innerHTML = `<a class="logo" href="#/">${logoAppli(nomAppli)}</a><span class="sp"></span>
     <button type="button" class="chip" id="bouton-affichage" aria-label="Affichage">🎨<span class="optionnel"> Affichage</span></button>
     ${cal ? `<span class="chip optionnel">Connecté : ${echapper(cal.moi.nom)}</span>
       <a class="chip" href="#/personnes">👪 Personnes</a>
@@ -125,6 +140,7 @@ function afficherConnexion(erreur = '') {
 
 function recevoirCalendrier(cal) {
   etat.cal = cal;
+  appliquerNomAppli(nomAppliAffiche(cal, nomAppli));
   etat.calRecuA = Date.now();
   enregistrerCalendrier(cal, lireJeton());
   afficherBarre();

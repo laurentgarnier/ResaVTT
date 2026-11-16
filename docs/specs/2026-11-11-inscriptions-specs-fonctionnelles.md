@@ -222,6 +222,7 @@ La météo est celle de la demi-journée de la sortie, déjà connue du téléph
 - Si un **adhérent supprime sa propre sortie libre**, celle-ci passe en « Annulée » avec un message dans la discussion. Aucun mail n'est envoyé **[choix du rédacteur]**.
 
 **Paramètres généraux**
+- Le **nom de l'association** **[décidé]** : il s'affiche dans l'onglet du navigateur, en haut à gauche du bandeau, et comme nom de l'appli installée sur le téléphone (court de préférence : une douzaine de caractères tiennent sous l'icône). Un changement vaut sans nouvelle version de l'appli ; une appli déjà installée garde le nom qu'elle avait à l'installation.
 - La commune du club (pour la météo).
 - Le point de rendez-vous par défaut.
 - Les destinataires du rappel WhatsApp et l'email qui reçoit les alertes en cas d'erreur.

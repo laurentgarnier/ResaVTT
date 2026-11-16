@@ -211,3 +211,8 @@ test('onglet Messages : sous chaque texte, la liste complète de ses repères ; 
   const rappels = html.slice(html.indexOf('Rappels'));
   for (const r of REPERES.rappel) assert.match(rappels, new RegExp(`\{\{${r}\}\}`), r);
 });
+
+test("Paramètres : nom de l'association (onglet du navigateur, bandeau, appli installée)", () => {
+  const html = renderAdmin(donneesAdmin(), 'parametres');
+  assert.match(html, /<label>Nom de l'association[^<]*<\/label><input name="nom_appli" value="Sorties VTT"/);
+});

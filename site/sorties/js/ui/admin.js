@@ -192,6 +192,7 @@ function ongletParametres(d) {
   const p = d.parametres;
   const c = (nom, libelle, attributs = '') => `<label>${libelle}</label><input name="${nom}" value="${echapper(p[nom])}" ${attributs}>`;
   return `<form class="bloc" id="form-parametres">
+    ${c('nom_appli', "Nom de l'association (onglet du navigateur, bandeau, nom de l'appli installée ; court de préférence)", 'maxlength="40" required')}
     <h3>Commune (pour la météo)</h3>
     <div class="ligne2"><div><input name="commune_nom" value="${echapper(p.commune_nom)}" aria-label="Commune"></div><button class="btn o" type="button" data-action="geocoder">Rechercher</button></div>
     <input type="hidden" name="commune_lat" value="${echapper(p.commune_lat)}"><input type="hidden" name="commune_lon" value="${echapper(p.commune_lon)}">

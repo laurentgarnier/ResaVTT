@@ -24,6 +24,7 @@ export const ONGLETS = {
 export const ENTETES_ADHERENTS = ['nom', 'telephone', 'email', 'actif', 'admin'];
 
 export const PARAMETRES_DEFAUT = {
+  nom_appli: 'Sorties VTT', // nom de l'association : onglet du navigateur, bandeau, appli installée
   commune_nom: 'Fontainebleau',
   commune_lat: '48.4047',
   commune_lon: '2.7016',
