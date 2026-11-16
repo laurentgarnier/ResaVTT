@@ -7,6 +7,7 @@ export const MODELES_DEFAUT = {
   rappel_groupe_objet: 'Sorties VTT : {{nom}}',
   rappel_groupe_texte: "Les inscriptions sont ouvertes !\n{{liste_sorties}}\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : {{lien}}",
   partage_whatsapp: 'Nouvelle sortie : {{titre}}\n{{date}} {{heure}} – {{point_rdv}}\n{{distances}}\n{{meteo}}\nInscriptions : {{lien_sortie}}',
+  annulation_partage_whatsapp: 'Sortie annulée : {{titre}}\n{{date}} {{heure}} – {{point_rdv}}\nMotif : {{motif}}\nDétails : {{lien_sortie}}',
   annulation_mail_objet: 'Sorties VTT : annulation',
   annulation_mail_corps: "Sortie(s) annulée(s) :\n{{liste_annulations}}\n📱 Détails dans l'appli (écran d'accueil).\n🌐 Pas encore installée : {{lien}}",
   annulation_whatsapp: "Sortie(s) annulée(s) :\n{{liste_annulations}}\n📱 Détails dans l'appli (écran d'accueil).\n🌐 Pas encore installée : {{lien}}",

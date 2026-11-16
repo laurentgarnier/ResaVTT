@@ -82,7 +82,17 @@ function renderPartage(sortie, partage, nouvelle) {
     : `<div class="partage">${bouton}</div>`;
 }
 
-export function renderSortie(sortie, messages, personnes, { tousMessages = false, partage = null, nouvelle = false } = {}) {
+// Sa propre sortie libre, une fois annulée : prévenir le club sur WhatsApp. Pas pour l'admin qui annule la sortie
+// d'un autre : le club est alors prévenu automatiquement par mail et WhatsApp.
+function renderPartageAnnulation(sortie, partageAnnulation, recente) {
+  if (!partageAnnulation || sortie.type !== 'libre' || !sortie.mienne || sortie.statut !== 'annulee') return '';
+  const bouton = `<a class="btn whatsapp" href="${echapper(lienWhatsApp(partageAnnulation.texte))}" target="_blank" rel="noopener">📲 Prévenir de l'annulation sur WhatsApp</a>`;
+  return recente
+    ? `<div class="encart partage"><b>Prévenir le club de l'annulation</b><br>Le message est prêt : choisissez le groupe du club dans WhatsApp, puis Envoyer.${bouton}</div>`
+    : `<div class="partage">${bouton}</div>`;
+}
+
+export function renderSortie(sortie, messages, personnes, { tousMessages = false, partage = null, nouvelle = false, partageAnnulation = null, annulationRecente = false } = {}) {
   const annulee = sortie.statut === 'annulee';
   const details = [sortie.lieu && `Secteur : ${echapper(sortie.lieu)}`, sortie.km && `${echapper(sortie.km)} km`, sortie.dplus && `${echapper(sortie.dplus)} m D+`].filter(Boolean).join(' · ');
   return `<article class="detail">
@@ -93,6 +103,7 @@ export function renderSortie(sortie, messages, personnes, { tousMessages = false
     ${details ? `<div class="meta">${details}</div>` : ''}
     ${sortie.description ? `<p class="meta" style="white-space:pre-wrap">${echapper(sortie.description)}</p>` : ''}
     ${renderPartage(sortie, partage, nouvelle)}
+    ${renderPartageAnnulation(sortie, partageAnnulation, annulationRecente)}
     ${annulee ? `<p class="encart">Sortie annulée. Motif : ${echapper(sortie.motif_annulation || 'non précisé')}</p>` : ''}
     ${renderTraces(sortie)}
     ${renderInscription(sortie, personnes)}
@@ -156,7 +167,12 @@ export function brancherSortie(racine, actions, sortie) {
       }
       if (cible.dataset.action === 'annuler') {
         const motif = prompt('Motif de l\'annulation (affiché aux adhérents) :');
-        if (motif !== null) { await actions.appeler('sortie_annuler', { sortie_id: id, motif }); actions.toast('Sortie annulée.'); await actions.rafraichir(); }
+        if (motif !== null) {
+          await actions.appeler('sortie_annuler', { sortie_id: id, motif });
+          actions.toast('Sortie annulée.');
+          actions.etat.sortieAnnulee = id; // la fiche propose alors de prévenir le club sur WhatsApp
+          await actions.rafraichir();
+        }
       }
       if (cible.dataset.supprimer) {
         await actions.appeler('discussion_supprimer', { message_id: cible.dataset.supprimer });

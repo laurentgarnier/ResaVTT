@@ -82,3 +82,20 @@ test('pas de bouton de partage pour un autre adhérent, une sortie récurrente o
   const ludo = donnees('libre-etangs', '0600000003');
   assert.doesNotMatch(renderSortie({ ...ludo.sortie, statut: 'annulee' }, ludo.messages, ludo.personnes, { partage }), /Partager sur WhatsApp/);
 });
+
+test("sortie libre annulée par son créateur : bouton pour prévenir sur WhatsApp ; encart juste après l'annulation", () => {
+  const { sortie, messages, personnes } = donnees('libre-etangs', '0600000003');
+  const annulee = { ...sortie, statut: 'annulee', motif_annulation: 'Pluie', peut_modifier: true, mienne: true };
+  const options = { partage: { texte: 'nouvelle' }, partageAnnulation: { texte: 'Sortie annulée : Boucle des étangs' } };
+  const html = renderSortie(annulee, messages, personnes, options);
+  assert.match(html, /<a class="btn whatsapp" href="https:\/\/wa\.me\/\?text=Sortie%20annul%C3%A9e%20%3A%20Boucle[^"]*" target="_blank" rel="noopener">📲 Prévenir de l'annulation sur WhatsApp<\/a>/);
+  assert.doesNotMatch(html, /Partager sur WhatsApp|Prévenir le club de l'annulation/);
+  assert.match(renderSortie(annulee, messages, personnes, { ...options, annulationRecente: true }), /Prévenir le club de l'annulation[\s\S]*📲 Prévenir de l'annulation sur WhatsApp/);
+});
+
+test("pas de bouton d'annulation pour une sortie qui n'est pas la sienne (admin compris) ni pour une sortie non annulée", () => {
+  const { sortie, messages, personnes } = donnees('libre-etangs', '0600000003');
+  const options = { partageAnnulation: { texte: 'x' } };
+  assert.doesNotMatch(renderSortie({ ...sortie, statut: 'annulee', mienne: false, peut_modifier: true }, messages, personnes, options), /Prévenir de l'annulation/);
+  assert.doesNotMatch(renderSortie(sortie, messages, personnes, options), /Prévenir de l'annulation/);
+});

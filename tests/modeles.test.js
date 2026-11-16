@@ -15,7 +15,7 @@ test('clé inconnue laissée intacte', () => {
 });
 
 test('les modèles par défaut existent, dont ceux des rappels individuels et groupés', () => {
-  assert.deepEqual(Object.keys(MODELES_DEFAUT).sort(), ['annulation_mail_corps', 'annulation_mail_objet', 'annulation_whatsapp', 'partage_whatsapp', 'rappel_groupe_objet', 'rappel_groupe_texte',
+  assert.deepEqual(Object.keys(MODELES_DEFAUT).sort(), ['annulation_mail_corps', 'annulation_mail_objet', 'annulation_partage_whatsapp', 'annulation_whatsapp', 'partage_whatsapp', 'rappel_groupe_objet', 'rappel_groupe_texte',
     'rappel_individuel_objet', 'rappel_individuel_texte']);
   assert.match(MODELES_DEFAUT.annulation_whatsapp, /\{\{liste_annulations\}\}/);
 });
@@ -36,4 +36,8 @@ test('WhatsApp : les emojis sont retirés (ils s\'affichent en caractères incon
 
 test('modèle par défaut du message WhatsApp de partage d\'une nouvelle sortie', () => {
   assert.equal(MODELES_DEFAUT.partage_whatsapp, 'Nouvelle sortie : {{titre}}\n{{date}} {{heure}} – {{point_rdv}}\n{{distances}}\n{{meteo}}\nInscriptions : {{lien_sortie}}');
+});
+
+test("modèle par défaut du message WhatsApp d'annulation envoyé par l'adhérent", () => {
+  assert.equal(MODELES_DEFAUT.annulation_partage_whatsapp, 'Sortie annulée : {{titre}}\n{{date}} {{heure}} – {{point_rdv}}\nMotif : {{motif}}\nDétails : {{lien_sortie}}');
 });

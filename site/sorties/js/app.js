@@ -5,7 +5,7 @@ import { echapper } from './logique/html.js';
 import { renderConnexion, brancherConnexion } from './ui/connexion.js';
 import { renderGrille, renderJour } from './ui/calendrier.js';
 import { renderFrise, renderAgenda } from './ui/calendrier-variantes.js';
-import { messagePartageSortie } from './logique/partage.js';
+import { messagePartageSortie, messageAnnulationSortie } from './logique/partage.js';
 import { lienWhatsApp } from './logique/modeles.js';
 import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, THEMES } from './ui/affichage.js';
 import { renderSortie, brancherSortie, arreterDiscussion } from './ui/sortie.js';
@@ -224,10 +224,15 @@ async function afficherSortie(racine, id) {
   const nouvelle = etat.sortieCreee === id;
   etat.sortieCreee = null;
   const modele = etat.cal.modele_partage;
-  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes, { partage: { texte: messagePartageSortie(sortie, null, urlAppli, modele) }, nouvelle });
+  const annulationRecente = etat.sortieAnnulee === id;
+  etat.sortieAnnulee = null;
+  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes, {
+    partage: { texte: messagePartageSortie(sortie, null, urlAppli, modele) }, nouvelle,
+    partageAnnulation: { texte: messageAnnulationSortie(sortie, urlAppli, etat.cal.modele_annulation) }, annulationRecente,
+  });
   brancherSortie(racine, actions, sortie);
   window.scrollTo(0, 0);
-  const bouton = racine.querySelector('a.btn.whatsapp');
+  const bouton = sortie.statut === 'annulee' ? null : racine.querySelector('a.btn.whatsapp');
   if (bouton) {
     meteoCourante().then((m) => {
       const plage = m.parDate && m.parDate[sortie.date] ? m.parDate[sortie.date][creneauDe(sortie.heure)] : null;

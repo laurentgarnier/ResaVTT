@@ -1,29 +1,43 @@
-// Message WhatsApp que le créateur d'une sortie libre envoie au club : la sortie, la météo prévue pour sa
-// demi-journée et le lien d'inscription. Composé dans le téléphone, sans appel au serveur, d'après le modèle réglé
-// par l'admin (Modeles.partage_whatsapp, reçu avec le calendrier).
+// Messages WhatsApp que le créateur d'une sortie libre envoie lui-même au club : à la création (la sortie, la météo
+// prévue pour sa demi-journée et le lien d'inscription) et à l'annulation. Composés dans le téléphone, sans appel au
+// serveur, d'après les modèles réglés par l'admin (Modeles.partage_whatsapp et annulation_partage_whatsapp, reçus
+// avec le calendrier).
 import { libelleJour } from './dates.js';
 import { ligneMeteoTexte } from './meteo.js';
 import { remplirModele, MODELES_DEFAUT } from './modeles.js';
 
-// Une ligne du modèle faite seulement de repères qui se retrouvent vides (ex. {{distances}}) disparaît.
-const QUE_DES_REPERES = /^\s*(\{\{\w+\}\}\s*)+$/;
+const REPERE = /\{\{(\w+)\}\}/g;
 
-export function messagePartageSortie(sortie, plageMeteo, urlAppli, modele) {
+// Une ligne qui contient des repères, tous vides (ex. « Motif : {{motif}} » sans motif), disparaît.
+// Une ligne sans repère, même vide, est gardée.
+function remplirLignes(modele, valeurs) {
+  return String(modele).split('\n')
+    .filter((ligne) => {
+      const reperes = [...ligne.matchAll(REPERE)].map((m) => m[1]);
+      return !reperes.length || reperes.some((cle) => String(valeurs[cle] ?? '').trim());
+    })
+    .map((ligne) => remplirModele(ligne, valeurs))
+    .join('\n');
+}
+
+function valeursSortie(sortie, urlAppli) {
   const adresse = String(urlAppli).replace(/\/?$/, '/');
-  const valeurs = {
+  return {
     titre: sortie.titre,
     date: libelleJour(sortie.date),
     heure: sortie.heure,
     point_rdv: sortie.point_rdv,
     distances: [sortie.km && `${sortie.km} km`, sortie.dplus && `${sortie.dplus} m D+`].filter(Boolean).join(' · '),
-    meteo: ligneMeteoTexte(plageMeteo),
     lien_sortie: `${adresse}#/sortie/${encodeURIComponent(sortie.id)}`,
     lien: adresse,
     createur: sortie.createur_nom || '',
   };
-  return String(modele || MODELES_DEFAUT.partage_whatsapp).split('\n')
-    .map((ligne) => ({ ligne, rempli: remplirModele(ligne, valeurs) }))
-    .filter(({ ligne, rempli }) => !(QUE_DES_REPERES.test(ligne) && !rempli.trim()))
-    .map(({ rempli }) => rempli)
-    .join('\n');
+}
+
+export function messagePartageSortie(sortie, plageMeteo, urlAppli, modele) {
+  return remplirLignes(modele || MODELES_DEFAUT.partage_whatsapp, { ...valeursSortie(sortie, urlAppli), meteo: ligneMeteoTexte(plageMeteo) });
+}
+
+export function messageAnnulationSortie(sortie, urlAppli, modele) {
+  return remplirLignes(modele || MODELES_DEFAUT.annulation_partage_whatsapp, { ...valeursSortie(sortie, urlAppli), motif: sortie.motif_annulation || '' });
 }

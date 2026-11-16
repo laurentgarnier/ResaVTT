@@ -70,6 +70,8 @@ export function vueSortie(s, contexteVue) {
     modifie_par: s.modifie_par, inscrits, nb_messages: nbMessages[s.id] || 0,
     traces: traces.map((t) => ({ id: t.id, nom_fichier: t.nom_fichier, km: t.km, dplus: t.dplus })),
     peut_modifier: peutModifier(sortie, u), peut_changer_horaire: peutChangerHoraire(sortie, u),
+    // Sa propre sortie libre (sans transmettre de numéro) : seul son créateur annonce lui-même l'annulation sur WhatsApp.
+    mienne: sortie.type === 'libre' && !!sortie.createur_tel && sortie.createur_tel === u.telephone,
     inscriptions_ouvertes: inscriptionsOuvertes(sortie, maintenant),
   };
 }
@@ -101,6 +103,7 @@ export function actionCalendrier(ctx, u) {
   const cv = contexteVue(ctx, u);
   const parDate = grouper(sorties, 'date');
   const parametres = lireCleValeur(ctx.depot.lire('Parametres'));
+  const modeles = lireCleValeur(ctx.depot.lire('Modeles'));
   // Les sorties d'une même règle restent groupées dans leur ordre, à l'heure de la règle, même si l'heure d'une occurrence a changé.
   const heureRegle = {};
   for (const r of ctx.depot.lire('Regles')) heureRegle[r.id] = r.heure;
@@ -116,7 +119,8 @@ export function actionCalendrier(ctx, u) {
       point_rdv_defaut: parametres.point_rdv_defaut,
     },
     // Message WhatsApp de partage d'une nouvelle sortie, réglé par l'admin : composé dans le téléphone.
-    modele_partage: lireCleValeur(ctx.depot.lire('Modeles')).partage_whatsapp || MODELES_DEFAUT.partage_whatsapp,
+    modele_partage: modeles.partage_whatsapp || MODELES_DEFAUT.partage_whatsapp,
+    modele_annulation: modeles.annulation_partage_whatsapp || MODELES_DEFAUT.annulation_partage_whatsapp,
     jours: dates.map((date) => ({
       date,
       passe: date < aujourdhui,

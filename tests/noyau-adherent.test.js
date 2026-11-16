@@ -151,3 +151,15 @@ test("calendrier : le modèle du message de partage arrive avec le calendrier, e
   t.depot.ajouter('Modeles', [{ cle: 'partage_whatsapp', valeur: 'Roulez avec {{createur}} ! {{lien_sortie}}' }]);
   assert.equal(t.appel('calendrier', { jeton }).data.modele_partage, 'Roulez avec {{createur}} ! {{lien_sortie}}');
 });
+
+test("calendrier : modèle du message d'annulation, et « mienne » vrai seulement pour le créateur d'une sortie libre", () => {
+  const t = contexteTest();
+  const ludo = t.appel('calendrier', { jeton: t.connecter('0600000003') }).data;
+  assert.equal(ludo.modele_annulation, 'Sortie annulée : {{titre}}\n{{date}} {{heure}} – {{point_rdv}}\nMotif : {{motif}}\nDétails : {{lien_sortie}}');
+  const sortieDe = (cal, id) => cal.jours.flatMap((j) => j.sorties).find((s) => s.id === id);
+  assert.equal(sortieDe(ludo, 'libre-etangs').mienne, true);
+  assert.equal(sortieDe(ludo, 'R:sm:2026-11-14:1').mienne, false);
+  const admin = t.appel('calendrier', { jeton: t.connecter('0611111111') }).data;
+  assert.equal(sortieDe(admin, 'libre-etangs').mienne, false);
+  assert.ok(!JSON.stringify(ludo.jours).includes('+33'));
+});

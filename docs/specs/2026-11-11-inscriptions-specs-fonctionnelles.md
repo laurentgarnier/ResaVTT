@@ -167,7 +167,15 @@ Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de 
 > Ensoleillé, 8–11°, pluie 0 mm, vent 10 km/h NE
 > Inscriptions : lien vers la sortie
 
-Repères du modèle : `{{titre}}`, `{{date}}`, `{{heure}}`, `{{point_rdv}}`, `{{distances}}`, `{{meteo}}`, `{{lien_sortie}}`, `{{createur}}`, `{{lien}}`. Une ligne faite seulement de repères vides disparaît.
+Repères du modèle : `{{titre}}`, `{{date}}`, `{{heure}}`, `{{point_rdv}}`, `{{distances}}`, `{{meteo}}`, `{{lien_sortie}}`, `{{createur}}`, `{{lien}}`. Une ligne dont tous les repères sont vides disparaît.
+
+**Prévenir de l'annulation sur WhatsApp [décidé]** : de même, quand un adhérent annule **sa propre** sortie libre, la fiche affiche un encart « Prévenir le club de l'annulation » avec un bouton **« 📲 Prévenir de l'annulation sur WhatsApp »**, et le message prêt, d'après un modèle réglé par l'admin (Admin → Messages) ; par défaut :
+> Sortie annulée : Boucle des étangs
+> Vendredi 20 novembre 13:30 – PDL
+> Motif : Pluie annoncée
+> Détails : lien vers la sortie
+
+Repères : ceux du partage (sans `{{meteo}}` ni `{{distances}}`), plus `{{motif}}` ; la ligne « Motif : » disparaît sans motif. Le bouton reste ensuite sur la fiche de la sortie annulée, pour son créateur. Un administrateur qui annule la sortie d'un autre ne le voit pas : le club est alors prévenu automatiquement par mail et WhatsApp (§4.8).
 
 La météo est celle de la demi-journée de la sortie, déjà connue du téléphone (pas d'appel au serveur). Le bouton reste ensuite sur la fiche, pour le créateur (et les administrateurs), tant que la sortie n'est pas annulée. Les sorties récurrentes n'en ont pas : elles ont leurs rappels (§4.9).
 

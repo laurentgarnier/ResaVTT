@@ -192,3 +192,9 @@ test('onglet Messages : le message WhatsApp de partage d\'une nouvelle sortie se
   assert.match(html, /\{\{createur\}\}/);
   assert.match(html, /\{\{lien_sortie\}\}/);
 });
+
+test("onglet Messages : le message WhatsApp d'annulation de l'adhérent se règle, avec ses repères", () => {
+  const html = renderAdmin(donneesAdmin(), 'messages');
+  assert.match(html, /Annulation par l'adhérent : message WhatsApp<\/label><textarea name="annulation_partage_whatsapp">Sortie annulée : \{\{titre\}\}/);
+  assert.match(html, /\{\{motif\}\}/);
+});
