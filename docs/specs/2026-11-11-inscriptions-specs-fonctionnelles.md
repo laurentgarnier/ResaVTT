@@ -63,7 +63,7 @@ Source d'inspiration **[décidé]** : une appli de padel montrant les jours de l
 | **Administrateur** (déclaré par le secrétaire) | Tout ce que fait un adhérent, plus l'accès à la page d'administration. Lors de sa première connexion sur un appareil, il reçoit un **code par email** **[décidé]**, puisque les numéros sont visibles par tous dans WhatsApp. Il peut modifier ou supprimer **n'importe quelle** sortie et supprimer n'importe quel message. |
 | **Secrétaire** | Tient la liste des adhérents et désigne les administrateurs, dans le tableau Google. Reçoit le rappel WhatsApp prêt à envoyer. |
 | **Suppléants** | Reçoivent aussi le rappel WhatsApp prêt à envoyer. |
-| **Automate** | Génère les sorties récurrentes, envoie le rappel du jeudi, envoie les annulations et purge les données anciennes. |
+| **Automate** | Génère les sorties récurrentes, envoie les rappels (par récurrence ou groupés), envoie les annulations et purge les données anciennes. |
 
 ## 4. Écrans et parcours
 
@@ -205,9 +205,8 @@ Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de 
 **Paramètres généraux**
 - La commune du club (pour la météo).
 - Le point de rendez-vous par défaut.
-- Le jour et l'heure du rappel hebdomadaire. Par défaut : **le jeudi à 18 h**.
 - Les destinataires du rappel WhatsApp et l'email qui reçoit les alertes en cas d'erreur.
-- Les **modèles de textes** : rappel par mail, rappel WhatsApp, annulation par mail, annulation WhatsApp.
+- Les **modèles de textes** des annulations (mail et WhatsApp). Les textes des rappels se règlent avec chaque rappel (voir 4.9).
 - La durée de conservation des sorties : **1 mois** par défaut **[décidé]** (voir 5).
 
 **Statistiques [décidé]**
@@ -221,18 +220,24 @@ Seules les sorties déjà parties sont comptées ; les sorties annulées ne le s
 
 **La liste des adhérents** et la désignation des administrateurs restent dans le **tableau Google** tenu par le secrétaire **[choix du rédacteur]**. Une gestion des adhérents dans l'appli serait une évolution ultérieure. Le club peut avoir **plusieurs administrateurs** : il suffit de cocher la case « admin » et de renseigner l'**email** de chacun, qui reçoit sur sa propre adresse le code d'accès à l'administration.
 
-### 4.9 Rappel hebdomadaire **[décidé]**
-Chaque jeudi à l'heure paramétrée, sans intervention :
-- **Mail** à la **liste de diffusion du club**, qui est un Google Groupe à adresse unique. C'est un rappel avec le **lien de l'appli** et des **liens directs vers le samedi et le dimanche qui suivent** **[décidé]**.
-- **Ordre du message [décidé]** : le rappel, mail comme WhatsApp, invite **d'abord à ouvrir l'appli installée** depuis l'écran d'accueil, **puis** donne le lien vers la version web pour ceux qui ne l'ont pas installée. Le modèle par défaut :
-  > Les sorties du week-end sont ouvertes !
-  > 🚵 Samedi : {{lien_samedi}}
-  > 🚵 Dimanche : {{lien_dimanche}}
+### 4.9 Rappels **[décidé]**
+Le rappel unique du jeudi est remplacé par des rappels réglés **par récurrence**, et par des **rappels groupés**. Détail : `docs/superpowers/specs/2026-11-16-rappels-par-recurrence-design.md`.
+
+- **Rappel individuel** : dans l'écran de chaque récurrence, l'admin choisit s'il y a un rappel, son **jour** et son **heure** d'envoi, ses **canaux** (mail à la liste, WhatsApp, ou les deux), son **objet** et son **texte**. Par défaut : 2 jours avant la sortie, à 18 h, par mail et WhatsApp.
+- **Rappels groupés** (onglet Admin « Rappels ») : un rappel nommé (ex. « Week-end ») annonce en un seul message les prochaines sorties de plusieurs récurrences, avec ses propres jour, heure, canaux et texte. Il **remplace les rappels individuels** des récurrences qu'il couvre. Une récurrence n'appartient qu'à un rappel groupé ; le désactiver ou le supprimer rend leur rappel individuel à ses récurrences.
+- **Sorties annoncées** : pour chaque récurrence couverte, sa prochaine date dans les 7 jours qui suivent l'envoi, sans les sorties annulées. Sans sortie à annoncer, rien ne part.
+- **Contenu par défaut** : chaque sortie annoncée avec la **météo prévue** pour sa demi-journée (pictogramme, températures, pluie en mm, vent en km/h et secteur) et le **lien direct vers la sortie**, où l'on s'inscrit :
+  > Les inscriptions sont ouvertes !
+  > 🚵 Samedi 21 novembre 09:00 – Samedi matin (PDL)
+  >    ☀️ 2–9° · 💧0 mm · 🌬 12 km/h NE
+  >    👉 lien vers la sortie
   > 📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.
   > 🌐 Pas encore installée : {{lien}}
-- `{{lien_samedi}}` et `{{lien_dimanche}}` mènent à la page du premier samedi et du premier dimanche à partir du jour d'envoi (un rappel envoyé un samedi désigne ce samedi-là). Les administrateurs les placent où ils veulent dans les textes.
-- La même consigne s'applique aux messages d'annulation.
-- **Mail au secrétaire et aux suppléants** contenant un bouton qui ouvre WhatsApp avec le rappel déjà rédigé. Il suffit de choisir le groupe et d'appuyer sur Envoyer.
+- **Ordre du message [décidé]** : le message invite d'abord à ouvrir l'appli installée, puis donne le lien de la version web. La même consigne s'applique aux messages d'annulation.
+- **« Envoyer maintenant »** sur chaque rappel l'envoie tout de suite, même désactivé ou couvert par un groupe (tests, démonstrations).
+- **Canal WhatsApp** : un mail au secrétaire et aux suppléants contient un bouton qui ouvre WhatsApp avec le message déjà rédigé ; il suffit de choisir le groupe et d'appuyer sur Envoyer.
+- **Mise en service** : l'ancien rappel du jeudi devient le rappel groupé « Week-end » (récurrences du samedi et du dimanche, mêmes jour et heure).
+- **Doubles annonces** : si l'admin modifie les rappels en cours de semaine, une sortie peut être annoncée deux fois ; accepté, car cela ne suit qu'une modification.
 - Si l'envoi échoue, les destinataires des alertes sont prévenus.
 
 ## 5. Données personnelles (RGPD)

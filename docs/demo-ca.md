@@ -21,8 +21,8 @@ Aujourd'hui, le secrétaire passe environ 30 minutes chaque jeudi. Il vide ou re
 | 7 | Téléphone | **+ Créer une sortie**, après-midi, puis Publier | Deux touchers suffisent pour proposer de rouler. Si une sortie existe déjà sur ce créneau, l'appli propose de la rejoindre. |
 | 8 | PC | Se connecter en tant que Ben (06 00 00 00 02) et changer l'heure de Samedi après-midi | N'importe quel adhérent peut décaler l'horaire d'une sortie récurrente. Le message apparaît dans la discussion sur le téléphone. |
 | 9 | Téléphone | **⚙ Admin** → recevoir le code par mail, le saisir | L'administration est protégée par un code envoyé par email. |
-| 10 | Téléphone | **Messages → Envoyer le rappel maintenant** | Habituellement, cela part tout seul le jeudi à 18 h. |
-| 11 | Téléphone | Ouvrir les 2 mails reçus, puis appuyer sur le bouton vert : WhatsApp s'ouvre, message prêt | Pour le secrétaire, il ne reste qu'un clic sur WhatsApp. |
+| 10 | Téléphone | **Rappels → Week-end → 📨 Envoyer maintenant** ; montrer aussi la section « Rappel » d'une récurrence | Chaque récurrence a son rappel (jour, heure, mail et/ou WhatsApp, texte), ou un rappel groupé comme « Week-end ». D'habitude, il part tout seul. |
+| 11 | Téléphone | Ouvrir les 2 mails reçus (météo et lien de chaque sortie), puis appuyer sur le bouton vert : WhatsApp s'ouvre, message prêt | Chaque sortie arrive avec sa météo et son lien d'inscription. Pour le secrétaire, il ne reste qu'un clic sur WhatsApp. |
 | 12 | Téléphone | **Fermetures** : fermer le samedi suivant (motif « Vacances ») | Les sorties sont annulées et les adhérents prévenus automatiquement (dans l'heure, ou tout de suite en lançant `tic`). |
 | 13 | PC | Ouvrir le Google Sheet et le fichier Adhérents | Les données restent chez le club, dans un tableau lisible. La liste des adhérents se tient comme aujourd'hui. |
 

@@ -191,21 +191,22 @@ Le schéma ne montre que les clés et les champs utiles aux liens ; le détail d
 Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux données de l'appli, et une mauvaise manipulation de sa part ne peut pas casser les onglets gérés par le code. Le chargement initial consiste à copier la liste existante du secrétaire dans ce fichier. L'email est **obligatoire pour les administrateurs** (voir §8, double vérification), facultatif pour les autres.
 
 ### Gérés via la page d'administration (le Sheet n'est que le stockage)
-- **`Regles`** : id, nom, jour (lundi à dimanche), heure, point_rdv, frequence_semaines (1, 2…), date_depart, active.
+- **`Regles`** : id, nom, jour (lundi à dimanche), heure, point_rdv, frequence_semaines (1, 2…), date_depart, active, puis le rappel individuel : rappel_actif, rappel_jour, rappel_heure, rappel_mail, rappel_whatsapp, rappel_objet, rappel_texte (colonnes ajoutées en fin d'en-tête des classeurs existants par l'adaptateur).
+- **`Rappels`** (rappels groupés) : id, nom, regle_ids (séparés par des virgules), jour, heure, mail, whatsapp, actif, objet, texte.
 - **`RegleSorties`** : regle_id, ordre (1, 2, 3…), titre, lieu, km, dplus, description, trace_id (facultatif).
 - **`Fermetures`** : id, debut, fin, regle_id (vide si toutes les règles sont concernées), motif, cree_par.
 - **`Parametres`** (clé / valeur) :
   - commune_nom, commune_lat, commune_lon ;
   - point_rdv_defaut ;
-  - rappel_jour, rappel_heure ;
+  - rappel_jour, rappel_heure : réglage de l'ancien rappel du jeudi, lu seulement par la mise en service des rappels ; rappels_migres (`oui` une fois faite) ;
   - adresse_liste (adresse @googlegroups.com) ;
   - destinataires_whatsapp, email_alertes ;
   - whatsapp_numero (facultatif) : s'il est renseigné, le lien devient `https://wa.me/<numero>?text=…` et ouvre directement la conversation avec ce numéro. Vide, le lien laisse choisir la conversation ou le groupe ;
   - conservation_mois, url_appli, contact_rgpd.
 - **`Modeles`** (clé / valeur) :
-  - rappel_mail_objet, rappel_mail_corps, rappel_whatsapp ;
-  - annulation_mail_objet, annulation_mail_corps, annulation_whatsapp.
-  - Le rappel hebdomadaire est un **simple rappel avec le lien de l'appli** **[décidé]**. Il utilise `{{lien}}`, ainsi que `{{lien_samedi}}` et `{{lien_dimanche}}` : liens directs vers la page du jour (`<url_appli>#/jour/AAAA-MM-JJ`) du premier samedi et du premier dimanche à partir de la date d'envoi. Après connexion, l'appli ouvre l'écran demandé par le lien. Les modèles par défaut, rappel comme annulation, invitent d'abord à ouvrir l'appli installée depuis l'écran d'accueil, puis donnent `{{lien}}` pour la version web (texte en spécification fonctionnelle §4.9).
+  - annulation_mail_objet, annulation_mail_corps, annulation_whatsapp ;
+  - rappel_individuel_objet / _texte et rappel_groupe_objet / _texte : textes proposés à la création d'un rappel. Le texte d'un rappel est ensuite rangé avec lui (`Regles.rappel_*` ou `Rappels`), avec les repères `{{liste_sorties}}`, `{{nom}}`, `{{lien}}`, `{{titre}}`, `{{date}}`, `{{heure}}`, `{{point_rdv}}`, `{{meteo}}`, `{{lien_sortie}}` (§7.2).
+  - Les modèles par défaut invitent d'abord à ouvrir l'appli installée depuis l'écran d'accueil, puis donnent `{{lien}}` pour la version web. Un lien vers un jour (`#/jour/AAAA-MM-JJ`) ou une sortie (`#/sortie/<id>`) ouvre cet écran, y compris après la connexion.
   - Les modèles d'annulation utilisent `{{lien}}` et `{{liste_annulations}}`. Ce second champ est un bloc texte que le code génère, avec une ligne par sortie annulée : titre, date, heure, motif. Il n'y a donc pas besoin de boucle dans le moteur de modèles, et le même modèle sert pour une ou plusieurs annulations.
 
 ### Gérés par le code
@@ -259,7 +260,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 | `trace_lire` | adhérent | Renvoie le contenu GPX. Les fichiers ne sont donc jamais publics sur Drive. |
 | `trace_supprimer` | créateur de la sortie, auteur de la trace, ou admin | — |
 | `admin_lire` / `admin_enregistrer` | admin | Lecture et écriture de `Regles` + `RegleSorties`, `Fermetures`, `Parametres` et `Modeles`. Enregistrer une fermeture déclenche immédiatement l'annulation des sorties déjà générées sur la période (§7.3). |
-| `rappel_envoyer_maintenant` | admin | Envoie immédiatement le rappel hebdomadaire (mail à la liste et mail WhatsApp), avec la clé `rappel:manuel:<horodatage>`. Sert aux tests et aux démonstrations. |
+| `rappel_envoyer_maintenant` | admin | `{ type: 'R'|'G', id }` : envoie tout de suite ce rappel (individuel ou groupé), même désactivé ou couvert, avec la clé `rappel-manuel:<type>:<id>:<horodatage>`. Renvoie `{ nb_sorties }`. |
 | `admin_stats` | admin | Statistiques d'une année (`annee`, par défaut l'année en cours) : sorties proposées et annulées, total des participants (inscriptions), participants et sorties par mois, participants par jour de la semaine et demi-journée (matin : départ avant 13 h). Réunit `Bilan` et les sorties encore présentes ; seules les sorties déjà parties comptent, les annulées sont mises à part. Renvoie aussi `annees`, les années disponibles. |
 | `admin_geocoder` | admin | Cherche une commune via l'API de géocodage Open-Meteo et renvoie des candidats avec latitude et longitude. |
 
@@ -376,34 +377,18 @@ flowchart TD
 
 L'exécution se produit dans l'heure qui suit l'horaire prévu, sans précision à la minute.
 
-### 7.2 Rappel hebdomadaire **[décidé]**
-Le rappel est dû quand le jour et l'heure courants atteignent `rappel_jour` / `rappel_heure` et que la clé `rappel:<date>` n'est pas encore terminée dans `Envois`.
+### 7.2 Rappels par récurrence et rappels groupés **[décidé]**
+Conception complète : `docs/superpowers/specs/2026-11-16-rappels-par-recurrence-design.md`. Code : `backend/noyau/rappels.js`.
 
-1. `MailApp.sendEmail` vers `adresse_liste`, qui compte pour un seul destinataire dans le quota Gmail de 100 par jour, avec le modèle `rappel_mail_*`.
-2. Un mail aux `destinataires_whatsapp`. Il contient le texte du rappel et un bouton vers `https://wa.me/?text=<texte encodé>`.
+À chaque `tic()` :
+1. `migrerRappels` (une seule fois, marquée par `rappels_migres = oui` dans `Parametres`) transforme l'ancien rappel du jeudi en rappel groupé « Week-end » et complète les `rappel_*` des règles.
+2. `rappelsDuTic` calcule les rappels programmés (`rappelsProgrammes` : groupes actifs, puis rappels individuels des récurrences non couvertes), garde ceux dus (jour réglé, heure atteinte) dont la clé `rappel:<R|G>:<id>:<date>` n'est pas terminée dans `Envois` et qui ont des sorties à annoncer (`sortiesAAnnoncer` : prochaine date de chaque récurrence dans les 7 jours, sans les annulées).
+3. La météo est lue **une seule fois** par tic, et seulement si un rappel part (`meteoServeur` : Open-Meteo par `UrlFetchApp`, mêmes variables que l'appli). Indisponible : « Météo pas encore disponible ».
+4. `envoyerRappelProgramme` compose le message (`composerMessage`) et envoie les seules étapes des canaux cochés :
+   - mail à `adresse_liste` (un seul destinataire dans le quota Gmail de 100 par jour) ;
+   - mail aux `destinataires_whatsapp` avec un bouton vers `https://wa.me/?text=<texte encodé>`.
 
-```mermaid
-sequenceDiagram
-  participant T as tic()
-  participant E as Onglet Envois
-  participant M as MailApp
-  participant L as Google Groupe
-  actor S as Secrétaire / suppléants
-  actor W as Groupe WhatsApp
-  T->>E: rappel:date terminé ?
-  alt étape mail pas faite
-    T->>M: mail rappel_mail_*
-    M->>L: un destinataire, diffusé à tous
-    T->>E: etape_mail = ok
-  end
-  alt étape WhatsApp pas faite
-    T->>M: mail avec bouton wa.me
-    M->>S: « Envoyer sur WhatsApp »
-    T->>E: etape_whatsapp = ok
-  end
-  Note over T,E: en cas d'erreur : tentatives +1,<br/>reprise au tic suivant, alerte après 3 échecs
-  S->>W: un clic, choix du groupe, Envoyer
-```
+Aucune requête d'adhérent ne lit ni ne calcule de rappel : les performances de l'appli ne changent pas.
 
 Chaque étape est enregistrée individuellement dans `Envois`, ce qui permet de reprendre sans doublon. Après 3 échecs, une alerte est envoyée à `email_alertes`.
 
