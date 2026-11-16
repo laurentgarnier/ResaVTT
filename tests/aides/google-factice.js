@@ -6,6 +6,7 @@ function creerFeuille(nom, stats = { getValues: 0 }) {
   // Comme Google Sheets : une feuille a un nombre maximal de lignes (1000 au départ) ;
   // écrire au-delà échoue, deleteRow le réduit, insertRowsAfter l'augmente.
   let lignesMax = 1000;
+  let colonnesMax = 26; // comme une feuille neuve (A à Z)
   const largeur = () => donnees.reduce((m, l) => Math.max(m, l.length), 0);
   const plage = (r, c, nr, nc) => ({
     getValues: () => (stats.getValues++, Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => {
@@ -13,6 +14,7 @@ function creerFeuille(nom, stats = { getValues: 0 }) {
       return v === undefined ? '' : v;
     }))),
     setValues: (v) => {
+      if (c + (v[0] || []).length - 1 > colonnesMax) throw new Error(`Colonnes en dehors des dimensions de la feuille (${nom}).`);
       if (r + v.length - 1 > lignesMax) throw new Error(`Les coordonnées de la plage sont en dehors des dimensions de la feuille (${nom}).`);
       v.forEach((ligne, i) => {
         while (donnees.length < r + i) donnees.push([]);
@@ -35,6 +37,8 @@ function creerFeuille(nom, stats = { getValues: 0 }) {
     getLastColumn: () => largeur(),
     getMaxRows: () => lignesMax,
     insertRowsAfter: (_apres, n) => { lignesMax += n; },
+    getMaxColumns: () => colonnesMax,
+    insertColumnsAfter: (_apres, n) => { colonnesMax += n; },
     getRange: (r, c, nr = 1, nc = 1) => plage(r, c, nr, nc),
     appendRow: (l) => { donnees.push([...l]); },
     deleteRow: (r) => { donnees.splice(r - 1, 1); lignesMax -= 1; },

@@ -204,3 +204,30 @@ test('cache des données : une modification relit la feuille, même si une ligne
   const idsAttendus = avant.slice(1).map((l) => l[0]).filter((id) => id !== avant[2][0]).sort();
   assert.deepEqual(apres.slice(1).map((l) => l[0]).sort(), idsAttendus, 'une autre ligne a été écrasée');
 });
+
+test("classeur d'une version précédente : les colonnes rappel_* manquantes sont ajoutées et les réglages enregistrés relus", () => {
+  const { g, contexte } = installer({ sheetsAvance: true });
+  // En-tête et lignes de Regles tels qu'avant l'ajout des rappels : 8 colonnes.
+  const ancienne = g.classeurActif.getSheetByName('Regles');
+  const lignes = ancienne.getRange(1, 1, ancienne.getLastRow(), 8).getValues();
+  g.classeurActif.deleteSheet(ancienne);
+  const f = g.classeurActif.insertSheet('Regles');
+  f.getRange(1, 1, lignes.length, 8).setValues(lignes);
+  g.cache.delete('donnees');
+  const n = vm.runInContext("depotSheets(classeurAppli, {}).modifier('Regles', function (r) { return r.id === 'sm'; }, { rappel_jour: '4', rappel_actif: true })", contexte);
+  assert.equal(n, 1);
+  const entete = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0];
+  assert.deepEqual(entete.slice(8), ['rappel_actif', 'rappel_jour', 'rappel_heure', 'rappel_mail', 'rappel_whatsapp', 'rappel_objet', 'rappel_texte']);
+  const relu = JSON.parse(vm.runInContext("JSON.stringify(depotSheets(classeurAppli, {}).lire('Regles'))", contexte)).find((r) => r.id === 'sm');
+  assert.equal(String(relu.rappel_jour), '4');
+  assert.equal(relu.nom, 'Samedi matin');
+});
+
+test('cache des données : Rappels y figure et la copie reste sous 30 000 caractères avec la démo', () => {
+  const { g, post } = installer({ sheetsAvance: true });
+  const jeton = post({ action: 'connexion', telephone: '0600000002' }).data.jeton;
+  post({ action: 'calendrier', jeton });
+  const brut = g.cache.get('donnees');
+  assert.ok(JSON.parse(brut).onglets.Rappels, 'Rappels absent du cache');
+  assert.ok(brut.length < 30000, `cache de ${brut.length} caractères`);
+});

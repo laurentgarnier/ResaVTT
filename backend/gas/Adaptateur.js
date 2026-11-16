@@ -121,7 +121,29 @@ function depotSheets(source, options) {
   function idClasseur() {
     return options.id || classeur().getId();
   }
+  var entetesVerifiees = {};
+  // Une nouvelle version peut ajouter des colonnes à un onglet (ex. rappel_* dans Regles) : elles sont ajoutées en fin
+  // d'en-tête des classeurs existants, une fois par requête, sans relire la feuille si l'en-tête en mémoire est complet.
+  function completerEntetes(f, onglet) {
+    if (entetesVerifiees[onglet] || !ONGLETS[onglet]) return f;
+    entetesVerifiees[onglet] = true;
+    var connues = memo[onglet] && memo[onglet][0];
+    if (!connues) connues = f.getLastColumn() ? f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0] : [];
+    connues = connues.map(function (e) { return String(e).trim(); });
+    var manquantes = ONGLETS[onglet].filter(function (c) { return connues.indexOf(c) < 0; });
+    if (!manquantes.length) return f;
+    var debut = f.getLastColumn() + 1;
+    if (debut + manquantes.length - 1 > f.getMaxColumns()) f.insertColumnsAfter(f.getMaxColumns(), debut + manquantes.length - 1 - f.getMaxColumns());
+    f.getRange(1, debut, 1, manquantes.length).setValues([manquantes]);
+    delete memo[onglet];
+    oublierDonneesEnCache();
+    return f;
+  }
   function feuille(onglet) {
+    var f = feuilleBrute(onglet);
+    return completerEntetes(f, onglet);
+  }
+  function feuilleBrute(onglet) {
     var f = classeur().getSheetByName(onglet);
     if (f) return f;
     // Onglet ajouté par une nouvelle version (ex. Bilan) : créé à la volée, sans relancer initialiser().
@@ -190,8 +212,12 @@ function depotSheets(source, options) {
   function valeurs(onglet) {
     precharger();
     if (!Object.prototype.hasOwnProperty.call(memo, onglet)) {
-      memo[onglet] = valeursFeuille(feuille(onglet));
+      // Lecture d'abord, contrôle de l'en-tête ensuite à partir de ce qui vient d'être lu : pas de lecture de plus.
+      var f = feuilleBrute(onglet);
+      memo[onglet] = valeursFeuille(f);
       mesure.feuilles_lues_une_a_une++;
+      completerEntetes(f, onglet);
+      if (!Object.prototype.hasOwnProperty.call(memo, onglet)) memo[onglet] = valeursFeuille(f);
     }
     return memo[onglet];
   }
