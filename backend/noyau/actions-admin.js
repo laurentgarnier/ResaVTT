@@ -5,7 +5,7 @@ import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schema.js';
 import { horodatage, completerRecurrences } from './actions-adherent.js';
 import { messageSysteme } from './actions-sorties.js';
-import { migrerRappels, reglagesRappelDefaut, regleIdsDuGroupe, envoyerRappelManuel } from './rappels.js';
+import { migrerRappels, reglagesRappelDefaut, regleIdsDuGroupe, envoyerRappelManuel, heureCourte } from './rappels.js';
 
 const DUREE_CODE_MS = 15 * 60 * 1000;
 const ESSAIS_CODE_MAX = 5;
@@ -52,8 +52,9 @@ export function actionAdminLire(ctx, u) {
   const booleens = (o, cles) => ({ ...o, ...Object.fromEntries(cles.map((c) => [c, estVrai(o[c])])) });
   return {
     regles: ctx.depot.lire('Regles').map((r) => ({ ...booleens(r, ['active', 'rappel_actif', 'rappel_mail', 'rappel_whatsapp']),
-      rappel_jour: String(r.rappel_jour), heure: r.heure, rappel_heure: r.rappel_heure })),
-    rappels: ctx.depot.lire('Rappels').map((g) => ({ ...booleens(g, ['actif', 'mail', 'whatsapp']), jour: String(g.jour), regle_ids: regleIdsDuGroupe(g) })),
+      rappel_jour: String(r.rappel_jour), rappel_heure: heureCourte(r.rappel_heure) })),
+    rappels: ctx.depot.lire('Rappels').map((g) => ({ ...booleens(g, ['actif', 'mail', 'whatsapp']), jour: String(g.jour), heure: heureCourte(g.heure),
+      regle_ids: regleIdsDuGroupe(g) })),
     regle_sorties: ctx.depot.lire('RegleSorties'),
     fermetures: ctx.depot.lire('Fermetures'),
     parametres: { ...PARAMETRES_DEFAUT, ...lireCleValeur(ctx.depot.lire('Parametres')) },
@@ -70,8 +71,9 @@ function texte(v, max) {
 const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 // Jour, heure, canaux, objet et texte d'un rappel (individuel ou groupé), validés. nom : pour le message d'erreur.
-function reglagesValides(nom, { actif, jour, heure, mail, whatsapp, objet, texte: corps }) {
+function reglagesValides(nom, { actif, jour, heure: heureBrute, mail, whatsapp, objet, texte: corps }) {
   const j = Number(jour);
+  const heure = heureCourte(heureBrute);
   const canaux = { mail: estVrai(mail) || mail === true, whatsapp: estVrai(whatsapp) || whatsapp === true };
   const estActif = estVrai(actif) || actif === true;
   if (!(j >= 0 && j <= 6) || String(jour) === '' || !HEURE.test(String(heure)) || (estActif && !canaux.mail && !canaux.whatsapp)) {

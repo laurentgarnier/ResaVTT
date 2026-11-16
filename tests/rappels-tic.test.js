@@ -143,3 +143,29 @@ test('rappel_envoyer_maintenant : envoie un rappel individuel même couvert par 
   assert.equal(t.appel('rappel_envoyer_maintenant', { jeton, type: 'G', id: 'g-weekend' }).data.nb_sorties, 2);
   assert.equal(t.appel('rappel_envoyer_maintenant', { jeton, type: 'G', id: 'inconnu' }).erreur, 'introuvable');
 });
+
+test("heure relue « 18:00:00 » (cellule convertie en heure par Sheets) : acceptée et ramenée à 18:00, l'enregistrement ne bloque pas", () => {
+  const t = contexteTest();
+  const jeton = adminVerifie(t);
+  t.depot.modifier('Regles', (r) => r.id === 'sm', { rappel_heure: '18:00:00' });
+  t.depot.modifier('Rappels', () => true, { heure: '18:00:00' });
+  const d = t.appel('admin_lire', { jeton }).data;
+  assert.equal(d.regles.find((r) => r.id === 'sm').rappel_heure, '18:00');
+  assert.equal(d.rappels[0].heure, '18:00');
+  const brut = t.depot.lire('Regles').map((r) => (r.id === 'sm' ? { ...r, rappel_heure: '18:00:00' } : r));
+  const r = t.appel('admin_enregistrer', { jeton, regles: brut, regle_sorties: d.regle_sorties, rappels: d.rappels.map((g) => ({ ...g, heure: '18:00:00' })) });
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.equal(t.depot.lire('Regles').find((x) => x.id === 'sm').rappel_heure, '18:00');
+  assert.equal(t.depot.lire('Rappels')[0].heure, '18:00');
+});
+
+test('rappel_envoyer_maintenant : un canal en échec → complet: false ; aucun canal coché → complet: false', () => {
+  const t = contexteTest();
+  const jeton = adminVerifie(t);
+  t.echouerMailSi((m) => m.objet === 'À poster sur WhatsApp');
+  assert.deepEqual(t.appel('rappel_envoyer_maintenant', { jeton, type: 'G', id: 'g-weekend' }).data, { nb_sorties: 2, complet: false });
+  t.echouerMailSi(null);
+  assert.deepEqual(t.appel('rappel_envoyer_maintenant', { jeton, type: 'G', id: 'g-weekend' }).data, { nb_sorties: 2, complet: true });
+  t.depot.modifier('Regles', (r) => r.id === 'sm', { rappel_mail: false, rappel_whatsapp: false });
+  assert.deepEqual(t.appel('rappel_envoyer_maintenant', { jeton, type: 'R', id: 'sm' }).data, { nb_sorties: 1, complet: false });
+});

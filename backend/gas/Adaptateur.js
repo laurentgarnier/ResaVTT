@@ -134,6 +134,8 @@ function depotSheets(source, options) {
     if (!manquantes.length) return f;
     var debut = f.getLastColumn() + 1;
     if (debut + manquantes.length - 1 > f.getMaxColumns()) f.insertColumnsAfter(f.getMaxColumns(), debut + manquantes.length - 1 - f.getMaxColumns());
+    // Au format texte comme les autres colonnes : sinon Sheets convertit « 18:00 » en heure.
+    f.getRange(1, debut, f.getMaxRows(), manquantes.length).setNumberFormat('@');
     f.getRange(1, debut, 1, manquantes.length).setValues([manquantes]);
     delete memo[onglet];
     oublierDonneesEnCache();

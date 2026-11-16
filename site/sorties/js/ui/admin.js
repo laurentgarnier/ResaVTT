@@ -324,7 +324,9 @@ export function brancherAdmin(racine, actions, d, reafficher) {
       b.disabled = true;
       try {
         const r = await actions.appeler('rappel_envoyer_maintenant', { type, id: reste.join(':') });
-        actions.toast(r.nb_sorties ? `Rappel envoyé (${r.nb_sorties} sortie${r.nb_sorties > 1 ? 's' : ''}) : vérifiez vos mails.` : 'Aucune sortie à annoncer dans les 7 jours : rien n\'est parti.');
+        const nb = `${r.nb_sorties} sortie${r.nb_sorties > 1 ? 's' : ''}`;
+        actions.toast(!r.nb_sorties ? 'Aucune sortie à annoncer dans les 7 jours : rien n\'est parti.'
+          : r.complet ? `Rappel envoyé (${nb}) : vérifiez vos mails.` : `Envoi incomplet (${nb}) : voir les derniers envois dans Messages.`);
       } catch (e) { actions.toast(e.message); }
       b.disabled = false;
     }

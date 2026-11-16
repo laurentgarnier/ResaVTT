@@ -8,6 +8,12 @@ import { envoyerEtapes, etapesMessage } from './automate.js';
 
 const HORIZON_JOURS = 7;
 
+// Une heure relue du classeur peut valoir « 18:00:00 » (cellule convertie en heure par Sheets) : ramenée à HH:MM.
+export function heureCourte(v) {
+  const m = String(v == null ? '' : v).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  return m ? `${m[1].padStart(2, '0')}:${m[2]}` : String(v == null ? '' : v);
+}
+
 // Nouvelle récurrence : rappel 2 jours avant la sortie, à 18:00, par mail et WhatsApp.
 export function reglagesRappelDefaut(jourSortie) {
   return {
@@ -133,14 +139,14 @@ export function envoyerRappelProgramme(ctx, rappel, cle, hourly) {
 
 export function rappelDepuisGroupe(g, regleIds) {
   return {
-    type: 'G', id: g.id, nom: g.nom, regle_ids: regleIds, jour: Number(g.jour), heure: g.heure,
+    type: 'G', id: g.id, nom: g.nom, regle_ids: regleIds, jour: Number(g.jour), heure: heureCourte(g.heure),
     mail: estVrai(g.mail), whatsapp: estVrai(g.whatsapp), objet: g.objet, texte: g.texte,
   };
 }
 
 export function rappelDepuisRegle(r) {
   return {
-    type: 'R', id: r.id, nom: r.nom, regle_ids: [r.id], jour: Number(r.rappel_jour), heure: r.rappel_heure,
+    type: 'R', id: r.id, nom: r.nom, regle_ids: [r.id], jour: Number(r.rappel_jour), heure: heureCourte(r.rappel_heure),
     mail: estVrai(r.rappel_mail), whatsapp: estVrai(r.rappel_whatsapp), objet: r.rappel_objet, texte: r.rappel_texte,
   };
 }
@@ -186,8 +192,11 @@ export function envoyerRappelManuel(ctx, type, id, horodatage) {
   }
   if (!rappel) return null;
   const hourly = meteoServeur(ctx, lireCleValeur(ctx.depot.lire('Parametres')));
-  const { nb_sorties: nb } = envoyerRappelProgramme(ctx, rappel, `rappel-manuel:${type}:${id}:${horodatage}`, hourly);
-  return { nb_sorties: nb };
+  const { etat, nb_sorties: nb } = envoyerRappelProgramme(ctx, rappel, `rappel-manuel:${type}:${id}:${horodatage}`, hourly);
+  // Complet : au moins un canal demandé, et chacun a réussi.
+  const complet = !!etat && (rappel.mail || rappel.whatsapp)
+    && (!rappel.mail || etat.etape_mail === 'ok') && (!rappel.whatsapp || etat.etape_whatsapp === 'ok');
+  return { nb_sorties: nb, complet: !!complet };
 }
 
 // ——— Mise en service sur un classeur existant ———

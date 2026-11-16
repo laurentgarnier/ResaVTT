@@ -231,3 +231,14 @@ test('cache des données : Rappels y figure et la copie reste sous 30 000 caract
   assert.ok(JSON.parse(brut).onglets.Rappels, 'Rappels absent du cache');
   assert.ok(brut.length < 30000, `cache de ${brut.length} caractères`);
 });
+
+test('colonnes ajoutées à un classeur existant : mises au format texte, comme celles créées par initialiser()', () => {
+  const { g, contexte } = installer({ sheetsAvance: true });
+  const ancienne = g.classeurActif.getSheetByName('Regles');
+  const lignes = ancienne.getRange(1, 1, ancienne.getLastRow(), 8).getValues();
+  g.classeurActif.deleteSheet(ancienne);
+  const f = g.classeurActif.insertSheet('Regles');
+  f.getRange(1, 1, lignes.length, 8).setValues(lignes);
+  vm.runInContext("depotSheets(classeurAppli, {}).modifier('Regles', function (r) { return r.id === 'sm'; }, { rappel_heure: '18:00' })", contexte);
+  assert.deepEqual(f.formatsTexte, [[1, 9, f.getMaxRows(), 7]]);
+});

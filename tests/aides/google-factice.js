@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 function creerFeuille(nom, stats = { getValues: 0 }) {
   const donnees = [];
+  const formatsTexte = [];
   // Comme Google Sheets : une feuille a un nombre maximal de lignes (1000 au départ) ;
   // écrire au-delà échoue, deleteRow le réduit, insertRowsAfter l'augmente.
   let lignesMax = 1000;
@@ -21,7 +22,7 @@ function creerFeuille(nom, stats = { getValues: 0 }) {
         ligne.forEach((x, j) => { donnees[r - 1 + i][c - 1 + j] = x; });
       });
     },
-    setNumberFormat: () => {},
+    setNumberFormat: (format) => { if (format === '@') formatsTexte.push([r, c, nr, nc]); },
     insertCheckboxes: () => {},
     clearContent: () => {
       for (let i = 0; i < nr; i++) if (donnees[r - 1 + i]) for (let j = 0; j < nc; j++) donnees[r - 1 + i][c - 1 + j] = '';
@@ -29,6 +30,7 @@ function creerFeuille(nom, stats = { getValues: 0 }) {
   });
   return {
     donnees,
+    formatsTexte,
     getName: () => nom,
     getLastRow: () => {
       for (let i = donnees.length; i > 0; i--) if ((donnees[i - 1] || []).some((x) => x !== '' && x != null)) return i;
