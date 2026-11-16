@@ -56,7 +56,8 @@ function alerterEchec(ctx, cle, erreur) {
   }
 }
 
-function etapesMessage(ctx, objet, texteMail, texteWhatsApp) {
+// canaux : étapes à envoyer (par défaut les deux). Un rappel peut ne partir que par mail ou que par WhatsApp.
+export function etapesMessage(ctx, objet, texteMail, texteWhatsApp, canaux = { mail: true, whatsapp: true }) {
   const { parametres } = reglagesEnvoi(ctx);
   return [
     {
@@ -75,7 +76,7 @@ function etapesMessage(ctx, objet, texteMail, texteWhatsApp) {
         ctx.services.mail(parametres.destinataires_whatsapp, c.objet, c.texte, c.html);
       },
     },
-  ];
+  ].filter((e) => canaux[e.nom]);
 }
 
 export function envoyerRappel(ctx, cle) {

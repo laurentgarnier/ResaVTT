@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pire, picto, synthetiser, heureParHeure, cardinal } from '../site/sorties/js/logique/meteo.js';
+import { pire, picto, synthetiser, heureParHeure, cardinal, ligneMeteoTexte } from '../site/sorties/js/logique/meteo.js';
 import { fabriquerHoraire } from './aides/meteo.js';
 
 test('le pire code suit la gravité, pas le numéro', () => {
@@ -72,4 +72,10 @@ test('ancienne météo en cache sans direction : pas d\'orientation, pas d\'erre
   const s = synthetiser(h, '2026-11-14');
   assert.equal(s.matin.vent_cardinal, '');
   assert.equal(heureParHeure(h, '2026-11-14')[0].vent_cardinal, '');
+});
+
+test('ligneMeteoTexte : synthèse en texte, secteur du vent seul ; null → « Météo pas encore disponible »', () => {
+  assert.equal(ligneMeteoTexte({ emoji: '☀️', tmin: 2, tmax: 9, pluie_mm: 0, vent_max: 12, vent_cardinal: 'NE' }), '☀️ 2–9° · 💧0 mm · 🌬 12 km/h NE');
+  assert.equal(ligneMeteoTexte({ emoji: '🌧', tmin: 7, tmax: 7, pluie_mm: 2.4, vent_max: 30, vent_cardinal: '' }), '🌧 7° · 💧2,4 mm · 🌬 30 km/h');
+  assert.equal(ligneMeteoTexte(null), 'Météo pas encore disponible');
 });

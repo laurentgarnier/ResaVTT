@@ -1,8 +1,10 @@
 // Rappels par récurrence et rappels groupés (conception : docs/superpowers/specs/2026-11-16-rappels-par-recurrence-design.md).
 // Le rappel individuel est rangé dans la récurrence (colonnes rappel_* de Regles), les rappels groupés dans l'onglet Rappels.
-import { aujourdhuiLocal, jourSemaine, estPasse } from '../../site/sorties/js/logique/dates.js';
-import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
-import { estVrai } from './schema.js';
+import { aujourdhuiLocal, jourSemaine, estPasse, creneau, libelleJour } from '../../site/sorties/js/logique/dates.js';
+import { MODELES_DEFAUT, remplirModele } from '../../site/sorties/js/logique/modeles.js';
+import { synthetiser, ligneMeteoTexte } from '../../site/sorties/js/logique/meteo.js';
+import { estVrai, lireCleValeur } from './schema.js';
+import { envoyerEtapes, etapesMessage } from './automate.js';
 
 const HORIZON_JOURS = 7;
 
@@ -71,4 +73,66 @@ export function sortiesAAnnoncer(sorties, regleIds, maintenant) {
     res.push(...candidates.filter((s) => s.date === prochaine));
   }
   return res.sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure));
+}
+
+// Météo horaire d'Open-Meteo pour la commune du club, lue par le serveur au moment d'un envoi. null si indisponible :
+// le rappel part alors sans météo.
+export function meteoServeur(ctx, parametres) {
+  if (!parametres.commune_lat || !parametres.commune_lon) return null;
+  const variables = 'temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m';
+  try {
+    const r = ctx.services.http(`https://api.open-meteo.com/v1/forecast?latitude=${parametres.commune_lat}&longitude=${parametres.commune_lon}`
+      + `&hourly=${variables}&timezone=Europe%2FParis&forecast_days=14`);
+    return r && r.hourly ? r.hourly : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function lienSortie(urlAppli, id) {
+  return urlAppli ? `${String(urlAppli).replace(/\/?$/, '/')}#/sortie/${encodeURIComponent(id)}` : '';
+}
+
+function meteoDe(sortie, hourly) {
+  if (!hourly) return null;
+  try {
+    return synthetiser(hourly, sortie.date)[creneau(sortie.heure)] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Objet et texte d'un rappel : repères {{nom}}, {{liste_sorties}}, {{lien}}, et ceux de la première sortie annoncée.
+export function composerMessage(rappel, sorties, hourly, urlAppli) {
+  const lignes = sorties.map((s) => {
+    const lien = lienSortie(urlAppli, s.id);
+    return [
+      `🚵 ${libelleJour(s.date)} ${s.heure} – ${s.titre}${s.point_rdv ? ` (${s.point_rdv})` : ''}`,
+      `   ${ligneMeteoTexte(meteoDe(s, hourly))}`,
+      lien ? `   👉 ${lien}` : '',
+    ].filter(Boolean).join('\n');
+  });
+  const premiere = sorties[0] || {};
+  const valeurs = {
+    nom: rappel.nom,
+    liste_sorties: lignes.join('\n'),
+    lien: urlAppli || '',
+    titre: premiere.titre || '',
+    date: premiere.date ? libelleJour(premiere.date) : '',
+    heure: premiere.heure || '',
+    point_rdv: premiere.point_rdv || '',
+    meteo: premiere.date ? ligneMeteoTexte(meteoDe(premiere, hourly)) : '',
+    lien_sortie: premiere.id ? lienSortie(urlAppli, premiere.id) : '',
+  };
+  return { objet: remplirModele(rappel.objet || '', valeurs), texte: remplirModele(rappel.texte || '', valeurs) };
+}
+
+// Envoie un rappel (programmé ou manuel) sur ses canaux. Aucune sortie à annoncer : rien ne part, rien n'est noté.
+export function envoyerRappelProgramme(ctx, rappel, cle, hourly) {
+  const sorties = sortiesAAnnoncer(ctx.depot.lire('Sorties'), rappel.regle_ids, ctx.services.maintenant());
+  if (!sorties.length) return { etat: null, nb_sorties: 0 };
+  const parametres = lireCleValeur(ctx.depot.lire('Parametres'));
+  const m = composerMessage(rappel, sorties, hourly, parametres.url_appli);
+  const etapes = etapesMessage(ctx, m.objet, m.texte, m.texte, { mail: !!rappel.mail, whatsapp: !!rappel.whatsapp });
+  return { etat: envoyerEtapes(ctx, cle, etapes), nb_sorties: sorties.length };
 }

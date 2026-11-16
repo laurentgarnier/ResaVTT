@@ -94,3 +94,11 @@ export function heureParHeure(hourly, date) {
     emoji: picto(hourly.weather_code[i]).emoji,
   }));
 }
+
+// Synthèse d'une demi-journée en texte brut, pour un message (le vent : secteur seul, sans flèche).
+export function ligneMeteoTexte(p) {
+  if (!p) return 'Météo pas encore disponible';
+  const temp = p.tmin === p.tmax ? `${p.tmin}` : `${p.tmin}–${p.tmax}`;
+  const pluie = String(Number(p.pluie_mm) || 0).replace('.', ',');
+  return `${p.emoji} ${temp}° · 💧${pluie} mm · 🌬 ${p.vent_max} km/h${p.vent_cardinal ? ` ${p.vent_cardinal}` : ''}`;
+}
