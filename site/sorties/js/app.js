@@ -5,6 +5,8 @@ import { echapper } from './logique/html.js';
 import { renderConnexion, brancherConnexion } from './ui/connexion.js';
 import { renderGrille, renderJour } from './ui/calendrier.js';
 import { renderFrise, renderAgenda } from './ui/calendrier-variantes.js';
+import { messagePartageSortie } from './logique/partage.js';
+import { lienWhatsApp } from './logique/modeles.js';
 import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, THEMES } from './ui/affichage.js';
 import { renderSortie, brancherSortie, arreterDiscussion } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
@@ -217,9 +219,20 @@ async function afficherSortie(racine, id) {
     racine.innerHTML = '<p class="mut">Cette sortie n\'existe plus.</p><a class="btn o" href="#/">Retour au calendrier</a>';
     return;
   }
-  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes);
+  // Message de partage : tout de suite sans météo, complété dès que la prévision (souvent déjà en cache) est là.
+  const urlAppli = location.href.split('#')[0];
+  const nouvelle = etat.sortieCreee === id;
+  etat.sortieCreee = null;
+  racine.innerHTML = renderSortie(sortie, [], etat.cal.personnes, { partage: { texte: messagePartageSortie(sortie, null, urlAppli) }, nouvelle });
   brancherSortie(racine, actions, sortie);
   window.scrollTo(0, 0);
+  const bouton = racine.querySelector('a.btn.whatsapp');
+  if (bouton) {
+    meteoCourante().then((m) => {
+      const plage = m.parDate && m.parDate[sortie.date] ? m.parDate[sortie.date][creneauDe(sortie.heure)] : null;
+      if (plage) bouton.href = lienWhatsApp(messagePartageSortie(sortie, plage, urlAppli));
+    }).catch(() => {});
+  }
 }
 
 function afficherCreation(racine, date) {

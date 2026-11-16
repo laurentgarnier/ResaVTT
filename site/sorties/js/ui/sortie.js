@@ -1,6 +1,7 @@
 // Détail d'une sortie : informations, traces GPX, inscription, liste des inscrits, discussion.
 import { echapper, initiales, couleurAvatar } from '../logique/html.js';
 import { libelleJour } from '../logique/dates.js';
+import { lienWhatsApp } from '../logique/modeles.js';
 import { lirePoints } from '../logique/gpx.js';
 import { badgeSortie } from './calendrier.js';
 import { afficherCarte } from './carte.js';
@@ -71,7 +72,17 @@ function renderInscrits(sortie) {
     <div class="noms">${sortie.inscrits.map((i) => `<div class="nm${i.a_moi ? ' moi' : ''}"><span class="av" style="background:${couleurAvatar(i.nom_affiche)}">${echapper(initiales(i.nom_affiche))}</span><span class="n">${echapper(i.nom_affiche)}</span>${i.inscrit_par ? ` <small>(par ${echapper(i.inscrit_par)})</small>` : ''}</div>`).join('')}</div>`;
 }
 
-export function renderSortie(sortie, messages, personnes, { tousMessages = false } = {}) {
+// Sortie libre, pour qui peut la modifier (son créateur, ou un admin) : la faire connaître sur WhatsApp.
+// nouvelle : juste après la création, l'encart invite à prévenir le club.
+function renderPartage(sortie, partage, nouvelle) {
+  if (!partage || sortie.type !== 'libre' || !sortie.peut_modifier || sortie.statut === 'annulee') return '';
+  const bouton = `<a class="btn whatsapp" href="${echapper(lienWhatsApp(partage.texte))}" target="_blank" rel="noopener">📲 Partager sur WhatsApp</a>`;
+  return nouvelle
+    ? `<div class="encart partage"><b>Prévenir le club</b><br>Le message est prêt, avec la météo et le lien d'inscription : choisissez le groupe du club dans WhatsApp, puis Envoyer.${bouton}</div>`
+    : `<div class="partage">${bouton}</div>`;
+}
+
+export function renderSortie(sortie, messages, personnes, { tousMessages = false, partage = null, nouvelle = false } = {}) {
   const annulee = sortie.statut === 'annulee';
   const details = [sortie.lieu && `Secteur : ${echapper(sortie.lieu)}`, sortie.km && `${echapper(sortie.km)} km`, sortie.dplus && `${echapper(sortie.dplus)} m D+`].filter(Boolean).join(' · ');
   return `<article class="detail">
@@ -81,6 +92,7 @@ export function renderSortie(sortie, messages, personnes, { tousMessages = false
       ${sortie.peut_changer_horaire && !annulee ? '<button class="lien-plus" data-action="horaire">✎ changer l\'heure</button>' : ''}</div>
     ${details ? `<div class="meta">${details}</div>` : ''}
     ${sortie.description ? `<p class="meta" style="white-space:pre-wrap">${echapper(sortie.description)}</p>` : ''}
+    ${renderPartage(sortie, partage, nouvelle)}
     ${annulee ? `<p class="encart">Sortie annulée. Motif : ${echapper(sortie.motif_annulation || 'non précisé')}</p>` : ''}
     ${renderTraces(sortie)}
     ${renderInscription(sortie, personnes)}

@@ -139,6 +139,7 @@ export function brancherFormulaire(racine, actions, { mode, sortie, cal }) {
         }
       }
       actions.toast(messageFin);
+      if (mode === 'creer') actions.etat.sortieCreee = id; // la fiche propose alors de prévenir le club sur WhatsApp
       await actions.rafraichir();
       actions.aller(lienSortie(id));
     } catch (e) {

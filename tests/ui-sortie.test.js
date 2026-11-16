@@ -63,3 +63,22 @@ test('droits : crayon horaire sur récurrente, modifier/annuler seulement pour l
   assert.match(htmlLudo, /href="#\/modifier\/libre-etangs"/);
   assert.match(htmlLudo, /Proposée par Ludo/);
 });
+
+test('sortie libre, vue par son créateur : bouton « Partager sur WhatsApp » avec le message prêt ; encart « Prévenir le club » juste après la création', () => {
+  const { sortie, messages, personnes } = donnees('libre-etangs', '0600000003'); // Ludo, créateur
+  const partage = { texte: '🚵 Nouvelle sortie : Boucle des étangs\n👉 lien' };
+  const html = renderSortie(sortie, messages, personnes, { partage });
+  assert.match(html, /<a class="btn whatsapp" href="https:\/\/wa\.me\/\?text=%F0%9F%9A%B5%20Nouvelle%20sortie[^"]*" target="_blank" rel="noopener">📲 Partager sur WhatsApp<\/a>/);
+  assert.doesNotMatch(html, /Prévenir le club/);
+  assert.match(renderSortie(sortie, messages, personnes, { partage, nouvelle: true }), /Prévenir le club[\s\S]*📲 Partager sur WhatsApp/);
+});
+
+test('pas de bouton de partage pour un autre adhérent, une sortie récurrente ou une sortie annulée', () => {
+  const partage = { texte: 'x' };
+  const autre = donnees('libre-etangs', '0600000002'); // Ben
+  assert.doesNotMatch(renderSortie(autre.sortie, autre.messages, autre.personnes, { partage }), /Partager sur WhatsApp/);
+  const recurrente = donnees('R:sm:2026-11-14:1', '0611111111');
+  assert.doesNotMatch(renderSortie(recurrente.sortie, recurrente.messages, recurrente.personnes, { partage }), /Partager sur WhatsApp/);
+  const ludo = donnees('libre-etangs', '0600000003');
+  assert.doesNotMatch(renderSortie({ ...ludo.sortie, statut: 'annulee' }, ludo.messages, ludo.personnes, { partage }), /Partager sur WhatsApp/);
+});

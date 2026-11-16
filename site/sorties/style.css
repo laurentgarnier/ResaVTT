@@ -364,3 +364,9 @@ details.heures .horaire { overscroll-behavior-x: contain; }
 label.case { display: inline-flex; align-items: center; gap: 6px; margin: 8px 0 4px; color: var(--txt); font-size: 14px; }
 label.case input { width: auto; }
 label.case input:disabled + * , label.case:has(input:disabled) { color: var(--mut); }
+
+/* Partage d'une sortie sur WhatsApp */
+.btn.whatsapp { background: #25d366; color: #06301a; }
+.partage { margin-top: 10px; }
+.partage .btn.whatsapp { display: block; width: 100%; margin-top: 8px; }
+.encart.partage { color: var(--txt); background: var(--card); border: 1px solid #25d366; }

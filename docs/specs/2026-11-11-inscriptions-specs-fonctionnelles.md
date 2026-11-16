@@ -160,6 +160,15 @@ Deux touchers suffisent donc pour publier une sortie. Si une sortie existe déj�
 
 Une sortie libre est une sortie unique : **pas de groupes de niveau** et pas de récurrence **[décidé]**.
 
+**Prévenir le club sur WhatsApp [décidé]** : juste après « Publier », la fiche de la sortie affiche un encart « Prévenir le club » avec un bouton **« 📲 Partager sur WhatsApp »**. Un toucher ouvre WhatsApp avec un message prêt, que l'adhérent envoie lui-même au groupe du club :
+> 🚵 Nouvelle sortie : Boucle des étangs
+> Vendredi 20 novembre 13:30 – PDL
+> 35 km · 450 m D+
+> ☀️ 8–11° · 💧0 mm · 🌬 10 km/h NE
+> 👉 Inscriptions : lien vers la sortie
+
+La météo est celle de la demi-journée de la sortie, déjà connue du téléphone (pas d'appel au serveur). Le bouton reste ensuite sur la fiche, pour le créateur (et les administrateurs), tant que la sortie n'est pas annulée. Les sorties récurrentes n'en ont pas : elles ont leurs rappels (§4.9).
+
 ### 4.6 Discussion d'une sortie **[décidé]**
 - C'est un fil de messages courts, en texte, propre à chaque sortie : remarques, contraintes, retards, et autres.
 - Chaque message affiche le nom de la personne, la date et l'heure. On peut supprimer son propre message ; un administrateur peut supprimer n'importe quel message.
