@@ -35,18 +35,10 @@ export function rappelsProgrammes(regles, groupes) {
     const ids = idsDuGroupe(g);
     ids.forEach((id) => couvertes.add(id));
     const regleIds = ids.filter((id) => actives.has(id));
-    if (!regleIds.length) continue;
-    res.push({
-      type: 'G', id: g.id, nom: g.nom, regle_ids: regleIds, jour: Number(g.jour), heure: g.heure,
-      mail: estVrai(g.mail), whatsapp: estVrai(g.whatsapp), objet: g.objet, texte: g.texte,
-    });
+    if (regleIds.length) res.push(rappelDepuisGroupe(g, regleIds));
   }
   for (const r of actives.values()) {
-    if (couvertes.has(r.id) || !estVrai(r.rappel_actif)) continue;
-    res.push({
-      type: 'R', id: r.id, nom: r.nom, regle_ids: [r.id], jour: Number(r.rappel_jour), heure: r.rappel_heure,
-      mail: estVrai(r.rappel_mail), whatsapp: estVrai(r.rappel_whatsapp), objet: r.rappel_objet, texte: r.rappel_texte,
-    });
+    if (!couvertes.has(r.id) && estVrai(r.rappel_actif)) res.push(rappelDepuisRegle(r));
   }
   return res;
 }
@@ -135,4 +127,114 @@ export function envoyerRappelProgramme(ctx, rappel, cle, hourly) {
   const m = composerMessage(rappel, sorties, hourly, parametres.url_appli);
   const etapes = etapesMessage(ctx, m.objet, m.texte, m.texte, { mail: !!rappel.mail, whatsapp: !!rappel.whatsapp });
   return { etat: envoyerEtapes(ctx, cle, etapes), nb_sorties: sorties.length };
+}
+
+// ——— Rappels déduits du classeur ———
+
+export function rappelDepuisGroupe(g, regleIds) {
+  return {
+    type: 'G', id: g.id, nom: g.nom, regle_ids: regleIds, jour: Number(g.jour), heure: g.heure,
+    mail: estVrai(g.mail), whatsapp: estVrai(g.whatsapp), objet: g.objet, texte: g.texte,
+  };
+}
+
+export function rappelDepuisRegle(r) {
+  return {
+    type: 'R', id: r.id, nom: r.nom, regle_ids: [r.id], jour: Number(r.rappel_jour), heure: r.rappel_heure,
+    mail: estVrai(r.rappel_mail), whatsapp: estVrai(r.rappel_whatsapp), objet: r.rappel_objet, texte: r.rappel_texte,
+  };
+}
+
+export function regleIdsDuGroupe(g) {
+  return idsDuGroupe(g);
+}
+
+// ——— Tâche horaire ———
+
+// Un rappel déjà parti aujourd'hui n'est repris que si l'un de ses canaux a échoué (envoyerEtapes saute ceux réussis).
+function resteAEnvoyer(rappel, ligne) {
+  if (!ligne) return true;
+  return (rappel.mail && ligne.etape_mail !== 'ok') || (rappel.whatsapp && ligne.etape_whatsapp !== 'ok');
+}
+
+// Rappels dus à cet instant. La météo n'est demandée qu'une fois, et seulement si au moins un rappel a des sorties
+// à annoncer.
+export function rappelsDuTic(ctx, maintenant) {
+  const aujourdhui = aujourdhuiLocal(maintenant);
+  const envois = new Map(ctx.depot.lire('Envois').map((e) => [e.cle, e]));
+  const sorties = ctx.depot.lire('Sorties');
+  const aEnvoyer = rappelsProgrammes(ctx.depot.lire('Regles'), ctx.depot.lire('Rappels'))
+    .filter((r) => estDu(r, maintenant))
+    .map((r) => ({ rappel: r, cle: `rappel:${r.type}:${r.id}:${aujourdhui}` }))
+    .filter(({ rappel, cle }) => resteAEnvoyer(rappel, envois.get(cle)))
+    .filter(({ rappel }) => sortiesAAnnoncer(sorties, rappel.regle_ids, maintenant).length > 0);
+  if (!aEnvoyer.length) return;
+  const hourly = meteoServeur(ctx, lireCleValeur(ctx.depot.lire('Parametres')));
+  for (const { rappel, cle } of aEnvoyer) envoyerRappelProgramme(ctx, rappel, cle, hourly);
+}
+
+// « Envoyer maintenant » : même désactivé ou couvert par un groupe, le rappel part.
+export function envoyerRappelManuel(ctx, type, id, horodatage) {
+  const regles = ctx.depot.lire('Regles');
+  let rappel = null;
+  if (type === 'G') {
+    const g = ctx.depot.lire('Rappels').find((x) => x.id === id);
+    if (g) rappel = rappelDepuisGroupe(g, idsDuGroupe(g).filter((rid) => regles.some((r) => r.id === rid)));
+  } else if (type === 'R') {
+    const r = regles.find((x) => x.id === id);
+    if (r) rappel = rappelDepuisRegle(r);
+  }
+  if (!rappel) return null;
+  const hourly = meteoServeur(ctx, lireCleValeur(ctx.depot.lire('Parametres')));
+  const { nb_sorties: nb } = envoyerRappelProgramme(ctx, rappel, `rappel-manuel:${type}:${id}:${horodatage}`, hourly);
+  return { nb_sorties: nb };
+}
+
+// ——— Mise en service sur un classeur existant ———
+
+export const RAPPEL_WEEKEND = {
+  nom: 'Week-end',
+  objet: 'Sorties VTT : les inscriptions du week-end sont ouvertes',
+  texte: "Les sorties du week-end sont ouvertes !\n{{liste_sorties}}\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : {{lien}}",
+};
+
+// Textes par défaut de l'ancien rappel du jeudi, pour reconnaître un texte jamais personnalisé.
+const ANCIENS_TEXTES_DEFAUT = [
+  "Les sorties du week-end sont ouvertes !\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : {{lien}}",
+  "Les sorties du week-end sont ouvertes !\n🚵 Samedi : {{lien_samedi}}\n🚵 Dimanche : {{lien_dimanche}}\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : {{lien}}",
+];
+
+function texteRepris(corps) {
+  if (!corps || ANCIENS_TEXTES_DEFAUT.includes(corps)) return RAPPEL_WEEKEND.texte;
+  const lignes = corps.split('\n').filter((l) => !/\{\{lien_(samedi|dimanche)\}\}/.test(l)).join('\n');
+  return /\{\{liste_sorties\}\}/.test(lignes) ? lignes : `${lignes}\n{{liste_sorties}}`;
+}
+
+// Une seule fois : l'ancien rappel du jeudi devient le rappel groupé « Week-end » (récurrences du samedi et du
+// dimanche) ; chaque récurrence reçoit ses réglages individuels (désactivés hors week-end).
+export function migrerRappels(ctx, parametresDefaut = {}) {
+  const parametres = { ...parametresDefaut, ...lireCleValeur(ctx.depot.lire('Parametres')) };
+  if (parametres.rappels_migres === 'oui') return false;
+  const regles = ctx.depot.lire('Regles');
+  for (const r of regles.filter((x) => x.rappel_jour === '' || x.rappel_jour == null)) {
+    const weekend = r.jour === '5' || r.jour === '6' || r.jour === 5 || r.jour === 6;
+    ctx.depot.modifier('Regles', (x) => x.id === r.id, { ...reglagesRappelDefaut(r.jour), rappel_actif: weekend });
+  }
+  if (!ctx.depot.lire('Rappels').length) {
+    const modeles = lireCleValeur(ctx.depot.lire('Modeles'));
+    const corps = modeles.rappel_mail_corps;
+    if (modeles.rappel_whatsapp && corps && modeles.rappel_whatsapp !== corps) {
+      ctx.journal('rappels', "Le texte WhatsApp de l'ancien rappel du jeudi n'a pas été repris : le rappel « Week-end » utilise le texte du mail.");
+    }
+    ctx.depot.ajouter('Rappels', [{
+      id: 'g-weekend', nom: RAPPEL_WEEKEND.nom,
+      regle_ids: regles.filter((r) => ['5', '6'].includes(String(r.jour))).map((r) => r.id).join(','),
+      jour: String(parametres.rappel_jour || '3'), heure: parametres.rappel_heure || '18:00', mail: true, whatsapp: true, actif: true,
+      objet: modeles.rappel_mail_objet || RAPPEL_WEEKEND.objet, texte: texteRepris(corps),
+    }]);
+  }
+  if (!ctx.depot.modifier('Parametres', (l) => l.cle === 'rappels_migres', { valeur: 'oui' })) {
+    ctx.depot.ajouter('Parametres', [{ cle: 'rappels_migres', valeur: 'oui' }]);
+  }
+  return true;
 }

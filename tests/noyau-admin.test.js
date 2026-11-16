@@ -43,7 +43,7 @@ test("admin_lire refusé tant que le code n'est pas vérifié", () => {
   assert.deepEqual(d.regles.map((r) => r.nom), ['Samedi matin', 'Samedi après-midi', 'Dimanche matin']);
   assert.equal(d.regle_sorties.length, 3);
   assert.equal(d.parametres.whatsapp_numero, PORTEUR.telephone);
-  assert.match(d.modeles.rappel_whatsapp, /^Les sorties du week-end/);
+  assert.deepEqual(d.rappels.map((g) => [g.nom, g.regle_ids]), [['Week-end', ['sm', 'sa', 'dm']]]);
   assert.equal(d.fermetures.length, 1);
 });
 
@@ -76,11 +76,12 @@ test('nouvelle règle mardi 18:30 toutes les 2 semaines → sortie le mardi suiv
 test('paramètres et modèles : seules les clés connues sont enregistrées', () => {
   const t = contexteTest();
   const jeton = adminVerifie(t);
-  t.appel('admin_enregistrer', { jeton, parametres: { point_rdv_defaut: 'Gare', cle_bidon: 'x' }, modeles: { rappel_whatsapp: 'Roulez ! {{lien}}' } });
+  t.appel('admin_enregistrer', { jeton, parametres: { point_rdv_defaut: 'Gare', cle_bidon: 'x' }, modeles: { annulation_whatsapp: 'Annulé ! {{lien}}', rappel_whatsapp: 'ancienne clé' } });
   const d = t.appel('admin_lire', { jeton }).data;
   assert.equal(d.parametres.point_rdv_defaut, 'Gare');
   assert.equal(d.parametres.cle_bidon, undefined);
-  assert.equal(d.modeles.rappel_whatsapp, 'Roulez ! {{lien}}');
+  assert.equal(d.modeles.annulation_whatsapp, 'Annulé ! {{lien}}');
+  assert.equal(d.modeles.rappel_whatsapp, undefined);
 });
 
 test('admin_geocoder renvoie des communes candidates', () => {
@@ -89,18 +90,3 @@ test('admin_geocoder renvoie des communes candidates', () => {
   assert.deepEqual(t.appel('admin_geocoder', { jeton, nom: 'Fontainebleau' }).data, [{ nom: 'Fontainebleau', departement: 'Seine-et-Marne', lat: 48.4, lon: 2.7 }]);
 });
 
-test('rappel_envoyer_maintenant envoie immédiatement les deux mails', () => {
-  const t = contexteTest();
-  const jeton = adminVerifie(t);
-  t.appel('admin_enregistrer', { jeton, parametres: { url_appli: 'https://exemple.github.io/sorties/' } });
-  const avant = t.mails.length;
-  const r = t.appel('rappel_envoyer_maintenant', { jeton });
-  assert.deepEqual(r.data, { etape_mail: 'ok', etape_whatsapp: 'ok' });
-  const [liste, wa] = t.mails.slice(avant);
-  assert.equal(liste.destinataires, PORTEUR.email);
-  assert.equal(liste.texte, "Les sorties du week-end sont ouvertes !\n🚵 Samedi : https://exemple.github.io/sorties/#/jour/2026-11-14\n🚵 Dimanche : https://exemple.github.io/sorties/#/jour/2026-11-15\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://exemple.github.io/sorties/");
-  assert.equal(wa.objet, 'À poster sur WhatsApp');
-  assert.match(wa.html, /href="https:\/\/wa\.me\/33611111111\?text=Les%20sorties/);
-  assert.match(wa.html, /📲 Envoyer sur WhatsApp/);
-  assert.ok(t.appel('admin_lire', { jeton }).data.envois.some((e) => e.cle.startsWith('rappel:manuel:')));
-});

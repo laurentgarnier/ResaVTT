@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { remplirModele, lienWhatsApp, listeAnnulations, MODELES_DEFAUT } from '../site/sorties/js/logique/modeles.js';
 
-test('rappel WhatsApp : texte exact et lien vers un numéro', () => {
-  const t = remplirModele(MODELES_DEFAUT.rappel_whatsapp, { lien: 'https://x.github.io/sorties/', lien_samedi: 'S', lien_dimanche: 'D' });
-  assert.equal(t, "Les sorties du week-end sont ouvertes !\n🚵 Samedi : S\n🚵 Dimanche : D\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://x.github.io/sorties/");
+test('rappel par défaut : texte exact et lien WhatsApp vers un numéro', () => {
+  const t = remplirModele(MODELES_DEFAUT.rappel_individuel_texte, { lien: 'https://x.github.io/sorties/', liste_sorties: 'L' });
+  assert.equal(t, "Les inscriptions sont ouvertes !\nL\n📱 Vous avez l'appli : ouvrez-la depuis votre écran d'accueil.\n🌐 Pas encore installée : https://x.github.io/sorties/");
   assert.ok(lienWhatsApp('a b', '+33612345678').startsWith('https://wa.me/33612345678?text=a%20b'));
   assert.ok(lienWhatsApp('a').startsWith('https://wa.me/?text='));
   assert.ok(lienWhatsApp('a', '').startsWith('https://wa.me/?text='));
@@ -16,7 +16,7 @@ test('clé inconnue laissée intacte', () => {
 
 test('les modèles par défaut existent, dont ceux des rappels individuels et groupés', () => {
   assert.deepEqual(Object.keys(MODELES_DEFAUT).sort(), ['annulation_mail_corps', 'annulation_mail_objet', 'annulation_whatsapp', 'rappel_groupe_objet', 'rappel_groupe_texte',
-    'rappel_individuel_objet', 'rappel_individuel_texte', 'rappel_mail_corps', 'rappel_mail_objet', 'rappel_whatsapp']);
+    'rappel_individuel_objet', 'rappel_individuel_texte']);
   assert.match(MODELES_DEFAUT.annulation_whatsapp, /\{\{liste_annulations\}\}/);
 });
 

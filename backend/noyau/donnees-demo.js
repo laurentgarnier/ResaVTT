@@ -6,6 +6,7 @@ import { statsTrace } from '../../site/sorties/js/logique/gpx.js';
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { PARAMETRES_DEFAUT } from './schema.js';
 import { TRACES_DEMO } from './traces-demo.js';
+import { reglagesRappelDefaut, RAPPEL_WEEKEND } from './rappels.js';
 
 const NOMS_DEMO = ['Marie', 'Ben', 'Ludo', 'Jo', 'Alex', 'Claire', 'Damien', 'Émilie', 'Fabrice', 'Hugo',
   'Kévin', 'Laure', 'Manu', 'Nadia', 'Olivier', 'Rémi', 'Sophie', 'Thomas', 'Yann', 'Pierrot',
@@ -87,7 +88,10 @@ export function creerDonneesDemo(aujourdhui, porteur) {
     { id: 'sm', nom: 'Samedi matin', jour: '5', heure: '09:00', point_rdv: RDV, frequence_semaines: '1', date_depart: lundi, active: true },
     { id: 'sa', nom: 'Samedi après-midi', jour: '5', heure: '14:00', point_rdv: RDV, frequence_semaines: '1', date_depart: lundi, active: true },
     { id: 'dm', nom: 'Dimanche matin', jour: '6', heure: '09:00', point_rdv: RDV, frequence_semaines: '1', date_depart: lundi, active: true },
-  ];
+  ].map((r) => ({ ...r, ...reglagesRappelDefaut(r.jour) }));
+  // Le rappel du jeudi 18:00 pour tout le week-end, comme avant les rappels par récurrence.
+  const rappels = [{ id: 'g-weekend', nom: RAPPEL_WEEKEND.nom, regle_ids: 'sm,sa,dm', jour: '3', heure: '18:00', mail: true, whatsapp: true, actif: true,
+    objet: RAPPEL_WEEKEND.objet, texte: RAPPEL_WEEKEND.texte }];
   // Un seul créneau par règle.
   const regleSorties = [
     { regle_id: 'sm', ordre: '1', titre: 'Samedi matin', lieu: 'Forêt domaniale', km: '42', dplus: '750', description: 'Regroupements aux carrefours, chacun à son rythme.', trace_id: 't-boucle-foret' },
@@ -146,14 +150,14 @@ export function creerDonneesDemo(aujourdhui, porteur) {
     trace('t-inter', 'inter-rocher.gpx', idMatin, '', 'Ben'),
   ];
 
-  const parametres = { ...PARAMETRES_DEFAUT, adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone };
+  const parametres = { ...PARAMETRES_DEFAUT, rappels_migres: 'oui', adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone };
 
   return {
     adherents,
     tables: {
       Jetons: [], Journal: [], Envois: [], Bilan: historiqueDemo(lundi),
       Personnes: personnes, Sorties: sorties, Inscriptions: inscriptions, Discussions: discussions, Traces: traces,
-      Regles: regles, RegleSorties: regleSorties, Fermetures: [fermeture],
+      Regles: regles, RegleSorties: regleSorties, Fermetures: [fermeture], Rappels: rappels,
       Parametres: Object.entries(parametres).map(([cle, valeur]) => ({ cle, valeur })),
       Modeles: Object.entries(MODELES_DEFAUT).map(([cle, valeur]) => ({ cle, valeur })),
     },

@@ -34,7 +34,7 @@ test('fermeture du samedi suivant → 2 sorties annulées, un seul mail liste et
   assert.equal(msgs.at(-1).texte, 'Sortie annulée : Vacances.');
 });
 
-test('rappel dû jeudi 18:00 : mail liste + mail WhatsApp avec lien wa.me/33611111111 ; pas renvoyé au tic suivant', () => {
+test('rappel « Week-end » dû jeudi 18:00 : mail liste + mail WhatsApp avec lien wa.me/33611111111 ; pas renvoyé au tic suivant', () => {
   const t = contexteTest({ maintenant: new Date(2026, 10, 12, 18, 5) });
   ticNoyau(t.ctx);
   assert.deepEqual(objets(t.mails), ['Sorties VTT : les inscriptions du week-end sont ouvertes', 'À poster sur WhatsApp']);
@@ -59,7 +59,7 @@ test('tic reprend un envoi échoué sans doublon', () => {
   t.echouerMailSi((m) => m.objet === 'À poster sur WhatsApp');
   ticNoyau(t.ctx);
   assert.deepEqual(objets(t.mails), ['Sorties VTT : les inscriptions du week-end sont ouvertes']);
-  let envoi = t.depot.lire('Envois').find((e) => e.cle === 'rappel:2026-11-12');
+  let envoi = t.depot.lire('Envois').find((e) => e.cle === 'rappel:G:g-weekend:2026-11-12');
   assert.deepEqual([envoi.etape_mail, envoi.etape_whatsapp, envoi.tentatives], ['ok', '', '1']);
   assert.match(envoi.derniere_erreur, /échec mail simulé/);
 
@@ -70,14 +70,14 @@ test('tic reprend un envoi échoué sans doublon', () => {
   const alertes = t.mails.filter((m) => m.objet.startsWith('Sorties VTT : échec'));
   assert.equal(alertes.length, 1);
   assert.equal(alertes[0].destinataires, PORTEUR.email);
-  assert.match(alertes[0].texte, /rappel:2026-11-12/);
+  assert.match(alertes[0].texte, /rappel:G:g-weekend:2026-11-12/);
 
   t.echouerMailSi(null);
   t.regler(new Date(2026, 10, 12, 21, 0));
   ticNoyau(t.ctx);
   assert.equal(t.mails.filter((m) => m.objet === 'Sorties VTT : les inscriptions du week-end sont ouvertes').length, 1);
   assert.equal(t.mails.filter((m) => m.objet === 'À poster sur WhatsApp').length, 1);
-  envoi = t.depot.lire('Envois').find((e) => e.cle === 'rappel:2026-11-12');
+  envoi = t.depot.lire('Envois').find((e) => e.cle === 'rappel:G:g-weekend:2026-11-12');
   assert.deepEqual([envoi.etape_mail, envoi.etape_whatsapp], ['ok', 'ok']);
 });
 

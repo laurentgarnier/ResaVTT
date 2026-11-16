@@ -1,9 +1,10 @@
 // Tâches automatiques (spec technique §7) : génération, annulations à notifier, rappel hebdomadaire, purge.
-import { fenetre, aujourdhuiLocal, jourSemaine, prochainJour } from '../../site/sorties/js/logique/dates.js';
-import { remplirModele, listeAnnulations, lienJour, MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
-import { estVrai, lireCleValeur } from './schema.js';
+import { fenetre, aujourdhuiLocal } from '../../site/sorties/js/logique/dates.js';
+import { remplirModele, listeAnnulations, MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
+import { estVrai, lireCleValeur, PARAMETRES_DEFAUT } from './schema.js';
 import { completerRecurrences, horodatage } from './actions-adherent.js';
 import { courrierListe, courrierWhatsApp } from './courriers.js';
+import { migrerRappels, rappelsDuTic } from './rappels.js';
 import { archiverSorties } from './statistiques.js';
 
 const SEUIL_ALERTE_ENVOI = 3;
@@ -79,18 +80,6 @@ export function etapesMessage(ctx, objet, texteMail, texteWhatsApp, canaux = { m
   ].filter((e) => canaux[e.nom]);
 }
 
-export function envoyerRappel(ctx, cle) {
-  const { parametres, modeles } = reglagesEnvoi(ctx);
-  const aujourdhui = aujourdhuiLocal(ctx.services.maintenant());
-  const valeurs = {
-    lien: parametres.url_appli,
-    lien_samedi: lienJour(parametres.url_appli, prochainJour(aujourdhui, 5)),
-    lien_dimanche: lienJour(parametres.url_appli, prochainJour(aujourdhui, 6)),
-  };
-  return envoyerEtapes(ctx, cle, etapesMessage(ctx, modeles.rappel_mail_objet,
-    remplirModele(modeles.rappel_mail_corps, valeurs), remplirModele(modeles.rappel_whatsapp, valeurs)));
-}
-
 function notifierAnnulations(ctx, aujourdhui) {
   const aNotifier = ctx.depot.lire('Sorties')
     .filter((s) => s.statut === 'annulee' && estVrai(s.a_notifier) && !estVrai(s.annulation_notifiee) && s.date >= aujourdhui)
@@ -106,13 +95,6 @@ function notifierAnnulations(ctx, aujourdhui) {
   if (etat.etape_mail === 'ok' && etat.etape_whatsapp === 'ok') {
     ctx.depot.modifier('Sorties', (s) => ids.includes(s.id), { annulation_notifiee: true });
   }
-}
-
-function rappelDu(ctx, maintenant, aujourdhui) {
-  const { parametres } = reglagesEnvoi(ctx);
-  if (jourSemaine(aujourdhui) !== Number(parametres.rappel_jour)) return;
-  if (heureLocale(maintenant) < (parametres.rappel_heure || '18:00')) return;
-  envoyerRappel(ctx, 'rappel:' + aujourdhui);
 }
 
 function dateMoinsMois(date, mois) {
@@ -182,6 +164,7 @@ export function ticNoyau(ctx) {
   const aujourdhui = aujourdhuiLocal(maintenant);
   completerRecurrences(ctx, fenetre(aujourdhui));
   notifierAnnulations(ctx, aujourdhui);
-  rappelDu(ctx, maintenant, aujourdhui);
+  migrerRappels(ctx, PARAMETRES_DEFAUT);
+  rappelsDuTic(ctx, maintenant);
   purgeDue(ctx, maintenant, aujourdhui);
 }

@@ -44,19 +44,18 @@ test('onglet paramètres : numéro WhatsApp et URL de l\'appli', () => {
   assert.match(html, /Rechercher/);
 });
 
-test('onglet messages : bouton « Envoyer le rappel maintenant » et historique des envois', () => {
-  const d = donneesAdmin((t, jeton) => t.appel('rappel_envoyer_maintenant', { jeton }));
+test("onglet messages : historique des envois et textes d'annulation, plus de rappel du jeudi", () => {
+  const d = donneesAdmin((t, jeton) => t.appel('rappel_envoyer_maintenant', { jeton, type: 'G', id: 'g-weekend' }));
   const html = renderAdmin(d, 'messages');
-  assert.match(html, /Envoyer le rappel maintenant/);
-  assert.match(html, /rappel:manuel:/);
+  assert.match(html, /rappel-manuel:G:g-weekend:/);
   assert.match(html, /class="ok">✓ mail/);
-  assert.match(html, /name="rappel_whatsapp"/);
-  assert.match(html, /\{\{lien_samedi\}\} et \{\{lien_dimanche\}\}/);
+  assert.match(html, /name="annulation_whatsapp"/);
+  assert.doesNotMatch(html, /Rappel du jeudi|rappel-maintenant|lien_samedi/);
 });
 
 test('modèles et paramètres affichés échappés', () => {
   const d = donneesAdmin();
-  d.modeles.rappel_whatsapp = '</textarea><script>x</script>';
+  d.modeles.annulation_whatsapp = '</textarea><script>x</script>';
   d.parametres.point_rdv_defaut = '"><script>y</script>';
   assert.doesNotMatch(renderAdmin(d, 'messages'), /<script>x/);
   assert.doesNotMatch(renderAdmin(d, 'parametres'), /<script>y/);

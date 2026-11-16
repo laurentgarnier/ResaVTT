@@ -5,9 +5,6 @@ import { aujourdhuiLocal } from '../logique/dates.js';
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const ONGLETS_ADMIN = [['recurrences', 'Récurrences'], ['fermetures', 'Fermetures'], ['parametres', 'Paramètres'], ['messages', 'Messages'], ['stats', 'Statistiques']];
 const LIBELLES_MODELES = {
-  rappel_mail_objet: 'Rappel du jeudi : objet du mail',
-  rappel_mail_corps: 'Rappel du jeudi : texte du mail',
-  rappel_whatsapp: 'Rappel du jeudi : message WhatsApp',
   annulation_mail_objet: 'Annulation : objet du mail',
   annulation_mail_corps: 'Annulation : texte du mail',
   annulation_whatsapp: 'Annulation : message WhatsApp',
@@ -131,17 +128,13 @@ function etape(nom, valeur) {
 }
 
 function ongletMessages(d) {
-  return `<div class="bloc">
-      <h3>Rappel du jeudi</h3>
-      <p class="meta">Envoyé automatiquement chaque semaine. Pour une démonstration ou un test, vous pouvez l'envoyer tout de suite.</p>
-      <button class="btn p" data-action="rappel-maintenant" style="width:100%">📨 Envoyer le rappel maintenant</button>
-    </div>
+  return `<p class="meta">Les rappels se règlent dans chaque récurrence et dans l'onglet Rappels.</p>
     <div class="bloc"><h3>Derniers envois</h3>
       ${d.envois.length ? d.envois.map((e) => `<div class="envoi"><span>${echapper(e.cle)}<br><small class="mut">${echapper(e.horodatage)}</small>${e.derniere_erreur ? `<br><small class="ko">${echapper(e.derniere_erreur)} (${echapper(e.tentatives)} essai·s)</small>` : ''}</span><span>${etape('mail', e.etape_mail)}<br>${etape('WhatsApp', e.etape_whatsapp)}</span></div>`).join('') : '<p class="mut">Aucun envoi pour l\'instant.</p>'}
     </div>
     <form class="bloc" id="form-modeles">
-      <h3>Textes des messages</h3>
-      <p class="meta">{{lien}} est remplacé par l'adresse de l'appli ; dans le rappel, {{lien_samedi}} et {{lien_dimanche}} par les liens vers le samedi et le dimanche qui suivent l'envoi ; {{liste_annulations}} par la liste des sorties annulées.</p>
+      <h3>Textes des annulations</h3>
+      <p class="meta">{{lien}} est remplacé par l'adresse de l'appli ; {{liste_annulations}} par la liste des sorties annulées.</p>
       ${Object.entries(LIBELLES_MODELES).map(([cle, libelle]) => `<label>${libelle}</label><textarea name="${cle}">${echapper(d.modeles[cle])}</textarea>`).join('')}
       <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les textes</button>
     </form>`;
@@ -246,14 +239,6 @@ export function brancherAdmin(racine, actions, d, reafficher) {
       enregistrer({ regles: d.regles.filter((r) => r.id !== b.dataset.supprimerRegle), regle_sorties: d.regle_sorties.filter((s) => s.regle_id !== b.dataset.supprimerRegle) }, 'Récurrence supprimée.');
     }
     if (b.dataset.supprimerFermeture) enregistrer({ fermetures: d.fermetures.filter((f) => f.id !== b.dataset.supprimerFermeture) }, 'Fermeture retirée (les sorties déjà annulées le restent).');
-    if (b.dataset.action === 'rappel-maintenant') {
-      b.disabled = true;
-      try {
-        const r = await actions.appeler('rappel_envoyer_maintenant');
-        actions.toast(r.etape_mail === 'ok' && r.etape_whatsapp === 'ok' ? 'Rappel envoyé : vérifiez vos mails.' : 'Envoi incomplet : voir les derniers envois.');
-      } catch (e) { actions.toast(e.message); }
-      reafficher({});
-    }
     if (b.dataset.action === 'geocoder') {
       const form = racine.querySelector('#form-parametres');
       const zone = racine.querySelector('#resultats-commune');

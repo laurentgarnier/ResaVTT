@@ -29,7 +29,7 @@ export const PARAMETRES_DEFAUT = {
   commune_lon: '2.7016',
   point_rdv_defaut: 'PDL',
   rappel_jour: '3',
-  rappel_heure: '18:00',
+  rappel_heure: '18:00', // rappel_jour / rappel_heure : ancien rappel du jeudi, lus seulement par la mise en service
   adresse_liste: '',
   destinataires_whatsapp: '',
   whatsapp_numero: '',

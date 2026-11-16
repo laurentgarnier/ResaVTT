@@ -5,7 +5,7 @@ import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schema.js';
 import { horodatage, completerRecurrences } from './actions-adherent.js';
 import { messageSysteme } from './actions-sorties.js';
-import { envoyerRappel } from './automate.js';
+import { migrerRappels, reglagesRappelDefaut, regleIdsDuGroupe, envoyerRappelManuel } from './rappels.js';
 
 const DUREE_CODE_MS = 15 * 60 * 1000;
 const ESSAIS_CODE_MAX = 5;
@@ -48,8 +48,12 @@ export function actionAdminCodeVerifier(ctx, u, req) {
 
 export function actionAdminLire(ctx, u) {
   exigerAdminVerifie(u);
+  migrerRappels(ctx, PARAMETRES_DEFAUT);
+  const booleens = (o, cles) => ({ ...o, ...Object.fromEntries(cles.map((c) => [c, estVrai(o[c])])) });
   return {
-    regles: ctx.depot.lire('Regles').map((r) => ({ ...r, active: estVrai(r.active) })),
+    regles: ctx.depot.lire('Regles').map((r) => ({ ...booleens(r, ['active', 'rappel_actif', 'rappel_mail', 'rappel_whatsapp']),
+      rappel_jour: String(r.rappel_jour), heure: r.heure, rappel_heure: r.rappel_heure })),
+    rappels: ctx.depot.lire('Rappels').map((g) => ({ ...booleens(g, ['actif', 'mail', 'whatsapp']), jour: String(g.jour), regle_ids: regleIdsDuGroupe(g) })),
     regle_sorties: ctx.depot.lire('RegleSorties'),
     fermetures: ctx.depot.lire('Fermetures'),
     parametres: { ...PARAMETRES_DEFAUT, ...lireCleValeur(ctx.depot.lire('Parametres')) },
@@ -63,6 +67,52 @@ function texte(v, max) {
   return String(v == null ? '' : v).trim().slice(0, max);
 }
 
+const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+// Jour, heure, canaux, objet et texte d'un rappel (individuel ou groupé), validés. nom : pour le message d'erreur.
+function reglagesValides(nom, { actif, jour, heure, mail, whatsapp, objet, texte: corps }) {
+  const j = Number(jour);
+  const canaux = { mail: estVrai(mail) || mail === true, whatsapp: estVrai(whatsapp) || whatsapp === true };
+  const estActif = estVrai(actif) || actif === true;
+  if (!(j >= 0 && j <= 6) || String(jour) === '' || !HEURE.test(String(heure)) || (estActif && !canaux.mail && !canaux.whatsapp)) {
+    throw erreurMetier('champs_invalides', `Rappel « ${nom} » : jour, heure ou canal manquant.`);
+  }
+  return { actif: estActif, jour: String(j), heure: String(heure), ...canaux, objet: texte(objet, 150), texte: texte(corps, 2000) };
+}
+
+// Réglages du rappel individuel d'une règle : ceux reçus, ou ceux par défaut pour une règle qui n'en a pas encore.
+function reglagesRappel(r, jourSortie) {
+  if (r.rappel_jour === undefined || r.rappel_jour === '' || r.rappel_jour === null) return reglagesRappelDefaut(jourSortie);
+  const v = reglagesValides(texte(r.nom, 60), { actif: r.rappel_actif, jour: r.rappel_jour, heure: r.rappel_heure, mail: r.rappel_mail,
+    whatsapp: r.rappel_whatsapp, objet: r.rappel_objet, texte: r.rappel_texte });
+  return { rappel_actif: v.actif, rappel_jour: v.jour, rappel_heure: v.heure, rappel_mail: v.mail, rappel_whatsapp: v.whatsapp,
+    rappel_objet: v.objet, rappel_texte: v.texte };
+}
+
+// Les rappels groupés, remplacés en bloc. Une récurrence n'appartient qu'à un groupe ; un id inconnu est ignoré.
+function enregistrerRappels(ctx, rappels) {
+  const regles = ctx.depot.lire('Regles');
+  const prises = new Map();
+  const lignes = rappels.map((g) => {
+    const nom = texte(g.nom, 60);
+    if (!nom) throw erreurMetier('champs_invalides', 'Un rappel groupé doit avoir un nom.');
+    const v = reglagesValides(nom, g);
+    const ids = (Array.isArray(g.regle_ids) ? g.regle_ids : String(g.regle_ids || '').split(','))
+      .map((id) => String(id).trim()).filter((id) => regles.some((r) => r.id === id));
+    for (const id of ids) {
+      if (prises.has(id)) {
+        const regle = regles.find((r) => r.id === id);
+        throw erreurMetier('champs_invalides', `La récurrence « ${regle.nom} » est déjà dans le rappel « ${prises.get(id)} ».`);
+      }
+      prises.set(id, nom);
+    }
+    return { id: texte(g.id, 60) || ctx.services.uuid(), nom, regle_ids: ids.join(','), jour: v.jour, heure: v.heure,
+      mail: v.mail, whatsapp: v.whatsapp, actif: v.actif, objet: v.objet, texte: v.texte };
+  });
+  ctx.depot.supprimer('Rappels', () => true);
+  ctx.depot.ajouter('Rappels', lignes);
+}
+
 function enregistrerRegles(ctx, regles, regleSorties) {
   const nouveauxIds = {};
   let n = 0;
@@ -70,12 +120,13 @@ function enregistrerRegles(ctx, regles, regleSorties) {
     let id = texte(r.id, 60);
     if (!id) { id = ctx.services.uuid(); nouveauxIds['__nouvelle_' + n] = id; n++; }
     const jour = Number(r.jour);
-    if (!(jour >= 0 && jour <= 6) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(r.heure) || !/^\d{4}-\d{2}-\d{2}$/.test(r.date_depart) || !texte(r.nom, 60)) {
+    if (!(jour >= 0 && jour <= 6) || !HEURE.test(r.heure) || !/^\d{4}-\d{2}-\d{2}$/.test(r.date_depart) || !texte(r.nom, 60)) {
       throw erreurMetier('champs_invalides', `Règle « ${texte(r.nom, 60)} » incomplète.`);
     }
     return {
       id, nom: texte(r.nom, 60), jour: String(jour), heure: r.heure, point_rdv: texte(r.point_rdv, 120),
       frequence_semaines: String(Math.max(1, Number(r.frequence_semaines) || 1)), date_depart: r.date_depart, active: estVrai(r.active) || r.active === true,
+      ...reglagesRappel(r, jour),
     };
   });
   const lignesRS = (regleSorties || []).map((rs) => ({
@@ -122,6 +173,7 @@ function enregistrerCleValeur(ctx, onglet, valeurs, clesAutorisees) {
 export function actionAdminEnregistrer(ctx, u, req) {
   exigerAdminVerifie(u);
   if (req.regles) enregistrerRegles(ctx, req.regles, req.regle_sorties);
+  if (req.rappels) enregistrerRappels(ctx, req.rappels);
   if (req.fermetures) enregistrerFermetures(ctx, u, req.fermetures);
   if (req.parametres) enregistrerCleValeur(ctx, 'Parametres', req.parametres, Object.keys(PARAMETRES_DEFAUT));
   if (req.modeles) enregistrerCleValeur(ctx, 'Modeles', req.modeles, Object.keys(MODELES_DEFAUT));
@@ -137,7 +189,9 @@ export function actionAdminGeocoder(ctx, u, req) {
   return (r.results || []).map((x) => ({ nom: x.name, departement: x.admin2 || x.admin1 || '', lat: x.latitude, lon: x.longitude }));
 }
 
-export function actionRappelEnvoyerMaintenant(ctx, u) {
+export function actionRappelEnvoyerMaintenant(ctx, u, req) {
   exigerAdminVerifie(u);
-  return envoyerRappel(ctx, 'rappel:manuel:' + horodatage(ctx));
+  const r = envoyerRappelManuel(ctx, req.type, texte(req.id, 60), horodatage(ctx));
+  if (!r) throw erreurMetier('introuvable', 'Rappel introuvable.');
+  return r;
 }
