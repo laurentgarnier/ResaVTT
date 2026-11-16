@@ -75,7 +75,7 @@ function blocJourAgenda(cal, jour, meteoParDate, heures) {
   const aujourdhui = jour.date === cal.aujourdhui;
   const creer = jour.passe ? '' : `<a class="creer-mini" href="#/creer/${jour.date}">+ Créer</a>`;
   if (!jour.sorties.length) {
-    return `<div id="jour-${jour.date}" class="jour-vide"><span><b>${echapper(libelleJour(jour.date))}</b>${aujourdhui ? ' · aujourd\'hui' : ''}</span><span class="mut">Aucune sortie</span>${creer}</div>`;
+    return `<div id="jour-${jour.date}" class="jour-vide"><span><b>${echapper(libelleJour(jour.date))}</b>${aujourdhui ? ' · aujourd\'hui' : ''}</span><span class="mut">Aucune sortie</span>${creer}${jour.passe ? '' : meteoMini(meteoParDate, jour)}</div>`;
   }
   return `<section id="jour-${jour.date}" class="agenda-jour${aujourdhui ? ' aujourdhui' : ''}${jour.passe ? ' passe' : ''}">
     <header class="agenda-tete">

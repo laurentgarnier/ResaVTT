@@ -105,3 +105,17 @@ test('frise : météo heure par heure dépliée pour aujourd\'hui, repliée pour
   assert.doesNotMatch(colonne('2026-11-09'), /class="heures"/);
   assert.doesNotMatch(renderFrise(cal, null, () => null), /class="heures"/);
 });
+
+test('agenda : un jour à venir sans sortie affiche quand même sa météo (utile pour décaler une sortie) ; un jour passé, non', () => {
+  const cal = calendrierMarie();
+  const html = renderAgenda(cal, meteoPartout(cal));
+  const vide = cal.jours.find((j) => !j.passe && !j.sorties.length);
+  assert.ok(vide, 'la démo doit avoir un jour à venir sans sortie');
+  const bloc = (date) => { const d = html.indexOf(`id="jour-${date}"`); return html.slice(d, html.indexOf('</div>', html.indexOf('creer-mini', d)) + 6); };
+  assert.match(bloc(vide.date), /class="jour-vide"[\s\S]*class="meteo-mini"[\s\S]*Matin<\/small> ☀️ 4–6°/);
+  const passeVide = cal.jours.find((j) => j.passe && !j.sorties.length);
+  if (passeVide) {
+    const d = html.indexOf(`id="jour-${passeVide.date}"`);
+    assert.doesNotMatch(html.slice(d, html.indexOf('</div>', d) + 6), /meteo-mini/);
+  }
+});
