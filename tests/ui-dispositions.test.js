@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { contexteTest } from './aides/contexte-test.js';
 import { renderFrise, renderAgenda } from '../site/sorties/js/ui/calendrier-variantes.js';
-import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, DISPOSITIONS, THEMES } from '../site/sorties/js/ui/affichage.js';
+import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, DISPOSITIONS, THEMES, ESPACEMENTS } from '../site/sorties/js/ui/affichage.js';
 
 // Marie est inscrite à la sortie du samedi matin du jeu de démonstration.
 function calendrierMarie() {
@@ -63,27 +63,33 @@ test('agenda : sans inscription, pas de bloc « Mes prochaines sorties »', () =
   assert.doesNotMatch(renderAgenda(cal, null), /class="mes-sorties"/);
 });
 
-test('affichage : classique et thème nuit par défaut ; un choix inconnu ou un stockage illisible retombe sur le défaut', () => {
-  assert.deepEqual(lireAffichage(stockage()), { disposition: 'classique', theme: 'nuit' });
-  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"agenda","theme":"clair"}' })), { disposition: 'agenda', theme: 'clair' });
-  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"bidon","theme":"foret"}' })), { disposition: 'classique', theme: 'foret' });
-  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': 'pas du json' })), { disposition: 'classique', theme: 'nuit' });
-  assert.deepEqual(lireAffichage({ getItem: () => { throw new Error('bloqué'); } }), { disposition: 'classique', theme: 'nuit' });
+const DEFAUT = { disposition: 'classique', theme: 'nuit', espacement: 'compact' };
+
+test('affichage : classique, thème nuit et espacement compact par défaut ; un choix inconnu ou un stockage illisible retombe sur le défaut', () => {
+  assert.deepEqual(lireAffichage(stockage()), DEFAUT);
+  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"agenda","theme":"club","espacement":"aere"}' })), { disposition: 'agenda', theme: 'club', espacement: 'aere' });
+  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"bidon","theme":"contraste","espacement":"bidon"}' })), { ...DEFAUT, theme: 'contraste' });
+  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"agenda","theme":"foret"}' })), { ...DEFAUT, disposition: 'agenda' }, 'Forêt a été retiré : retour au thème nuit');
+  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': 'pas du json' })), DEFAUT);
+  assert.deepEqual(lireAffichage({ getItem: () => { throw new Error('bloqué'); } }), DEFAUT);
 });
 
 test('affichage : le choix est mémorisé sur l\'appareil', () => {
   const s = stockage();
-  enregistrerAffichage(s, { disposition: 'frise', theme: 'foret' });
-  assert.deepEqual(lireAffichage(s), { disposition: 'frise', theme: 'foret' });
+  enregistrerAffichage(s, { disposition: 'frise', theme: 'ardoise', espacement: 'aere' });
+  assert.deepEqual(lireAffichage(s), { disposition: 'frise', theme: 'ardoise', espacement: 'aere' });
   assert.doesNotThrow(() => enregistrerAffichage({ setItem: () => { throw new Error('plein'); } }, { disposition: 'frise', theme: 'nuit' }));
 });
 
-test('sélecteur : trois mises en page et trois thèmes, le choix courant est marqué', () => {
+test('sélecteur : trois mises en page, cinq thèmes et deux espacements, le choix courant est marqué', () => {
   assert.deepEqual(DISPOSITIONS.map((d) => d.id), ['classique', 'frise', 'agenda']);
-  assert.deepEqual(THEMES.map((t) => t.id), ['nuit', 'clair', 'foret']);
-  const html = renderSelecteurAffichage({ disposition: 'agenda', theme: 'clair' });
+  assert.deepEqual(THEMES.map((t) => t.id), ['nuit', 'clair', 'contraste', 'club', 'ardoise']);
+  assert.deepEqual(ESPACEMENTS.map((e) => e.id), ['compact', 'aere']);
+  const html = renderSelecteurAffichage({ disposition: 'agenda', theme: 'clair', espacement: 'aere' });
   assert.equal((html.match(/data-disposition="/g) || []).length, 3);
-  assert.equal((html.match(/data-theme-choix="/g) || []).length, 3);
+  assert.equal((html.match(/data-theme-choix="/g) || []).length, 5);
+  assert.equal((html.match(/data-espacement="/g) || []).length, 2);
+  assert.match(html, /data-espacement="aere" aria-pressed="true"/);
   assert.match(html, /data-disposition="agenda" aria-pressed="true"/);
   assert.match(html, /data-disposition="classique" aria-pressed="false"/);
   assert.match(html, /data-theme-choix="clair" aria-pressed="true"/);

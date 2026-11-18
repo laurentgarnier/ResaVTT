@@ -245,9 +245,9 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
   background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, .35);
 }
-.selecteur-affichage .choix { display: flex; gap: 6px; margin: 6px 0 12px; }
+.selecteur-affichage .choix { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
 .choix button {
-  flex: 1; background: var(--card2); border: 1px solid var(--line); color: var(--txt); border-radius: 10px;
+  flex: 1; min-width: 84px; background: var(--card2); border: 1px solid var(--line); color: var(--txt); border-radius: 10px;
   padding: 9px 6px; font: inherit; font-size: 13px; cursor: pointer;
 }
 .choix button[aria-pressed="true"] { background: var(--acc); border-color: var(--acc); color: var(--sur-acc); font-weight: 700; }
@@ -340,22 +340,88 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
   --rayon: 16px; --ombre: 0 1px 2px rgba(20, 40, 25, .06), 0 6px 18px rgba(20, 40, 25, .07);
   color-scheme: light;
 }
-:root[data-theme="foret"] {
-  --bg: rgba(10, 26, 20, .82); --fond: #08140f; --card: #11241c; --card2: #163026; --line: #234437;
-  --txt: #e5f3ec; --mut: #8eb2a2; --acc: #5fe3a7; --acc-dk: #143b2d; --acc-txt: #84f0c0;
-  --red: #ff7d7d; --blue: #63c6ff; --warn: #f2b866; --sur-acc: #052016;
-  --fond-bleu: #15334a; --fond-orange: #3a311a; --fond-rouge: #3d1f25; --fond-neutre: #2b4b3f; --fond-trace: #0d1d16;
-  --rayon: 16px; --ombre: 0 8px 24px rgba(0, 0, 0, .28);
+:root[data-theme="contraste"] {
+  --bg: rgba(0, 0, 0, .92); --fond: #000000; --card: #151a23; --card2: #222a37; --line: #46536b;
+  --txt: #ffffff; --mut: #c0cadb; --acc: #d4ff3a; --acc-dk: #2d3b0e; --acc-txt: #e2ff78;
+  --red: #ff7575; --blue: #74bcff; --warn: #ffc864; --sur-acc: #0f1608;
+  --fond-bleu: #1a2e52; --fond-orange: #42300f; --fond-rouge: #4a1820; --fond-neutre: #4a576f; --fond-trace: #0b0f16;
+  --rayon: 14px; --ombre: none;
 }
-:root[data-theme="foret"] body { background: radial-gradient(1200px 600px at 80% -10%, #12352a 0%, transparent 60%), var(--fond); }
+:root[data-theme="contraste"] .jour, :root[data-theme="contraste"] .agenda-jour { border-width: 1.5px; }
+:root[data-theme="club"] {
+  --bg: #b3000c; --fond: #efecea; --card: #ffffff; --card2: #f6f2f0; --line: #d9cfca;
+  --txt: #1b1414; --mut: #5f5450; --acc: #c00000; --acc-dk: #fbe1e1; --acc-txt: #a30000;
+  --red: #c00000; --blue: #1f5fbf; --warn: #9e5600; --sur-acc: #ffffff;
+  --fond-bleu: #e2ebfa; --fond-orange: #fbecd3; --fond-rouge: #fde0e0; --fond-neutre: #ddd3cf; --fond-trace: #faf8f7;
+  --rayon: 14px; --ombre: 0 1px 2px rgba(60, 10, 10, .06), 0 6px 16px rgba(60, 10, 10, .08);
+  color-scheme: light;
+}
+:root[data-theme="club"] .barre { border-bottom-color: #8a0009; }
+:root[data-theme="club"] .barre .logo { color: #ffffff; }
+:root[data-theme="club"] .barre .chip { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .35); color: #ffffff; }
+:root[data-theme="club"] .onglet.on, :root[data-theme="club"] .pastille-jour { color: #ffffff; }
+:root[data-theme="ardoise"] {
+  --bg: #1e2633; --fond: #121821; --card: #2a3445; --card2: #344155; --line: #4a586f;
+  --txt: #f2f5f9; --mut: #adb8ca; --acc: #4fd1c5; --acc-dk: #1b4646; --acc-txt: #84ebe1;
+  --red: #ff7d7d; --blue: #80c3ff; --warn: #ffcf73; --sur-acc: #052624;
+  --fond-bleu: #23395a; --fond-orange: #4a3818; --fond-rouge: #4c2129; --fond-neutre: #56657e; --fond-trace: #1a222d;
+  --rayon: 14px; --ombre: 0 6px 18px rgba(0, 0, 0, .3);
+}
 :root[data-theme="clair"] body { background: radial-gradient(1000px 500px at 90% -20%, #e1efd9 0%, transparent 60%), var(--fond); }
-:root[data-theme="clair"] .barre, :root[data-theme="foret"] .barre { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-:root[data-theme="clair"] .jour, :root[data-theme="foret"] .jour,
-:root[data-theme="clair"] .carte-form, :root[data-theme="foret"] .carte-form,
-:root[data-theme="clair"] .bloc, :root[data-theme="foret"] .bloc { box-shadow: var(--ombre); }
-:root[data-theme="clair"] .sortie, :root[data-theme="clair"] .ligne-sortie { background: var(--card); }
-:root[data-theme="clair"] .selecteur-affichage { box-shadow: 0 16px 40px rgba(20, 40, 25, .18); }
-:root[data-theme="clair"] .attente-barre { filter: none; }
+:root[data-theme="clair"] .barre { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+:root[data-theme="clair"] .jour, :root[data-theme="club"] .jour, :root[data-theme="ardoise"] .jour,
+:root[data-theme="clair"] .carte-form, :root[data-theme="club"] .carte-form,
+:root[data-theme="clair"] .bloc, :root[data-theme="club"] .bloc { box-shadow: var(--ombre); }
+:root[data-theme="clair"] .sortie, :root[data-theme="clair"] .ligne-sortie,
+:root[data-theme="club"] .sortie, :root[data-theme="club"] .ligne-sortie { background: var(--card); }
+:root[data-theme="clair"] .selecteur-affichage, :root[data-theme="club"] .selecteur-affichage { box-shadow: 0 16px 40px rgba(20, 20, 20, .18); }
+:root[data-theme="clair"] .attente-barre, :root[data-theme="club"] .attente-barre { filter: none; }
+:root[data-theme="club"] .selecteur-affichage { color: var(--txt); }
+
+/* ——— Espacement « Aéré » (à l'essai) : jours bien séparés, moins de cadres imbriqués ——— */
+/* Agenda : chaque jour a un en-tête en bandeau ; sorties séparées par un filet au lieu d'être encadrées. */
+:root[data-espacement="aere"] .agenda-jour { padding: 0; margin-bottom: 22px; overflow: hidden; }
+:root[data-espacement="aere"] .agenda-tete { background: var(--card2); border-bottom: 1px solid var(--line); padding: 12px 14px; margin: 0; }
+:root[data-espacement="aere"] .agenda-jour.aujourdhui .agenda-tete { background: var(--acc-dk); }
+:root[data-espacement="aere"] .agenda-tete .date { font-size: 18px; }
+:root[data-espacement="aere"] .agenda-tete .meteo-mini { flex-basis: 100%; background: none; padding: 0; }
+:root[data-espacement="aere"] .agenda-jour > :not(.agenda-tete) { margin-left: 14px; margin-right: 14px; }
+:root[data-espacement="aere"] .agenda-jour > .petit { margin-top: 10px; }
+:root[data-espacement="aere"] .agenda-jour > :last-child { margin-bottom: 14px; }
+:root[data-espacement="aere"] .ligne-sortie { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 14px 0; margin-top: 8px; }
+:root[data-espacement="aere"] .ligne-sortie.moi { box-shadow: inset 3px 0 0 var(--acc); padding-left: 10px; }
+:root[data-espacement="aere"] .ligne-sortie .heure { font-size: 19px; }
+:root[data-espacement="aere"] .jour-vide { border: 0; border-left: 3px solid var(--line); border-radius: 0; padding: 6px 12px; margin: 0 0 18px; }
+:root[data-espacement="aere"] .jour-vide .meteo-mini { background: none; padding: 0; }
+:root[data-espacement="aere"] .mes-sorties { margin-bottom: 22px; }
+/* Classique : sections plus distinctes, encadrés plus larges. */
+:root[data-espacement="aere"] .titre-jour { font-size: 21px; margin: 10px 0 12px; }
+:root[data-espacement="aere"] .meteo > div { padding: 8px 10px; }
+:root[data-espacement="aere"] .total { margin-top: 12px; padding: 10px 12px; }
+:root[data-espacement="aere"] .section {
+  margin-top: 26px; padding-bottom: 6px; border-bottom: 2px solid var(--line);
+  text-transform: uppercase; letter-spacing: .06em; font-size: 12.5px;
+}
+:root[data-espacement="aere"] .sortie { padding: 12px; margin-top: 12px; border-radius: 14px; }
+:root[data-espacement="aere"] .sortie .who { margin-top: 8px; }
+:root[data-espacement="aere"] .onglets { gap: 8px; padding-bottom: 14px; }
+:root[data-espacement="aere"] .grille { gap: 14px; margin-bottom: 26px; }
+:root[data-espacement="aere"] .jour { padding: 12px; }
+/* Agenda sur PC : toute la largeur, la date et la météo à gauche, les sorties à droite. */
+@media (min-width: 1000px) {
+  :root[data-espacement="aere"] .agenda { max-width: 1200px; }
+  :root[data-espacement="aere"] .agenda-jour { display: grid; grid-template-columns: 300px minmax(0, 1fr); column-gap: 20px; align-content: start; }
+  :root[data-espacement="aere"] .agenda-tete {
+    grid-column: 1; grid-row: 1 / span 40; flex-direction: column; align-items: flex-start; justify-content: flex-start;
+    border-bottom: 0; border-right: 1px solid var(--line);
+  }
+  :root[data-espacement="aere"] .agenda-tete .meteo-mini { flex: none; flex-direction: column; gap: 4px; margin-top: 8px; }
+  :root[data-espacement="aere"] .agenda-jour > :not(.agenda-tete) { grid-column: 2; margin-left: 0; margin-right: 20px; }
+  :root[data-espacement="aere"] .agenda-jour > .petit { margin-top: 14px; }
+  :root[data-espacement="aere"] .jour-vide { display: grid; grid-template-columns: 300px auto 1fr; align-items: center; column-gap: 20px; }
+  :root[data-espacement="aere"] .jour-vide .meteo-mini { grid-column: 3; grid-row: 1; flex-basis: auto; }
+  :root[data-espacement="aere"] .jour-vide .creer-mini { grid-column: 2; grid-row: 2; }
+}
 .ligne-sortie .heure.modifie { color: var(--warn); }
 .vent-dir { white-space: nowrap; }
 .vent-dir i { display: inline-block; font-style: normal; font-weight: 700; margin-right: 2px; color: var(--blue); }

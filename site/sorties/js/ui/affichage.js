@@ -1,4 +1,4 @@
-// Choix d'affichage à l'essai (mise en page du calendrier et thème), mémorisé sur l'appareil.
+// Choix d'affichage à l'essai (mise en page du calendrier, thème, espacement), mémorisé sur l'appareil.
 import { echapper } from '../logique/html.js';
 
 export const DISPOSITIONS = [
@@ -10,11 +10,19 @@ export const DISPOSITIONS = [
 export const THEMES = [
   { id: 'nuit', libelle: 'Nuit', couleur: '#121a2b' },
   { id: 'clair', libelle: 'Clair', couleur: '#f4f6f2' },
-  { id: 'foret', libelle: 'Forêt', couleur: '#0f1f1a' },
+  { id: 'contraste', libelle: 'Contraste', couleur: '#05070b' },
+  { id: 'club', libelle: 'Club', couleur: '#b3000c' },
+  { id: 'ardoise', libelle: 'Ardoise', couleur: '#1e2633' },
+];
+
+// Aéré : jours bien séparés, moins de cadres imbriqués, agenda plus large sur PC.
+export const ESPACEMENTS = [
+  { id: 'compact', libelle: 'Compact', aide: 'Affichage dense, le plus d\'informations à l\'écran' },
+  { id: 'aere', libelle: 'Aéré', aide: 'Jours bien séparés, moins de cadres ; agenda sur toute la largeur sur PC' },
 ];
 
 const CLE = 'sorties-vtt-affichage';
-const DEFAUT = { disposition: 'classique', theme: 'nuit' };
+const DEFAUT = { disposition: 'classique', theme: 'nuit', espacement: 'compact' };
 
 export function lireAffichage(stockage) {
   let lu = {};
@@ -22,6 +30,7 @@ export function lireAffichage(stockage) {
   return {
     disposition: DISPOSITIONS.some((d) => d.id === lu.disposition) ? lu.disposition : DEFAUT.disposition,
     theme: THEMES.some((t) => t.id === lu.theme) ? lu.theme : DEFAUT.theme,
+    espacement: ESPACEMENTS.some((e) => e.id === lu.espacement) ? lu.espacement : DEFAUT.espacement,
   };
 }
 
@@ -36,6 +45,8 @@ export function renderSelecteurAffichage(affichage) {
     <div class="choix">${DISPOSITIONS.map((d) => bouton('data-disposition', d.id, d.libelle, d.id === affichage.disposition, d.aide)).join('')}</div>
     <div class="petit mut">Thème</div>
     <div class="choix">${THEMES.map((t) => bouton('data-theme-choix', t.id, t.libelle, t.id === affichage.theme)).join('')}</div>
+    <div class="petit mut">Espacement</div>
+    <div class="choix">${ESPACEMENTS.map((e) => bouton('data-espacement', e.id, e.libelle, e.id === affichage.espacement, e.aide)).join('')}</div>
     <div class="petit mut">À l'essai : le choix ne vaut que pour cet appareil.</div>
   </div>`;
 }

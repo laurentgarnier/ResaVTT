@@ -31,6 +31,7 @@ let affichage = lireAffichage(stockageLocal);
 
 function appliquerTheme() {
   document.documentElement.dataset.theme = affichage.theme;
+  document.documentElement.dataset.espacement = affichage.espacement;
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = THEMES.find((t) => t.id === affichage.theme).couleur;
 }
@@ -59,7 +60,9 @@ function basculerSelecteur(ouvrir) {
   document.querySelector('.selecteur-affichage').addEventListener('click', (ev) => {
     const b = ev.target.closest('button');
     if (!b) return;
-    affichage = { ...affichage, ...(b.dataset.disposition ? { disposition: b.dataset.disposition } : { theme: b.dataset.themeChoix }) };
+    const choix = b.dataset.disposition ? { disposition: b.dataset.disposition }
+      : b.dataset.espacement ? { espacement: b.dataset.espacement } : { theme: b.dataset.themeChoix };
+    affichage = { ...affichage, ...choix };
     enregistrerAffichage(stockageLocal, affichage);
     appliquerTheme();
     basculerSelecteur(true);
