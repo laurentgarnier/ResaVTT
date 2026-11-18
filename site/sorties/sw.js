@@ -1,6 +1,6 @@
 // Service worker de l'appli : portée limitée à /sorties/. Met en cache l'interface (stale-while-revalidate),
 // jamais les données : l'API, la météo et les tuiles de carte passent toujours par le réseau.
-const VERSION = 'sorties-vtt-v21'; // à garder égal à js/version.js
+const VERSION = 'sorties-vtt-v22'; // à garder égal à js/version.js
 const COQUILLE = [
   './',
   'index.html',
@@ -17,6 +17,7 @@ const COQUILLE = [
   'js/api.js',
   'js/app.js',
   'js/cache-calendrier.js',
+  'js/maj-appli.js',
   'js/logique/dates.js',
   'js/logique/droits.js',
   'js/logique/gpx.js',
@@ -54,7 +55,9 @@ function manifesteAvecNom(texte, nom) {
 }
 
 self.addEventListener('install', (ev) => {
-  ev.waitUntil(caches.open(VERSION).then((c) => c.addAll(COQUILLE)).then(() => self.skipWaiting()));
+  // cache: 'reload' : sans quoi le navigateur peut reprendre des fichiers de l'ancienne version, gardés 10 min.
+  ev.waitUntil(caches.open(VERSION).then((c) => c.addAll(COQUILLE.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (ev) => {
@@ -68,7 +71,8 @@ self.addEventListener('fetch', (ev) => {
   if (ev.request.method !== 'GET' || HOTES_RESEAU.includes(url.hostname) || url.origin !== self.location.origin) return;
   const reponse = caches.open(VERSION).then(async (cache) => {
     const enCache = await cache.match(ev.request, { ignoreSearch: true });
-    const reseau = fetch(ev.request).then((rep) => {
+    // no-cache : le serveur confirme (ou non) la copie, au lieu d'une copie du téléphone de moins de 10 min.
+    const reseau = fetch(ev.request.url, { cache: 'no-cache', credentials: 'same-origin' }).then((rep) => {
       if (rep.ok) cache.put(ev.request, rep.clone());
       return rep;
     }).catch(() => enCache);

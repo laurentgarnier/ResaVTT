@@ -7,6 +7,7 @@ import { renderGrille, renderJour } from './ui/calendrier.js';
 import { renderFrise, renderAgenda } from './ui/calendrier-variantes.js';
 import { messagePartageSortie, messageAnnulationSortie } from './logique/partage.js';
 import { lienWhatsApp } from './logique/modeles.js';
+import { surveillerMisesAJour } from './maj-appli.js';
 import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, THEMES } from './ui/affichage.js';
 import { renderSortie, brancherSortie, arreterDiscussion } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
@@ -373,7 +374,8 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('hashchange', router);
 if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+  surveillerMisesAJour(navigator, document, location);
 }
 router();
 
