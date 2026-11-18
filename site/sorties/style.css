@@ -444,3 +444,6 @@ label.case input:disabled + * , label.case:has(input:disabled) { color: var(--mu
 .partage .btn.whatsapp { display: block; width: 100%; margin-top: 8px; }
 .encart.partage { color: var(--txt); background: var(--card); border: 1px solid #25d366; }
 .jour-vide .meteo-mini { flex-basis: 100%; }
+
+/* Précipitations : en gras dès qu'il pleut, dans la couleur du texte. */
+.pluie { font-weight: 800; color: var(--txt); }

@@ -29,7 +29,7 @@ test('frise : 14 colonnes côte à côte, jours passés grisés, aujourd\'hui re
   assert.match(html, /Boucle des étangs/);
   assert.match(html, /href="#\/creer\/2026-11-14"/);
   assert.doesNotMatch(html, /href="#\/creer\/2026-11-09"/);
-  assert.match(html, /💧0,2 mm/);
+  assert.match(html, /💧<strong class="pluie">0,2 mm<\/strong>/);
 });
 
 test('agenda : part d\'aujourd\'hui, heure en tête de chaque sortie, jours sans sortie sur une ligne', () => {
@@ -106,7 +106,7 @@ test('frise : météo heure par heure dépliée pour aujourd\'hui, repliée pour
   const heures = (date) => [{ heure: '09', temp: date === cal.aujourdhui ? 3 : 7, pluie_proba: 0, pluie_mm: 0.4, vent: 12, vent_dir: 90, vent_cardinal: 'E', code: 0, emoji: '☀️' }];
   const html = renderFrise(cal, meteoPartout(cal), heures);
   const colonne = (date) => { const d = html.indexOf(`id="jour-${date}"`); return html.slice(d, html.indexOf('</section>', d)); };
-  assert.match(colonne(cal.aujourdhui), /<details class="heures" open><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>3°<br>0,4 mm<br>12 km\/h/);
+  assert.match(colonne(cal.aujourdhui), /<details class="heures" open><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>3°<br><strong class="pluie">0,4 mm<\/strong><br>12 km\/h/);
   assert.match(colonne('2026-11-14'), /<details class="heures"><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>7°/);
   assert.doesNotMatch(colonne('2026-11-09'), /class="heures"/);
   assert.doesNotMatch(renderFrise(cal, null, () => null), /class="heures"/);
@@ -124,4 +124,15 @@ test('agenda : un jour à venir sans sortie affiche quand même sa météo (util
     const d = html.indexOf(`id="jour-${passeVide.date}"`);
     assert.doesNotMatch(html.slice(d, html.indexOf('</div>', d) + 6), /meteo-mini/);
   }
+});
+
+test('météo : des précipitations au-dessus de 0 sont écrites en gras, 0 mm reste normal', async () => {
+  const { mm } = await import('../site/sorties/js/ui/calendrier.js');
+  assert.equal(mm(0), '0 mm');
+  assert.equal(mm(undefined), '0 mm');
+  assert.equal(mm(0.2), '<strong class="pluie">0,2 mm</strong>');
+  const cal = calendrierMarie();
+  const html = renderAgenda(cal, meteoPartout(cal));
+  assert.match(html, /💧0 mm/);
+  assert.match(html, /💧<strong class="pluie">0,2 mm<\/strong>/);
 });

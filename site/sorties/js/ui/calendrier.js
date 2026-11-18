@@ -27,9 +27,12 @@ export function personnesDistinctes(sorties) {
   return new Set(sorties.filter((s) => s.statut !== 'annulee').flatMap((s) => s.inscrits.map((i) => i.personne_id))).size;
 }
 
-// Précipitations en mm, à la française (0,4 mm).
+// Précipitations en mm, à la française (0,4 mm), en gras dès qu'il pleut (<strong> : les <b> de la météo ont leur
+// propre mise en forme).
 export function mm(v) {
-  return `${String(Number(v) || 0).replace('.', ',')} mm`;
+  const n = Number(v) || 0;
+  const texte = `${String(n).replace('.', ',')} mm`;
+  return n > 0 ? `<strong class="pluie">${texte}</strong>` : texte;
 }
 
 // Orientation du vent : secteur d'où il vient, flèche dans le sens où il souffle.
