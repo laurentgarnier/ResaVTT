@@ -1,6 +1,6 @@
 # Appli de sorties du club de VTT : spécifications fonctionnelles
 
-*Version 0.3, du 13/11/2026. Intègre les évolutions demandées pendant la réalisation du prototype : liens directs vers le week-end, météo en mm et km/h, conservation d'un mois, statistiques, mises en page et thèmes à l'essai. Remplace la version 0.2.*
+*Version 0.4, du 18/11/2026. Intègre les évolutions demandées pendant la réalisation du prototype : liens directs vers le week-end, météo en mm et km/h, conservation d'un mois, statistiques, mises en page et thèmes à l'essai ; puis rappels par récurrence, partage sur WhatsApp, nom et logo du club, thèmes contrastés et espacement « Aéré », mise à jour automatique de l'appli installée. Remplace la version 0.3.*
 
 Légende des marquages :
 - **[décidé]** : validé par l'association.
@@ -71,7 +71,9 @@ Source d'inspiration **[décidé]** : une appli de padel montrant les jours de l
 1. L'adhérent saisit son **numéro de téléphone**.
 2. Le numéro est comparé à la **liste des adhérents actifs** **[décidé]**, sans code SMS (le SMS est payant). Un numéro inconnu affiche « Contactez le secrétaire ».
 3. L'appli **mémorise la connexion** sur l'appareil et ne la redemande plus.
-4. Elle propose ensuite d'**installer l'appli** sur l'écran d'accueil, avec une aide spécifique pour iPhone et pour Android.
+4. Elle propose ensuite d'**installer l'appli** sur l'écran d'accueil, avec une aide spécifique pour iPhone et pour Android. L'icône de l'appli installée est le **logo du club** ; la page de connexion l'affiche aussi, au-dessus du nom de l'association.
+
+**Mises à jour de l'appli installée [décidé]** : une nouvelle version s'installe d'elle-même. L'appli la cherche à chaque ouverture et à chaque retour au premier plan (sur iPhone, rouvrir l'appli depuis l'écran d'accueil ne la recharge pas toujours), puis se recharge pour l'afficher. Si une saisie est en cours, le rechargement attend que l'adhérent quitte l'appli. Le **numéro de version** figure en pied de page.
 
 **Ouverture depuis un lien (mail, WhatsApp) [décidé] :**
 - Sur **Android**, le lien ouvre en général directement l'appli installée. Sinon il ouvre la version web dans le navigateur, où l'adhérent est déjà connecté.
@@ -104,16 +106,25 @@ Sur téléphone, la vue du jour regroupe les sorties en « Matin » et « Après
 Sur téléphone, les cartes s'affichent les unes sous les autres et l'appli ouvre directement sur le jour courant **[choix du rédacteur]**.
 
 **Mises en page et thèmes à l'essai [décidé : à tester avant de choisir]**
-Un bouton **🎨** dans l'en-tête permet à chacun de choisir, pour son appareil uniquement, une mise en page du calendrier et un thème. Le choix est mémorisé sur l'appareil. Par défaut, l'appli garde la mise en page **Classique** et le thème **Nuit** décrits ci-dessus.
+Un bouton **🎨** dans l'en-tête permet à chacun de choisir, pour son appareil uniquement, une mise en page du calendrier, un thème et un espacement. Le choix est mémorisé sur l'appareil. Par défaut, l'appli garde la mise en page **Classique**, le thème **Nuit** et l'espacement **Compact** décrits ci-dessus.
 - **Classique** : la grille des deux semaines (une carte par jour) ; sur téléphone, un jour à la fois avec les onglets de jours.
 - **Frise** (horizontale) : les 14 jours en colonnes côte à côte, qu'on fait glisser du doigt, avec un repère entre les deux semaines. L'appli s'ouvre sur aujourd'hui, ou sur le jour visé par un lien. Sur téléphone, une colonne occupe presque tout l'écran et laisse voir le bord du jour suivant. Chaque jour à venir propose la météo heure par heure, dépliée pour aujourd'hui et repliée pour les autres jours.
 - **Agenda** : une liste qui part d'aujourd'hui.
   - En tête, **« Mes prochaines sorties »** : les sorties à venir où l'une des personnes du compte est inscrite, avec un accès direct.
   - Chaque sortie commence par **son heure**, en gros, suivie du titre, du lieu, des distances et des inscrits.
   - Chaque jour donne sa météo résumée sur une ligne pour le matin et une pour l'après-midi ; aujourd'hui donne aussi la météo heure par heure.
-  - Les jours sans sortie tiennent sur une ligne, avec « + Créer ».
+  - Les jours sans sortie ont le même cadre que les autres jours, plus court : « Aucune sortie », « + Créer » et la météo du matin et de l'après-midi (utile pour décaler une sortie).
   - Les jours passés de la quinzaine sont repliés sous « Jours passés ».
-- **Thèmes** : **Nuit** (sombre, l'actuel), **Clair** (fond clair, accent vert, lisible en plein soleil) et **Forêt** (sombre aux tons verts). Le thème s'applique à toute l'appli.
+- **Thèmes** (pour toute l'appli) :
+  - **Nuit** : sombre, l'actuel ;
+  - **Clair** : fond gris clair et accent bleu, lisible en plein soleil (sans vert, à la demande du club) ;
+  - **Contraste** : fond noir, texte blanc, bordures marquées, le plus lisible en extérieur ;
+  - **Club** : fond clair et bandeau rouge, aux couleurs du logo ;
+  - **Ardoise** : sombre bleu-gris, cartes nettement plus claires que le fond, accent turquoise.
+  Le thème Forêt a été retiré ; un appareil qui l'avait choisi revient au thème Nuit.
+- **Espacement** : **Compact** (l'actuel, le plus d'informations à l'écran) ou **Aéré**, qui s'applique aux trois mises en page :
+  - en Agenda, chaque jour commence par un bandeau (date en plus grand, météo), les sorties sont séparées par un filet au lieu d'être encadrées, et les jours sont plus espacés ; sur PC, l'agenda occupe toute la largeur, la date et la météo à gauche, les sorties à droite ;
+  - en Classique, les sections « Matin » et « Après-midi » sont soulignées et les encadrés des sorties plus grands et plus espacés.
 
 Une fois les essais faits, le club pourra garder une seule mise en page et un seul thème, ou laisser le choix à chacun.
 
@@ -190,13 +201,17 @@ La météo est celle de la demi-journée de la sortie, déjà connue du téléph
 - Les prévisions concernent la **commune du club**, paramétrée par les administrateurs.
 - **Pour chaque jour affiché :** une synthèse du **matin** (8 h–12 h) et une de l'**après-midi** (13 h–18 h) **[choix du rédacteur pour les plages]**. Chaque synthèse donne :
   - un pictogramme et la température ;
-  - la **quantité de pluie en mm** **[décidé]**, cumulée sur la plage ;
+  - la **quantité de pluie en mm** **[décidé]**, cumulée sur la plage, **en gras dès qu'elle dépasse 0 mm** **[décidé]** (partout où la pluie est affichée, heure par heure comprise) ;
   - le **vent en km/h** et son **orientation** **[décidé]** : le secteur d'où il vient (N, NE, E, SE, S, SO, O, NO) et une flèche dans le sens où il souffle. L'orientation retenue est celle de l'heure où le vent est le plus fort.
 - **Pour le jour courant :** la météo **heure par heure** (de 6 h à 21 h) : pictogramme, température, pluie en mm, vent en km/h et orientation. En mise en page Frise, elle est aussi proposée pour les autres jours à venir (voir 4.3).
 - Au-delà de l'horizon de prévision fiable, l'appli affiche « Prévision indisponible ».
 - **Pas de météo pour les jours passés** **[décidé]**.
 
 ### 4.8 Page d'administration (administrateurs uniquement)
+
+Les onglets sont, dans cet ordre **[décidé]** : **Paramètres** (ouvert par défaut), **Récurrences**, **Rappels**, **Messages**, **Fermetures**, **Statistiques**.
+
+Dans l'onglet **Messages**, chaque texte réglable (partage d'une nouvelle sortie, annulation par l'adhérent, objet et texte du mail d'annulation automatique, message WhatsApp d'annulation automatique) a son propre cadre, avec un titre en gras au-dessus de sa zone de saisie et, en dessous, la liste complète de ses repères (`{{titre}}`, `{{date}}`, etc.) **[décidé]**.
 
 **Sorties récurrentes** **[décidé]**
 - Créer, modifier, suspendre ou supprimer une **règle récurrente**. Une règle comprend :
@@ -222,7 +237,7 @@ La météo est celle de la demi-journée de la sortie, déjà connue du téléph
 - Si un **adhérent supprime sa propre sortie libre**, celle-ci passe en « Annulée » avec un message dans la discussion. Aucun mail n'est envoyé **[choix du rédacteur]**.
 
 **Paramètres généraux**
-- Le **nom de l'association** **[décidé]** : il s'affiche dans l'onglet du navigateur, en haut à gauche du bandeau, et comme nom de l'appli installée sur le téléphone (court de préférence : une douzaine de caractères tiennent sous l'icône). Un changement vaut sans nouvelle version de l'appli ; une appli déjà installée garde le nom qu'elle avait à l'installation. Le nom est écrit d'une seule couleur, précédé du **logo du club** (bandeau et page de connexion) ; le logo est une image du site (`icones/logo.png`, voir INSTALL.md).
+- Le **nom de l'association** **[décidé]** : il s'affiche dans l'onglet du navigateur, en haut à gauche du bandeau, et comme nom de l'appli installée sur le téléphone (court de préférence : une douzaine de caractères tiennent sous l'icône). Un changement vaut sans nouvelle version de l'appli ; une appli déjà installée garde le nom qu'elle avait à l'installation. Le nom est écrit d'une seule couleur, précédé du **logo du club** (bandeau et page de connexion). Le logo sert aussi d'icône à l'appli installée ; c'est une image du site, tirée du logo vectoriel du club (`docs/logo/corbas-vtt.svg`, voir INSTALL.md). Le changer demande une nouvelle version du site.
 - La commune du club (pour la météo).
 - Le point de rendez-vous par défaut.
 - Les destinataires du rappel WhatsApp et l'email qui reçoit les alertes en cas d'erreur.
@@ -283,7 +298,7 @@ Le rappel unique du jeudi est remplacé par des rappels réglés **par récurren
   - activer la double authentification sur le compte Google du club.
 
 ## 6. Exigences générales
-- **Mobile d'abord** : en français, avec de grands boutons, dans un **thème sombre** inspiré de la capture **[choix du rédacteur]**. Deux autres thèmes, Clair et Forêt, sont proposés à l'essai (voir 4.3).
+- **Mobile d'abord** : en français, avec de grands boutons, dans un **thème sombre** inspiré de la capture **[choix du rédacteur]**. D'autres thèmes (Clair, Contraste, Club, Ardoise) et un espacement « Aéré » sont proposés à l'essai (voir 4.3).
 - **Installable** comme une appli sur Android et iPhone.
 - **Coût : 0 €.**
 - **Maintenance minimale** : aucun serveur à surveiller.

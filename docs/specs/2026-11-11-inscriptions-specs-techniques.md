@@ -1,6 +1,6 @@
 # Appli de sorties du club de VTT : spécifications techniques
 
-*Version 0.2 du 12/11/2026. À lire avec les spécifications fonctionnelles v0.2.*
+*Version 0.3 du 18/11/2026. À lire avec les spécifications fonctionnelles v0.4.*
 
 Les mentions **[décidé]** signalent ce que l'association a validé. Les mentions **[choix du rédacteur]** sont des propositions argumentées, que le développeur peut remettre en cause.
 
@@ -72,7 +72,7 @@ site/
 │   ├── style.css            styles propres à l'appli, en plus de commun/theme.css
 │   ├── manifest.webmanifest scope et start_url = /sorties/
 │   ├── sw.js                service worker, limité à /sorties/
-│   └── icones/              192 et 512 px
+│   └── icones/              logo.png et logo-maskable.png (sources 1024 px), puis 192/512, découpables 192/512, apple-touch-icon
 └── <autre-section>/         toute nouvelle page : un dossier + un index.html
     └── index.html
 ```
@@ -271,7 +271,9 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 Tous dans `site/sorties/` (voir l'arborescence au §2.1) :
 - `index.html`, `app.js`, `api.js`, `meteo.js`, `gpx.js`, `admin.js`, `style.css`
 - `config.js` : contient l'URL de l'API
-- `manifest.webmanifest`, `sw.js`, icônes en 192 et 512 px
+- `manifest.webmanifest`, `sw.js`, `js/maj-appli.js` (mises à jour de l'appli installée), `js/version.js` (numéro de version en pied de page)
+- **Icônes** : `icones/icone-192.png` et `icone-512.png` (*purpose* `any` : onglet, bandeau, page de connexion, Android), `icone-maskable-192/512.png` (*purpose* `maskable` : le logo tient dans le cercle central qu'Android peut découper), `apple-touch-icon.png` (180 px, iPhone). Toutes viennent de deux images sources de 1024 px, `logo.png` et `logo-maskable.png`, réduites par `npm run icones` (`outils/generer-icones.ps1`, Windows).
+- **Logo du club** : `docs/logo/corbas-vtt.svg`, vectorisé depuis l'image fournie (`outils/vectoriser-logo.py`, potrace, avec le Python d'Inkscape). `outils/composer-icone.py` en compose les deux sources carrées sur fond blanc (logo à 88 % du côté, ou diagonale à 80 % pour la version découpable) et les exporte avec Inkscape.
 
 La page de confidentialité est commune au site : `site/confidentialite.html`.
 
@@ -281,10 +283,11 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 - **Sur téléphone** : une colonne, avec défilement automatique jusqu'au jour courant.
 
 **Mises en page et thèmes à l'essai** (spec fonctionnelle §4.3)
-- `ui/affichage.js` : listes `DISPOSITIONS` (`classique`, `frise`, `agenda`) et `THEMES` (`nuit`, `clair`, `foret`), lecture et écriture du choix dans `localStorage` sous la clé `sorties-vtt-affichage` (`{disposition, theme}`). Une valeur inconnue ou un stockage illisible retombe sur `classique` et `nuit`. Le bouton 🎨 de l'en-tête ouvre le panneau de choix (`renderSelecteurAffichage`).
+- `ui/affichage.js` : listes `DISPOSITIONS` (`classique`, `frise`, `agenda`), `THEMES` (`nuit`, `clair`, `contraste`, `club`, `ardoise`) et `ESPACEMENTS` (`compact`, `aere`), lecture et écriture du choix dans `localStorage` sous la clé `sorties-vtt-affichage` (`{disposition, theme, espacement}`). Une valeur inconnue ou un stockage illisible retombe sur `classique`, `nuit` et `compact` ; l'ancien thème `foret`, retiré, retombe donc sur `nuit`. Le bouton 🎨 de l'en-tête ouvre le panneau de choix (`renderSelecteurAffichage`).
 - `ui/calendrier-variantes.js` : `renderFrise(cal, meteoParDate, heuresDe)` et `renderAgenda(cal, meteoParDate, heures)`. Elles réutilisent les briques de `ui/calendrier.js` (encadré de sortie, météo, bande heure par heure). Chaque jour porte l'ancre `id="jour-AAAA-MM-JJ"`.
 - Avec Frise ou Agenda, les routes `#/` et `#/jour/AAAA-MM-JJ` affichent le même écran, qui défile jusqu'au jour visé : défilement horizontal de la frise, ou défilement de la page pour l'agenda.
-- **Thèmes** : l'attribut `data-theme` sur `<html>` redéfinit les variables de couleur (`--bg`, `--card`, `--acc`, `--sur-acc`, `--fond-bleu`, `--ombre`…). Le thème Nuit correspond aux valeurs de `commun/theme.css`. Les fonds des badges, encarts et traces passent par ces variables ; seuls restent écrits en dur le blanc des pastilles d’initiales et les dégradés propres aux thèmes Clair et Forêt. La balise `theme-color` suit le thème choisi.
+- **Thèmes** : l'attribut `data-theme` sur `<html>` redéfinit les variables de couleur (`--bg`, `--card`, `--acc`, `--sur-acc`, `--fond-bleu`, `--ombre`…). Le thème Nuit correspond aux valeurs de `commun/theme.css`. Les fonds des badges, encarts et traces passent par ces variables ; seuls restent écrits en dur le blanc des pastilles d’initiales, le dégradé du thème Clair et le bandeau rouge du thème Club (texte et puces en blanc). La balise `theme-color` suit le thème choisi.
+- **Espacement** : l'attribut `data-espacement` sur `<html>` (`compact` ou `aere`). Les règles `:root[data-espacement="aere"]` de `style.css` ne changent que la mise en forme, jamais le HTML produit : en Agenda, en-tête du jour en bandeau, sorties séparées par un filet, jours plus espacés ; au-delà de 1000 px, `.agenda` passe de 720 à 1200 px et chaque jour devient une grille à deux colonnes (date et météo sur 300 px, sorties à droite) ; en Classique, sections soulignées et encadrés plus grands.
 
 ### Rafraîchissement
 - Le calendrier est rechargé à l'ouverture, au retour au premier plan (`visibilitychange`) et après chaque action.
@@ -297,7 +300,7 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 - **Synthèse du matin (8–12 h) et de l'après-midi (13–18 h)** :
   - température minimale et maximale ;
   - probabilité de pluie maximale ;
-  - cumul de pluie, affiché en mm (aussi heure par heure) ;
+  - cumul de pluie, affiché en mm (aussi heure par heure). `mm()` (`ui/calendrier.js`) l'écrit à la française et l'entoure de `<strong class="pluie">` dès qu'il dépasse 0 ; `<strong>` plutôt que `<b>`, car les `<b>` de la météo heure par heure ont leur propre mise en forme ;
   - vent maximal en km/h, avec son orientation (secteur d'où il vient : N, NE… et flèche dans le sens où il souffle) prise à l'heure du vent le plus fort ; heure par heure aussi ;
   - vent maximal ;
   - `weather_code` le plus défavorable, traduit en pictogramme et en libellé français. Les codes WMO ne sont **pas** classés par gravité : le plus défavorable se choisit avec une table de gravité explicite (par exemple orage > neige forte > pluie forte > averses > pluie faible > bruine > brouillard > couvert > éclaircies > clair), pas avec le code numérique le plus élevé.
@@ -332,6 +335,10 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
   - Android : bouton déclenché par `beforeinstallprompt` ;
   - iOS : encart « Partager → Sur l'écran d'accueil » (Safari, Chrome, Edge ou Firefox depuis iOS 16.4).
 - **Service worker** : l'interface est mise en cache (*stale-while-revalidate*). Les données passent toujours par le réseau. Hors ligne, l'appli affiche les dernières données en lecture seule.
+  - **Version** : le cache s'appelle `sorties-vtt-v<n>` (`VERSION` dans `sw.js`), et `js/version.js` porte le même numéro, affiché en pied de page ; un test vérifie qu'ils concordent. Changer ce numéro change `sw.js`, ce qui déclenche l'installation de la nouvelle version ; à l'activation, les anciens caches sont supprimés, sauf `sorties-vtt-reglages` (nom de l'association, voir `nom_appli`).
+  - **Toujours depuis le serveur** : GitHub Pages autorise le navigateur à garder chaque fichier 10 min (`Cache-Control: max-age=600`). L'installation précharge donc la liste `COQUILLE` avec `cache: 'reload'`, et la mise à jour en arrière-plan d'un fichier part avec `cache: 'no-cache'` (le serveur confirme la copie par son ETag). Le service worker est inscrit avec `updateViaCache: 'none'`, pour que `sw.js` lui-même ne soit jamais pris dans ce cache.
+  - **Mises à jour de l'appli installée** (`js/maj-appli.js`, `surveillerMisesAJour`) : sur iPhone, rouvrir l'appli depuis l'écran d'accueil la réveille souvent sans recharger la page, et le navigateur ne cherche alors aucune nouvelle version. L'appli appelle donc `registration.update()` à chaque retour au premier plan (`visibilitychange`). Sur `controllerchange` (une nouvelle version a pris la main, grâce à `skipWaiting` et `clients.claim`), elle se recharge une fois, sauf à la toute première installation ; si un formulaire est à l'écran, le rechargement attend que l'appli passe en arrière-plan.
+  - Le service worker n'est pas inscrit sur `localhost` (développement).
 - **Robustesse** : les appels d'API sont réessayés automatiquement 2 à 3 fois, avec un délai croissant, en cas d'erreur de verrou ou de quota. Cela couvre notamment l'affluence du jeudi soir.
 
 ## 6. Règles métier
@@ -486,7 +493,9 @@ sequenceDiagram
   - samedi 14 h ;
   - dimanche 9 h ;
   - chacune avec une seule sortie, rendez-vous « PDL » (`point_rdv_defaut`).
-- **`INSTALL.md`** : guide pas à pas pour un bénévole. Il couvre :
+- **Installation de l'association** (`npm run installer`, `outils/installer.js`) : à partir de zéro, sur les comptes Google et GitHub du club, quand seul le fichier des adhérents existe. Le script connecte clasp au compte Google, demande le lien du fichier adhérents, crée le classeur « Sorties VTT » et son script, y envoie le code avec un fichier `Installation.js` (non versionné) qui donne l'identifiant du fichier adhérents (`INSTALLATION_ADHERENTS_ID`), puis attend qu'on exécute `initialiser` et `installer` dans l'éditeur. `initialiser` se branche alors sur le fichier adhérents (`brancherAdherents`, qui vérifie que la ligne 1 de sa première feuille contient les colonnes `nom`, `telephone`, `email`, `actif`, `admin`) au lieu de charger la démo. Le script déploie ensuite l'API, écrit son adresse dans `site/sorties/config.js` et bascule le dépôt vers celui de l'association (l'ancien reste sous le nom `perso`). Les fonctions pures (lecture des liens et des sorties de clasp, configuration de production) sont dans `outils/installation.js` et testées.
+- **Mises à jour du serveur** : `npm run gas:publier` (`outils/publier-gas.js`) envoie le code et publie une nouvelle version du déploiement dont l'identifiant est noté dans `backend/gas/.deploiement.json` (non versionné) ; l'adresse de l'API ne change pas.
+- **`INSTALL.md`** : guide pas à pas pour un bénévole. Il couvre l'installation de l'association (ci-dessus), le changement du logo, puis, pour une installation de démonstration :
   - la création du Sheet ;
   - le déploiement du script ;
   - `installer()` ;
