@@ -9,7 +9,7 @@ export const DISPOSITIONS = [
 
 export const THEMES = [
   { id: 'nuit', libelle: 'Nuit', couleur: '#121a2b' },
-  { id: 'clair', libelle: 'Clair', couleur: '#f4f6f2' },
+  { id: 'clair', libelle: 'Clair', couleur: '#f1f3f6' },
   { id: 'contraste', libelle: 'Contraste', couleur: '#05070b' },
   { id: 'club', libelle: 'Club', couleur: '#b3000c' },
   { id: 'ardoise', libelle: 'Ardoise', couleur: '#1e2633' },

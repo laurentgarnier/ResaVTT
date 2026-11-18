@@ -324,20 +324,21 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
 .ligne-sortie.annulee { opacity: .6; }
 .ligne-sortie.annulee .st { text-decoration: line-through; }
 .jour-vide {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 8px;
-  border: 1px dashed var(--line); border-radius: 12px; font-size: 13px; scroll-margin-top: 70px;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px; margin-bottom: 12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--ombre);
+  font-size: 13px; scroll-margin-top: 70px;
 }
-.jour-vide .mut { flex: 1; }
+.jour-vide .mut { flex: 1; white-space: nowrap; }
 .creer-mini { display: inline-block; margin-top: 8px; color: var(--acc); font-weight: 700; font-size: 13px; text-decoration: none; }
 .jour-vide .creer-mini { margin-top: 0; }
 
 /* ——— Thèmes (à l'essai) ——— */
 :root[data-theme="clair"] {
-  --bg: rgba(255, 255, 255, .86); --fond: #f2f4ef; --card: #ffffff; --card2: #f5f7f2; --line: #e2e7dd;
-  --txt: #18221b; --mut: #5d6a61; --acc: #2e7d32; --acc-dk: #e2f1de; --acc-txt: #1f6324;
-  --red: #c9383e; --blue: #2364c9; --warn: #a35f00; --sur-acc: #ffffff;
-  --fond-bleu: #e5edfb; --fond-orange: #fbeed6; --fond-rouge: #fae1e2; --fond-neutre: #d9dfd5; --fond-trace: #f7f9f5;
-  --rayon: 16px; --ombre: 0 1px 2px rgba(20, 40, 25, .06), 0 6px 18px rgba(20, 40, 25, .07);
+  --bg: rgba(255, 255, 255, .88); --fond: #f1f3f6; --card: #ffffff; --card2: #f5f6f9; --line: #dde1e8;
+  --txt: #161a22; --mut: #596274; --acc: #2251c4; --acc-dk: #e2e9fb; --acc-txt: #1b43a6;
+  --red: #c9383e; --blue: #6b46c1; --warn: #a35f00; --sur-acc: #ffffff;
+  --fond-bleu: #ece6fa; --fond-orange: #fbeed6; --fond-rouge: #fae1e2; --fond-neutre: #d8dce4; --fond-trace: #f7f8fa;
+  --rayon: 16px; --ombre: 0 1px 2px rgba(20, 30, 50, .06), 0 6px 18px rgba(20, 30, 50, .07);
   color-scheme: light;
 }
 :root[data-theme="contraste"] {
@@ -367,7 +368,7 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
   --fond-bleu: #23395a; --fond-orange: #4a3818; --fond-rouge: #4c2129; --fond-neutre: #56657e; --fond-trace: #1a222d;
   --rayon: 14px; --ombre: 0 6px 18px rgba(0, 0, 0, .3);
 }
-:root[data-theme="clair"] body { background: radial-gradient(1000px 500px at 90% -20%, #e1efd9 0%, transparent 60%), var(--fond); }
+:root[data-theme="clair"] body { background: radial-gradient(1000px 500px at 90% -20%, #e1e8f7 0%, transparent 60%), var(--fond); }
 :root[data-theme="clair"] .barre { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 :root[data-theme="clair"] .jour, :root[data-theme="club"] .jour, :root[data-theme="ardoise"] .jour,
 :root[data-theme="clair"] .carte-form, :root[data-theme="club"] .carte-form,
@@ -391,7 +392,7 @@ button.chip { cursor: pointer; font: inherit; font-size: 12.5px; }
 :root[data-espacement="aere"] .ligne-sortie { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 14px 0; margin-top: 8px; }
 :root[data-espacement="aere"] .ligne-sortie.moi { box-shadow: inset 3px 0 0 var(--acc); padding-left: 10px; }
 :root[data-espacement="aere"] .ligne-sortie .heure { font-size: 19px; }
-:root[data-espacement="aere"] .jour-vide { border: 0; border-left: 3px solid var(--line); border-radius: 0; padding: 6px 12px; margin: 0 0 18px; }
+:root[data-espacement="aere"] .jour-vide { padding: 12px 14px; margin-bottom: 22px; }
 :root[data-espacement="aere"] .jour-vide .meteo-mini { background: none; padding: 0; }
 :root[data-espacement="aere"] .mes-sorties { margin-bottom: 22px; }
 /* Classique : sections plus distinctes, encadrés plus larges. */
