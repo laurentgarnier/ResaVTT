@@ -15,7 +15,7 @@ import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormula
 import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
 import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
-import { reaffichageAutomatiquePermis, destinationApresConnexion } from './ui/navigation.js';
+import { reaffichageAutomatiquePermis, destinationApresConnexion, doitRelireCalendrier, calendrierAChange, INTERVALLE_CALENDRIER_MS } from './ui/navigation.js';
 import { creerAttente } from './ui/attente.js';
 import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from './cache-calendrier.js';
 import { aujourdhuiLocal } from './logique/dates.js';
@@ -366,6 +366,32 @@ async function routerSansAttente() {
   location.hash = '#/';
   return undefined;
 }
+
+// Calendrier à l'écran (toutes mises en page) : relu toutes les 30 s, sans indicateur d'attente, pour suivre les
+// inscriptions et désinscriptions faites depuis d'autres appareils. Redessiné seulement s'il a changé, en gardant la
+// position de défilement et les sections dépliées.
+async function relireCalendrierALEcran() {
+  const hash = location.hash;
+  if (!etat.cal || !doitRelireCalendrier({ visible: document.visibilityState === 'visible', connecte: !!lireJeton(), hash, recuIlYa: Date.now() - etat.calRecuA })) return;
+  const avant = etat.cal;
+  recevoirCalendrier(await appeler('calendrier', {}, { surDeconnexion: () => afficherConnexion('Votre session a expiré, reconnectez-vous.') }));
+  if (location.hash !== hash || !calendrierAChange(avant, etat.cal) || document.querySelector('.selecteur-affichage')) return;
+  await reafficherSansBouger();
+}
+
+async function reafficherSansBouger() {
+  const y = window.scrollY;
+  const frise = vue().querySelector('.frise');
+  const x = frise ? frise.scrollLeft : null;
+  const ouverts = [...vue().querySelectorAll('details')].map((d) => d.open);
+  await routerSansAttente();
+  vue().querySelectorAll('details').forEach((d, i) => { if (i < ouverts.length) d.open = ouverts[i]; });
+  const friseNeuve = vue().querySelector('.frise');
+  if (friseNeuve && x !== null) friseNeuve.scrollLeft = x;
+  window.scrollTo(0, y);
+}
+
+setInterval(() => { relireCalendrierALEcran().catch(() => {}); }, INTERVALLE_CALENDRIER_MS);
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !lireJeton() || !etat.cal) return;

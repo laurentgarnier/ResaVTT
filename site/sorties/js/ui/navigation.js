@@ -10,3 +10,15 @@ export function reaffichageAutomatiquePermis(hash) {
 export function destinationApresConnexion(hash) {
   return !hash || hash === '#/deconnexion' ? '#/' : hash;
 }
+
+// Calendrier à l'écran : relu régulièrement pour suivre les inscriptions faites depuis d'autres appareils.
+export const INTERVALLE_CALENDRIER_MS = 30000;
+
+export function doitRelireCalendrier({ visible, connecte, hash, recuIlYa }) {
+  return visible && connecte && reaffichageAutomatiquePermis(hash) && recuIlYa >= INTERVALLE_CALENDRIER_MS - 1000;
+}
+
+// Le calendrier n'est redessiné que si ses jours ont changé : sinon rien ne bouge à l'écran.
+export function calendrierAChange(avant, apres) {
+  return !avant || JSON.stringify(avant.jours) !== JSON.stringify(apres.jours);
+}
