@@ -12,23 +12,30 @@ function lienHtml(url, libelle = url) {
   return `<a href="${url}">${libelle}</a>`;
 }
 
-function ligneHtml(ligne) {
+const sansBarreFinale = (u) => String(u || '').replace(/\/+$/, '');
+
+// Ligne vide : <div><br></div>, que les messageries affichent et copient comme une vraie ligne vide.
+// Lien vers l'appli (urlAppli) : « Application <nom de l'association> » au lieu de son adresse.
+function ligneHtml(ligne, { urlAppli, nomAppli }) {
   const retrait = /^\s+\S/.test(ligne);
   const brute = ligne.trim();
-  if (!brute) return '<div style="height:12px"></div>';
+  if (!brute) return '<div><br></div>';
   const e = echapper(brute);
   let contenu;
   const sortie = e.match(LIGNE_SORTIE);
   const lienSortie = e.match(LIGNE_LIEN_SORTIE);
   if (sortie) contenu = `🚵 <b style="font-size:19px">${sortie[1]}</b> – ${sortie[2]}`;
   else if (lienSortie) contenu = `👉 ${lienHtml(lienSortie[1], "Voir la sortie et s'inscrire")}`;
-  else contenu = e.replace(URL_TEXTE, (u) => lienHtml(u));
+  else {
+    const appli = urlAppli && nomAppli ? sansBarreFinale(echapper(urlAppli)) : null;
+    contenu = e.replace(URL_TEXTE, (u) => lienHtml(u, appli && sansBarreFinale(u) === appli ? `Application ${echapper(nomAppli)}` : u));
+  }
   return `<div${retrait ? ' style="padding-left:28px"' : ''}>${contenu}</div>`;
 }
 
-export function courrierListe(objet, texte) {
+export function courrierListe(objet, texte, { urlAppli = '', nomAppli = '' } = {}) {
   const html = '<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#1a2338">'
-    + String(texte).split('\n').map(ligneHtml).join('')
+    + String(texte).split('\n').map((l) => ligneHtml(l, { urlAppli, nomAppli })).join('')
     + '</div>';
   return { objet, texte, html };
 }

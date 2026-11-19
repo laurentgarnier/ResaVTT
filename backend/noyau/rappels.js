@@ -113,8 +113,7 @@ export function composerMessage(rappel, sorties, hourly, urlAppli) {
   const premiere = sorties[0] || {};
   const valeurs = {
     nom: rappel.nom,
-    // Une ligne vide après chaque sortie (lien compris) : le message reste lisible avec plusieurs sorties.
-    liste_sorties: lignes.map((bloc) => `${bloc}\n`).join('\n'),
+    liste_sorties: lignes.join('\n'),
     lien: urlAppli || '',
     titre: premiere.titre || '',
     date: premiere.date ? libelleJour(premiere.date) : '',
@@ -123,7 +122,24 @@ export function composerMessage(rappel, sorties, hourly, urlAppli) {
     meteo: premiere.date ? ligneMeteoTexte(meteoDe(premiere, hourly)) : '',
     lien_sortie: premiere.id ? lienSortie(urlAppli, premiere.id) : '',
   };
-  return { objet: remplirModele(rappel.objet || '', valeurs), texte: remplirModele(rappel.texte || '', valeurs) };
+  return { objet: remplirModele(rappel.objet || '', valeurs), texte: aerer(remplirModele(rappel.texte || '', valeurs)) };
+}
+
+// Une ligne vide avant chaque sortie annoncée (🚵) et après son lien (👉), quel que soit le texte réglé par l'admin ;
+// jamais deux lignes vides de suite, ni au début ni à la fin.
+export function aerer(texte) {
+  const lignes = [];
+  let videApres = false;
+  for (const ligne of String(texte).split('\n')) {
+    const t = ligne.trim();
+    if (t && (videApres || t.startsWith('🚵'))) lignes.push('');
+    lignes.push(t ? ligne : '');
+    videApres = t.startsWith('👉');
+  }
+  const res = [];
+  for (const l of lignes) if (l !== '' || (res.length && res[res.length - 1] !== '')) res.push(l);
+  while (res.length && res[res.length - 1] === '') res.pop();
+  return res.join('\n');
 }
 
 // Envoie un rappel (programmé ou manuel) sur ses canaux. Aucune sortie à annoncer : rien ne part, rien n'est noté.

@@ -25,10 +25,16 @@ test('mail à la liste : la date et l\'heure de chaque sortie en plus grand', ()
   assert.match(html, /🚵 <b style="font-size:19px">Samedi 21 novembre 09:00<\/b> – Samedi matin \(PDL\)/);
 });
 
-test('mail à la liste : le lien de la sortie, court, sur la même ligne que son pictogramme ; les autres liens cliquables', () => {
-  const { html } = courrierListe('Rappel', TEXTE);
+test("mail à la liste : le lien de la sortie, court, sur la ligne de son pictogramme ; celui de l'appli à son nom ; les autres cliquables", () => {
+  const { html } = courrierListe('Rappel', `${TEXTE}\nVoir aussi https://autre.example.org/page`, { urlAppli: 'https://club.example.org/sorties', nomAppli: 'Corbas VTT' });
   assert.ok(html.includes(`👉 <a href="${LIEN}">Voir la sortie et s'inscrire</a>`));
-  assert.ok(html.includes('Pas encore installée : <a href="https://club.example.org/sorties/">https://club.example.org/sorties/</a>'));
+  assert.ok(html.includes('Pas encore installée : <a href="https://club.example.org/sorties/">Application Corbas VTT</a>'));
+  assert.ok(html.includes('Voir aussi <a href="https://autre.example.org/page">https://autre.example.org/page</a>'));
+});
+
+test('mail à la liste : une ligne vide du texte est une vraie ligne vide (affichée et copiée par les messageries)', () => {
+  const { html } = courrierListe('Rappel', 'A\n\nB');
+  assert.ok(html.includes('<div>A</div><div><br></div><div>B</div>'));
 });
 
 test('mail à la liste : le texte est échappé', () => {
