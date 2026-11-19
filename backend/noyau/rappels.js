@@ -113,7 +113,8 @@ export function composerMessage(rappel, sorties, hourly, urlAppli) {
   const premiere = sorties[0] || {};
   const valeurs = {
     nom: rappel.nom,
-    liste_sorties: lignes.join('\n'),
+    // Une ligne vide après chaque sortie (lien compris) : le message reste lisible avec plusieurs sorties.
+    liste_sorties: lignes.map((bloc) => `${bloc}\n`).join('\n'),
     lien: urlAppli || '',
     titre: premiere.titre || '',
     date: premiere.date ? libelleJour(premiere.date) : '',

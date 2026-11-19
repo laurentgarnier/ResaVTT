@@ -51,6 +51,11 @@ test('adaptateur : initialiser, chargerDonneesDemoCompletes, puis doPost connexi
 
   assert.equal(post({ action: 'admin_code_demander', jeton: cx.data.jeton }).ok, true);
   assert.equal(g.mails.at(-1).to, 'porteur@example.org');
+  assert.equal(g.mails.at(-1).name, 'Sorties VTT', "expéditeur : nom de l'association par défaut");
+  classeur.getSheetByName('Parametres').donnees.forEach((l) => { if (l[0] === 'nom_appli') l[1] = 'VTT Club Bellifontain'; });
+  vm.runInContext('oublierDonneesEnCache()', contexte);
+  assert.equal(post({ action: 'admin_code_demander', jeton: cx.data.jeton }).ok, true);
+  assert.equal(g.mails.at(-1).name, 'VTT Club Bellifontain', "expéditeur : nom de l'association réglé par l'admin");
   assert.equal(JSON.parse(contexte.doPost({ postData: { contents: 'pas du json' } }).getContent()).erreur, 'requete_invalide');
 
   vm.runInContext('installer()', contexte);

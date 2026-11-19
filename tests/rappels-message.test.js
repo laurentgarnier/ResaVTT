@@ -23,7 +23,7 @@ const SORTIES = [
 const groupe = (autres = {}) => ({ type: 'G', id: 'g', nom: 'Week-end', regle_ids: ['sm', 'sa'], mail: true, whatsapp: true,
   objet: 'Sorties VTT : {{nom}}', texte: 'Les inscriptions sont ouvertes !\n{{liste_sorties}}\n🌐 {{lien}}', ...autres });
 
-test('composerMessage : liste des sorties avec la météo de leur demi-journée et le lien vers chaque sortie', () => {
+test('composerMessage : liste des sorties avec la météo de leur demi-journée et le lien vers chaque sortie, une ligne vide après chaque sortie', () => {
   const m = composerMessage(groupe(), SORTIES, horaire(), URL_APPLI);
   assert.equal(m.objet, 'Sorties VTT : Week-end');
   assert.equal(m.texte, [
@@ -31,9 +31,11 @@ test('composerMessage : liste des sorties avec la météo de leur demi-journée 
     '🚵 Samedi 14 novembre 09:30 – Samedi matin (PDL)',
     '   ☀️ Ensoleillé, 2–6°, pluie 0 mm, vent 12 km/h NE',
     '   👉 https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-14%3A1',
+    '',
     '🚵 Samedi 14 novembre 14:00 – Samedi après-midi (PDL)',
     '   ⛅ Éclaircies, 8–11°, pluie 1,2 mm, vent 9 km/h O',
     '   👉 https://club.example.org/sorties/#/sortie/R%3Asa%3A2026-11-14%3A1',
+    '',
     `🌐 ${URL_APPLI}`,
   ].join('\n'));
 });
@@ -47,7 +49,7 @@ test("composerMessage : repères d'une seule sortie, et ceux de la première qua
 
 test("composerMessage : sans météo ni adresse de l'appli, les lignes restent lisibles", () => {
   const m = composerMessage(groupe({ texte: '{{liste_sorties}}' }), SORTIES.slice(0, 1), null, '');
-  assert.equal(m.texte, '🚵 Samedi 14 novembre 09:30 – Samedi matin (PDL)\n   Météo pas encore disponible');
+  assert.equal(m.texte, '🚵 Samedi 14 novembre 09:30 – Samedi matin (PDL)\n   Météo pas encore disponible\n');
 });
 
 test('meteoServeur : une requête Open-Meteo avec la direction du vent ; échec ou commune absente → null', () => {

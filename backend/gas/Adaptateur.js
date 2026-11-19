@@ -288,6 +288,18 @@ function hexSha256(texte) {
   return octets.map(function (b) { return ((b + 256) % 256).toString(16).padStart(2, '0'); }).join('');
 }
 
+// Nom d'expéditeur des mails : le nom de l'association (paramètre nom_appli), sinon « Sorties VTT ». L'adresse reste
+// celle du compte Google qui exécute le script.
+function nomExpediteur(depot) {
+  try {
+    var ligne = depot.lire('Parametres').filter(function (l) { return l.cle === 'nom_appli'; })[0];
+    var nom = ligne ? String(ligne.valeur).trim() : '';
+    return nom || 'Sorties VTT';
+  } catch (e) {
+    return 'Sorties VTT';
+  }
+}
+
 var CLE_CACHE_ADHERENTS = 'adherents';
 var DUREE_CACHE_ADHERENTS = 300; // secondes : une modification du fichier Adhérents est vue au plus 5 min après
 
@@ -341,7 +353,7 @@ function contexteGoogle(options) {
       uuid: function () { return Utilities.getUuid(); },
       hacher: hexSha256,
       mail: function (destinataires, objet, texte, html) {
-        var options = { to: destinataires, subject: objet, body: texte, name: 'Sorties VTT' };
+        var options = { to: destinataires, subject: objet, body: texte, name: nomExpediteur(depot) };
         if (html) options.htmlBody = html;
         MailApp.sendEmail(options);
       },
