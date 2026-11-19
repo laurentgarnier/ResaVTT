@@ -15,7 +15,7 @@ import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormula
 import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
 import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
-import { reaffichageAutomatiquePermis, destinationApresConnexion, doitRelireCalendrier, calendrierAChange, INTERVALLE_CALENDRIER_MS } from './ui/navigation.js';
+import { reaffichageAutomatiquePermis, destinationApresConnexion, doitRelireCalendrier, calendrierAChange, INTERVALLE_CALENDRIER_MS, destinationLienCourt } from './ui/navigation.js';
 import { creerAttente } from './ui/attente.js';
 import { enregistrerCalendrier, lireCalendrierEnCache, oublierCalendrier } from './cache-calendrier.js';
 import { aujourdhuiLocal } from './logique/dates.js';
@@ -328,6 +328,15 @@ const ROUTES = [
   { motif: /^#\/$/, afficher: (racine) => afficherCalendrier(racine) },
   { motif: /^#\/jour\/(\d{4}-\d{2}-\d{2})$/, afficher: async (racine, m) => afficherJour(racine, m[1], await meteoCourante()) },
   { motif: /^#\/sortie\/(.+)$/, afficher: (racine, m) => afficherSortie(racine, decodeURIComponent(m[1])) },
+  // Lien court des messages : remplacé dans l'historique par l'adresse de la fiche.
+  {
+    motif: /^#\/s\/([0-9a-z]+)$/,
+    afficher: (racine, m) => {
+      const destination = destinationLienCourt(etat.cal, m[1]);
+      if (destination) location.replace(destination);
+      else racine.innerHTML = '<p class="mut">Cette sortie n\'est plus au calendrier.</p><a class="btn o" href="#/">Retour au calendrier</a>';
+    },
+  },
 ];
 
 async function router() {

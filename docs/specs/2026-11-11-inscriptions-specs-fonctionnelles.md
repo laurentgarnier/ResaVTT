@@ -271,7 +271,8 @@ Le rappel unique du jeudi est remplacé par des rappels réglés **par récurren
   > 🌐 Pas encore installée : {{lien}}
 - **Ordre du message [décidé]** : le message invite d'abord à ouvrir l'appli installée, puis donne le lien de la version web. La même consigne s'applique aux messages d'annulation.
 - **« Envoyer maintenant »** sur chaque rappel l'envoie tout de suite, même désactivé ou couvert par un groupe (tests, démonstrations).
-- **Canal WhatsApp** : un mail au secrétaire et aux suppléants contient un bouton qui ouvre WhatsApp avec le message déjà rédigé ; il suffit de choisir le groupe et d'appuyer sur Envoyer.
+- **Canal WhatsApp** : un mail au secrétaire et aux suppléants contient un bouton qui ouvre WhatsApp avec le message déjà rédigé ; il suffit de choisir le groupe et d'appuyer sur Envoyer. Le message a la même présentation que le mail, sans pictogrammes : date et heure de chaque sortie en gras, « Voir la sortie et s'inscrire : » suivi du lien, mêmes lignes vides **[décidé]**.
+- **Liens courts [décidé]** : dans tous les messages (rappels, partage et annulation sur WhatsApp), le lien d'une sortie est court : l'adresse de l'appli suivie de `#/s/` et d'un code de 6 caractères. Les anciens liens restent valables ; une sortie qui n'est plus au calendrier affiche « Cette sortie n'est plus au calendrier ».
 - **Pas d'emojis sur WhatsApp [décidé]** : ils s'affichent en caractères inconnus chez certains. Tout message destiné à WhatsApp (rappels, annulations, partage d'une sortie) en est débarrassé automatiquement, y compris ceux saisis dans les textes ; les mails à la liste les gardent.
 - **Mise en service** : l'ancien rappel du jeudi devient le rappel groupé « Week-end » (récurrences du samedi et du dimanche, mêmes jour et heure).
 - **Doubles annonces** : si l'admin modifie les rappels en cours de semaine, une sortie peut être annoncée deux fois ; accepté, car cela ne suit qu'une modification.

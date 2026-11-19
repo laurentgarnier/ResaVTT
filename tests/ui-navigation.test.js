@@ -38,3 +38,12 @@ test('calendrier relu : redessiné seulement si les jours ont changé (inscripti
   assert.equal(calendrierAChange({ jours }, { jours: copie }), true);
   assert.equal(calendrierAChange(null, { jours }), true);
 });
+
+test('lien court reçu (#/s/<code>) : mène à la fiche de la sortie du calendrier, sinon à rien', async () => {
+  const { destinationLienCourt } = await import('../site/sorties/js/ui/navigation.js');
+  const { codeCourt } = await import('../site/sorties/js/logique/liens.js');
+  const cal = { jours: [{ sorties: [{ id: 'R:sm:2026-11-21:1' }] }] };
+  assert.equal(destinationLienCourt(cal, codeCourt('R:sm:2026-11-21:1')), '#/sortie/R%3Asm%3A2026-11-21%3A1');
+  assert.equal(destinationLienCourt(cal, 'zzzzzz'), null);
+  assert.equal(destinationApresConnexion(`#/s/${codeCourt('x')}`), `#/s/${codeCourt('x')}`, 'gardé pendant la connexion');
+});

@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { codeCourt } from '../site/sorties/js/logique/liens.js';
 import assert from 'node:assert/strict';
 import { contexteTest } from './aides/contexte-test.js';
 import { ticNoyau } from '../backend/noyau/automate.js';
@@ -25,8 +26,8 @@ test('tic jeudi 18:05 (démo) : un seul rappel « Week-end », samedi matin et a
   assert.deepEqual(objets(t.mails), ['Sorties VTT : les inscriptions du week-end sont ouvertes', 'À poster sur WhatsApp']);
   const texte = t.mails[0].texte;
   assert.match(texte, /^Les sorties du week-end sont ouvertes !/);
-  assert.match(texte, /#\/sortie\/R%3Asm%3A2026-11-14%3A1/);
-  assert.match(texte, /#\/sortie\/R%3Asa%3A2026-11-14%3A1/);
+  assert.ok(texte.includes(`#/s/${codeCourt('R:sm:2026-11-14:1')}`));
+  assert.ok(texte.includes(`#/s/${codeCourt('R:sa:2026-11-14:1')}`));
   assert.doesNotMatch(texte, /Dimanche matin/);
   assert.ok(t.depot.lire('Envois').some((e) => e.cle === 'rappel:G:g-weekend:2026-11-12'));
   t.regler(new Date(2026, 10, 12, 19, 5));

@@ -1,6 +1,7 @@
 // Rappels par récurrence et rappels groupés (conception : docs/superpowers/specs/2026-11-16-rappels-par-recurrence-design.md).
 // Le rappel individuel est rangé dans la récurrence (colonnes rappel_* de Regles), les rappels groupés dans l'onglet Rappels.
 import { aujourdhuiLocal, jourSemaine, estPasse, creneau, libelleJour } from '../../site/sorties/js/logique/dates.js';
+import { lienSortie } from '../../site/sorties/js/logique/liens.js';
 import { MODELES_DEFAUT, remplirModele } from '../../site/sorties/js/logique/modeles.js';
 import { synthetiser, ligneMeteoTexte } from '../../site/sorties/js/logique/meteo.js';
 import { estVrai, lireCleValeur } from './schema.js';
@@ -87,9 +88,6 @@ export function meteoServeur(ctx, parametres) {
   }
 }
 
-function lienSortie(urlAppli, id) {
-  return urlAppli ? `${String(urlAppli).replace(/\/?$/, '/')}#/sortie/${encodeURIComponent(id)}` : '';
-}
 
 function meteoDe(sortie, hourly) {
   if (!hourly) return null;

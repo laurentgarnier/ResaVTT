@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { codeCourt } from '../site/sorties/js/logique/liens.js';
 import assert from 'node:assert/strict';
 import { contexteTest } from './aides/contexte-test.js';
 import { fabriquerHoraire } from './aides/meteo.js';
@@ -31,11 +32,11 @@ test('composerMessage : liste des sorties avec la météo et le lien de chaque s
     '',
     '🚵 Samedi 14 novembre 09:30 – Samedi matin (PDL)',
     '   ☀️ Ensoleillé, 2–6°, pluie 0 mm, vent 12 km/h NE',
-    '   👉 https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-14%3A1',
+    `   👉 https://club.example.org/sorties/#/s/${codeCourt('R:sm:2026-11-14:1')}`,
     '',
     '🚵 Samedi 14 novembre 14:00 – Samedi après-midi (PDL)',
     '   ⛅ Éclaircies, 8–11°, pluie 1,2 mm, vent 9 km/h O',
-    '   👉 https://club.example.org/sorties/#/sortie/R%3Asa%3A2026-11-14%3A1',
+    `   👉 https://club.example.org/sorties/#/s/${codeCourt('R:sa:2026-11-14:1')}`,
     '',
     `🌐 ${URL_APPLI}`,
   ].join('\n'));
@@ -45,7 +46,7 @@ test("composerMessage : repères d'une seule sortie, et ceux de la première qua
   const rappel = groupe({ type: 'R', nom: 'Samedi matin', objet: '{{titre}} {{date}}', texte: '{{heure}}|{{point_rdv}}|{{meteo}}|{{lien_sortie}}' });
   const m = composerMessage(rappel, SORTIES, horaire(), URL_APPLI);
   assert.equal(m.objet, 'Samedi matin Samedi 14 novembre');
-  assert.equal(m.texte, '09:30|PDL|☀️ Ensoleillé, 2–6°, pluie 0 mm, vent 12 km/h NE|https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-14%3A1');
+  assert.equal(m.texte, `09:30|PDL|☀️ Ensoleillé, 2–6°, pluie 0 mm, vent 12 km/h NE|https://club.example.org/sorties/#/s/${codeCourt('R:sm:2026-11-14:1')}`);
 });
 
 test("composerMessage : sans météo ni adresse de l'appli, les lignes restent lisibles", () => {
@@ -80,7 +81,7 @@ test("envoyerRappelProgramme : mail seul → une seule étape, la liste ; WhatsA
   assert.equal(r.nb_sorties, 2);
   assert.equal(t.mails.length, 1);
   assert.equal(t.mails[0].objet, 'Sorties VTT : Week-end');
-  assert.match(t.mails[0].texte, /#\/sortie\/R%3Asa%3A2026-11-14%3A1/);
+  assert.ok(t.mails[0].texte.includes(`#/s/${codeCourt('R:sa:2026-11-14:1')}`));
   const t2 = contexteRappel();
   envoyerRappelProgramme(t2.ctx, groupe({ mail: false }), 'rappel:G:g:2026-11-12', horaire());
   assert.deepEqual(t2.mails.map((m) => m.objet), ['À poster sur WhatsApp']);
@@ -107,8 +108,8 @@ test('rappel sur WhatsApp : le message à poster ne contient aucun emoji ; le ma
   const [liste, whatsapp] = t.mails;
   assert.match(liste.texte, /🚵 Samedi 14 novembre 09:30/);
   assert.doesNotMatch(whatsapp.texte, /\p{Extended_Pictographic}/u);
-  assert.match(whatsapp.texte, /^Les inscriptions sont ouvertes !\n\nSamedi 14 novembre 09:30 – Samedi matin \(PDL\)\n   Ensoleillé, 2–6°, pluie 0 mm, vent 12 km\/h NE\n   https:/);
-  const texteLien = decodeURIComponent(whatsapp.html.match(/wa\.me\/[^?]*\?text=([^"&]*)/)[1]);
+  assert.match(whatsapp.texte, /^Les inscriptions sont ouvertes !\n\n\*Samedi 14 novembre 09:30\* – Samedi matin \(PDL\)\nEnsoleillé, 2–6°, pluie 0 mm, vent 12 km\/h NE\nVoir la sortie et s'inscrire : https:/);
+  const texteLien = decodeURIComponent(whatsapp.html.replace(/&#39;/g, "'").match(/wa\.me\/[^?]*\?text=([^"&]*)/)[1]);
   assert.doesNotMatch(texteLien, /\p{Extended_Pictographic}/u);
 });
 

@@ -40,8 +40,21 @@ export function courrierListe(objet, texte, { urlAppli = '', nomAppli = '' } = {
   return { objet, texte, html };
 }
 
+// Message WhatsApp : la présentation du mail sans pictogrammes. Date et heure d'une sortie en gras (*…* sur WhatsApp),
+// lien d'une sortie annoncé par « Voir la sortie et s'inscrire : », retrait des lignes supprimé.
+export function miseEnFormeWhatsApp(texte) {
+  return String(texte).split('\n').map((ligne) => {
+    const t = ligne.trim();
+    const sortie = t.match(LIGNE_SORTIE);
+    if (sortie) return `*${sortie[1]}* – ${sortie[2]}`;
+    const lien = t.match(LIGNE_LIEN_SORTIE);
+    if (lien) return `Voir la sortie et s'inscrire : ${lien[1]}`;
+    return t;
+  }).join('\n');
+}
+
 export function courrierWhatsApp(texteBrut, numero) {
-  const texte = sansEmojis(texteBrut);
+  const texte = sansEmojis(miseEnFormeWhatsApp(texteBrut));
   const lien = lienWhatsApp(texte, numero);
   const html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1a2338">'
     + '<p>Message prêt à poster sur WhatsApp :</p>'

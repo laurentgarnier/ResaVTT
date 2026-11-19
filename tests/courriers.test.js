@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { courrierListe } from '../backend/noyau/courriers.js';
+import { courrierListe, courrierWhatsApp } from '../backend/noyau/courriers.js';
 import { contexteTest } from './aides/contexte-test.js';
 
 const LIEN = 'https://club.example.org/sorties/#/sortie/R%3Asm%3A2026-11-21%3A1';
@@ -51,4 +51,13 @@ test('rappel envoyé à la liste : le mail part avec sa version mise en forme', 
   const liste = t.mails.find((m) => m.destinataires === 'porteur@example.org' && m.objet !== 'À poster sur WhatsApp');
   assert.ok(liste && liste.html, 'mail à la liste avec html');
   assert.match(liste.html, /🚵 <b style="font-size:19px">/);
+});
+
+test("message WhatsApp : même présentation que le mail, sans pictogrammes : date en gras, lien de la sortie annoncé, lignes vides gardées, sans retrait", () => {
+  const texte = ['Rappel', '', '🚵 Samedi 21 novembre 09:00 – Matin (PDL)', '   ☀️ Ensoleillé, 2–9°, pluie 0 mm', `   👉 ${LIEN}`, '', '🌐 Pas encore installée : https://club.example.org/sorties/'].join('\n');
+  const c = courrierWhatsApp(texte, '');
+  const message = c.texte.split('\n\nEnvoyer sur WhatsApp : ')[0];
+  assert.equal(message, ['Rappel', '', '*Samedi 21 novembre 09:00* – Matin (PDL)', 'Ensoleillé, 2–9°, pluie 0 mm', `Voir la sortie et s'inscrire : ${LIEN}`, '', 'Pas encore installée : https://club.example.org/sorties/'].join('\n'));
+  const texteLien = decodeURIComponent(c.html.replace(/&#39;/g, "'").match(/wa\.me\/[^?]*\?text=([^"&]*)/)[1]);
+  assert.equal(texteLien, message);
 });

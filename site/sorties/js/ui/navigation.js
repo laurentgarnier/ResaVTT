@@ -1,4 +1,5 @@
 // Règles de navigation partagées par l'appli.
+import { idDuCodeCourt } from '../logique/liens.js';
 
 // Au retour dans l'appli, on ne reconstruit que le calendrier : un écran de saisie (formulaire, message,
 // administration) verrait sinon ses champs vidés.
@@ -21,4 +22,10 @@ export function doitRelireCalendrier({ visible, connecte, hash, recuIlYa }) {
 // Le calendrier n'est redessiné que si ses jours ont changé : sinon rien ne bouge à l'écran.
 export function calendrierAChange(avant, apres) {
   return !avant || JSON.stringify(avant.jours) !== JSON.stringify(apres.jours);
+}
+
+// Lien court des messages (#/s/<code>) : la fiche de la sortie du calendrier, ou null si elle n'y est plus.
+export function destinationLienCourt(cal, code) {
+  const id = idDuCodeCourt(cal ? cal.jours : [], code);
+  return id ? `#/sortie/${encodeURIComponent(id)}` : null;
 }

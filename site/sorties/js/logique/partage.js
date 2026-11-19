@@ -3,6 +3,7 @@
 // serveur, d'après les modèles réglés par l'admin (Modeles.partage_whatsapp et annulation_partage_whatsapp, reçus
 // avec le calendrier).
 import { libelleJour } from './dates.js';
+import { lienSortie } from './liens.js';
 import { ligneMeteoTexte } from './meteo.js';
 import { remplirModele, MODELES_DEFAUT } from './modeles.js';
 
@@ -29,7 +30,7 @@ function valeursSortie(sortie, urlAppli) {
     heure: sortie.heure,
     point_rdv: sortie.point_rdv,
     distances: [sortie.km && `${sortie.km} km`, sortie.dplus && `${sortie.dplus} m D+`].filter(Boolean).join(' · '),
-    lien_sortie: `${adresse}#/sortie/${encodeURIComponent(sortie.id)}`,
+    lien_sortie: lienSortie(adresse, sortie.id),
     lien: adresse,
     createur: sortie.createur_nom || '',
   };
