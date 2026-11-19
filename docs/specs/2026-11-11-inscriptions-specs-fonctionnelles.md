@@ -194,7 +194,7 @@ La météo est celle de la demi-journée de la sortie, déjà connue du téléph
 - C'est un fil de messages courts, en texte, propre à chaque sortie : remarques, contraintes, retards, et autres.
 - Chaque message affiche le nom de la personne, la date et l'heure. On peut supprimer son propre message ; un administrateur peut supprimer n'importe quel message.
 - Il est possible de **joindre une trace GPX** à un message **[choix du rédacteur]**.
-- Le fil se met à jour à l'ouverture de la sortie, puis toutes les 30 secondes tant qu'elle reste ouverte. Il n'y a **pas de notification sur le téléphone** **[choix du rédacteur]**.
+- Le fil se met à jour à l'ouverture de la sortie, puis toutes les 30 secondes tant qu'elle reste ouverte ; la **liste des inscrits** aussi, pour voir les inscriptions faites depuis un autre appareil **[décidé]**. Il n'y a **pas de notification sur le téléphone** **[choix du rédacteur]**.
 - Des messages automatiques signalent les changements d'horaire et les annulations.
 
 ### 4.7 Météo **[décidé]**

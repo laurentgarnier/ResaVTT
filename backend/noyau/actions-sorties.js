@@ -2,7 +2,7 @@
 import { estPasse } from '../../site/sorties/js/logique/dates.js';
 import { peutModifier, peutChangerHoraire } from '../../site/sorties/js/logique/droits.js';
 import { estVrai, erreurMetier } from './schema.js';
-import { horodatage, personnesDuCompte, trouverSortie } from './actions-adherent.js';
+import { horodatage, personnesDuCompte, trouverSortie, inscritsVus, nomsParTelephone } from './actions-adherent.js';
 
 const TAILLE_MAX_TRACE = 5 * 1024 * 1024;
 const LONGUEUR_MAX_MESSAGE = 1000;
@@ -94,7 +94,16 @@ export function actionSortieAnnuler(ctx, u, req) {
   return null;
 }
 
+// Avec avec_inscrits (fiche d'une sortie ouverte, interrogée toutes les 30 s) : { messages, inscrits }, pour que la
+// liste des inscrits suive les inscriptions faites depuis d'autres appareils. Sans : la liste des messages seule.
 export function actionDiscussionLire(ctx, u, req) {
+  const messages = messagesDepuis(ctx, u, req);
+  if (!req.avec_inscrits) return messages;
+  const inscriptions = ctx.depot.lire('Inscriptions').filter((i) => i.sortie_id === req.sortie_id);
+  return { messages, inscrits: inscritsVus(inscriptions, u, nomsParTelephone(ctx)) };
+}
+
+function messagesDepuis(ctx, u, req) {
   const depuis = req.depuis || '';
   return ctx.depot.lire('Discussions')
     .filter((m) => m.sortie_id === req.sortie_id && !estVrai(m.supprime) && String(m.horodatage) > depuis)

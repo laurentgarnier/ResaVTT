@@ -50,7 +50,7 @@ function renderTraces(sortie) {
     </div>`).join('')}`;
 }
 
-function renderInscription(sortie, personnes) {
+export function renderInscription(sortie, personnes) {
   if (sortie.statut === 'annulee') return '';
   if (!sortie.inscriptions_ouvertes) return '<p class="mut">Inscriptions closes : l\'heure du rendez-vous est passée.</p>';
   const inscrites = new Set(sortie.inscrits.filter((i) => i.a_moi).map((i) => i.personne_id));
@@ -66,7 +66,15 @@ function renderInscription(sortie, personnes) {
   </form>`;
 }
 
-function renderInscrits(sortie) {
+// Ce qui change quand les inscrits d'une fiche ouverte sont relus : la liste, et mes propres inscriptions (dont dépend
+// le formulaire : pour un compte d'une seule personne, son bouton inscrit ou désinscrit selon cette liste).
+export function changementInscrits(avant, apres) {
+  const cle = (liste) => JSON.stringify(liste);
+  const miennes = (liste) => liste.filter((i) => i.a_moi).map((i) => i.personne_id).sort().join(',');
+  return { liste: cle(avant) !== cle(apres), miennes: miennes(avant) !== miennes(apres) };
+}
+
+export function renderInscrits(sortie) {
   const n = sortie.inscrits.length;
   return `<div class="section">Inscrits <span>${n} · ordre alphabétique</span></div>
     <div class="noms">${sortie.inscrits.map((i) => `<div class="nm${i.a_moi ? ' moi' : ''}"><span class="av" style="background:${couleurAvatar(i.nom_affiche)}">${echapper(initiales(i.nom_affiche))}</span><span class="n">${echapper(i.nom_affiche)}</span>${i.inscrit_par ? ` <small>(par ${echapper(i.inscrit_par)})</small>` : ''}</div>`).join('')}</div>`;
@@ -106,8 +114,8 @@ export function renderSortie(sortie, messages, personnes, { tousMessages = false
     ${renderPartageAnnulation(sortie, partageAnnulation, annulationRecente)}
     ${annulee ? `<p class="encart">Sortie annulée. Motif : ${echapper(sortie.motif_annulation || 'non précisé')}</p>` : ''}
     ${renderTraces(sortie)}
-    ${renderInscription(sortie, personnes)}
-    ${renderInscrits(sortie)}
+    <div id="zone-inscription">${renderInscription(sortie, personnes)}</div>
+    <div id="inscrits">${renderInscrits(sortie)}</div>
     <div class="discussion" id="discussion">${renderDiscussion(messages, tousMessages)}</div>
     ${sortie.peut_modifier && !annulee ? `<div class="actions"><a class="btn o" href="#/modifier/${encodeURIComponent(sortie.id)}">✎ Modifier</a><button class="btn d" data-action="annuler">Annuler la sortie</button></div>` : ''}
   </article>`;
@@ -134,9 +142,22 @@ export function brancherSortie(racine, actions, sortie) {
     zoneDiscussion().innerHTML = renderDiscussion(messages, tousMessages);
     brancherSaisie();
   };
+  // Inscrits relus avec la discussion : la liste suit les inscriptions faites depuis d'autres appareils.
+  const mettreAJourInscrits = (inscrits) => {
+    if (!Array.isArray(inscrits)) return;
+    const change = changementInscrits(sortie.inscrits, inscrits);
+    if (!change.liste) return;
+    sortie.inscrits = inscrits; // la sortie est celle du calendrier en mémoire : il en profite aussi
+    const zone = racine.querySelector('#inscrits');
+    if (zone) zone.innerHTML = renderInscrits(sortie);
+    const zoneForm = racine.querySelector('#zone-inscription');
+    if (change.miennes && zoneForm) zoneForm.innerHTML = renderInscription(sortie, actions.etat.cal ? actions.etat.cal.personnes : []);
+  };
   const chargerMessages = async () => {
     const depuis = messages.length ? messages[messages.length - 1].horodatage : '';
-    const nouveaux = await actions.appeler('discussion_lire', { sortie_id: id, depuis });
+    const r = await actions.appeler('discussion_lire', { sortie_id: id, depuis, avec_inscrits: true });
+    const nouveaux = Array.isArray(r) ? r : r.messages;
+    mettreAJourInscrits(Array.isArray(r) ? null : r.inscrits);
     if (nouveaux.length || !messages.length) {
       messages = messages.concat(nouveaux);
       afficherDiscussion();
@@ -203,10 +224,12 @@ export function brancherSortie(racine, actions, sortie) {
     }
   });
 
-  const formInscription = racine.querySelector('#form-inscription');
-  if (formInscription) {
-    formInscription.addEventListener('submit', async (ev) => {
+  // Écoute sur la racine : le formulaire peut être remplacé quand mes inscriptions changent ailleurs.
+  if (racine.querySelector('#form-inscription')) {
+    racine.addEventListener('submit', async (ev) => {
+      if (ev.target.id !== 'form-inscription') return;
       ev.preventDefault();
+      const formInscription = ev.target;
       const champs = [...formInscription.querySelectorAll('[name="personne"]')];
       const deja = new Set(sortie.inscrits.filter((i) => i.a_moi).map((i) => i.personne_id));
       let voulues;

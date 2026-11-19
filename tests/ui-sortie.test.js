@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { contexteTest } from './aides/contexte-test.js';
-import { renderSortie } from '../site/sorties/js/ui/sortie.js';
+import { renderSortie, renderInscription, renderInscrits, changementInscrits } from '../site/sorties/js/ui/sortie.js';
 
 function donnees(id, tel = '0600000002') {
   const t = contexteTest();
@@ -98,4 +98,20 @@ test("pas de bouton d'annulation pour une sortie qui n'est pas la sienne (admin 
   const options = { partageAnnulation: { texte: 'x' } };
   assert.doesNotMatch(renderSortie({ ...sortie, statut: 'annulee', mienne: false, peut_modifier: true }, messages, personnes, options), /Prévenir de l'annulation/);
   assert.doesNotMatch(renderSortie(sortie, messages, personnes, options), /Prévenir de l'annulation/);
+});
+
+test("fiche ouverte : liste des inscrits et formulaire d'inscription ont chacun leur zone, pour être remis à jour sans recharger la fiche", () => {
+  const { sortie, messages, personnes } = donnees('R:sm:2026-11-14:1');
+  const html = renderSortie(sortie, messages, personnes);
+  assert.ok(html.includes(`<div id="inscrits">${renderInscrits(sortie)}</div>`));
+  assert.ok(html.includes(`<div id="zone-inscription">${renderInscription(sortie, personnes)}</div>`));
+});
+
+test("fiche ouverte : une inscription faite ailleurs change la liste ; le formulaire ne change que si ce sont mes propres inscriptions", () => {
+  const moi = { personne_id: 'p1', nom_affiche: 'Ben', inscrit_par: null, a_moi: true };
+  const autre = { personne_id: 'p9', nom_affiche: 'Zoé', inscrit_par: null, a_moi: false };
+  assert.deepEqual(changementInscrits([moi], [moi]), { liste: false, miennes: false });
+  assert.deepEqual(changementInscrits([moi], [moi, autre]), { liste: true, miennes: false });
+  assert.deepEqual(changementInscrits([autre], [moi, autre]), { liste: true, miennes: true });
+  assert.deepEqual(changementInscrits([moi, autre], [autre]), { liste: true, miennes: true });
 });

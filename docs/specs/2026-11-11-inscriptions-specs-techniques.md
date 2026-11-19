@@ -255,7 +255,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 | `sortie_modifier` | créateur ou admin | Modifie n'importe quel champ. |
 | `sortie_horaire` | adhérent, sortie `recurrente` uniquement | Change seulement l'heure. Renseigne modifie_par et ajoute un message automatique dans la discussion. |
 | `sortie_annuler` | créateur ou admin | Passe le statut à `annulee` et ajoute un message automatique. **Si c'est un admin qui annule**, l'annulation est aussi notifiée par mail et WhatsApp (§7.3). |
-| `discussion_lire` | adhérent | `{sortie_id, depuis}`. Renvoie les messages plus récents que `depuis`. |
+| `discussion_lire` | adhérent | `{sortie_id, depuis, avec_inscrits}`. Renvoie les messages plus récents que `depuis`. Avec `avec_inscrits` : `{messages, inscrits}`, les inscrits de la sortie au même format que dans `calendrier` (sans numéro, `a_moi` vu par le demandeur). |
 | `discussion_ecrire` / `discussion_supprimer` | adhérent ; suppression : auteur ou admin | Un message peut contenir une trace jointe. |
 | `trace_ajouter` | créateur ou admin pour la sortie elle-même ; tout adhérent si la trace est jointe à un message | `{sortie_id, nom_fichier, contenu_base64, km, dplus}`. Le fichier ne doit pas dépasser **5 Mo**. Il est enregistré dans le dossier Drive du club, **non partagé**. |
 | `trace_lire` | adhérent | Renvoie le contenu GPX. Les fichiers ne sont donc jamais publics sur Drive. |
@@ -291,7 +291,7 @@ La page de confidentialité est commune au site : `site/confidentialite.html`.
 
 ### Rafraîchissement
 - Le calendrier est rechargé à l'ouverture, au retour au premier plan (`visibilitychange`) et après chaque action.
-- Une discussion ouverte est interrogée toutes les 30 s (`discussion_lire` avec `depuis`). L'interrogation s'arrête quand l'onglet est masqué.
+- Une discussion ouverte est interrogée toutes les 30 s (`discussion_lire` avec `depuis` et `avec_inscrits`). L'interrogation s'arrête quand l'onglet est masqué. La liste des inscrits de la fiche suit ainsi les inscriptions faites depuis d'autres appareils : elle est remplacée dans sa zone (`#inscrits`) ; le formulaire d'inscription (`#zone-inscription`) ne l'est que si les inscriptions du compte ont changé, car pour un compte d'une seule personne son bouton inscrit ou désinscrit selon cette liste.
 
 ### Météo (`meteo.js`) **[décidé : commune du club]**
 - **Appel direct** du navigateur vers `https://api.open-meteo.com/v1/forecast`. Le service est gratuit, sans clé, et autorise le CORS.

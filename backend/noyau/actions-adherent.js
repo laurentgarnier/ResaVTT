@@ -48,9 +48,9 @@ function versBooleen(v) {
   return estVrai(v);
 }
 
-export function vueSortie(s, contexteVue) {
-  const { u, maintenant, inscriptionsParSortie, nomParTelephone, nbMessages, tracesParSortie, tracesParId } = contexteVue;
-  const inscrits = (inscriptionsParSortie[s.id] || []).map((i) => {
+// Inscrits d'une sortie tels que les voit l'adhérent u (sans aucun numéro), par ordre alphabétique.
+export function inscritsVus(inscriptions, u, nomParTelephone) {
+  return inscriptions.map((i) => {
     const titulaire = nomParTelephone[i.telephone] || '';
     return {
       personne_id: i.personne_id,
@@ -59,6 +59,17 @@ export function vueSortie(s, contexteVue) {
       a_moi: i.telephone === u.telephone,
     };
   }).sort((a, b) => a.nom_affiche.localeCompare(b.nom_affiche, 'fr'));
+}
+
+export function nomsParTelephone(ctx) {
+  const noms = {};
+  for (const a of ctx.adherents.lire()) noms[a.telephone] = a.nom;
+  return noms;
+}
+
+export function vueSortie(s, contexteVue) {
+  const { u, maintenant, inscriptionsParSortie, nomParTelephone, nbMessages, tracesParSortie, tracesParId } = contexteVue;
+  const inscrits = inscritsVus(inscriptionsParSortie[s.id] || [], u, nomParTelephone);
   const masquees = String(s.traces_masquees || '').split(',').filter(Boolean);
   const traces = [];
   if (s.trace_regle_id && tracesParId[s.trace_regle_id] && !masquees.includes(s.trace_regle_id)) traces.push(tracesParId[s.trace_regle_id]);
@@ -83,8 +94,7 @@ function grouper(liste, cle) {
 }
 
 export function contexteVue(ctx, u) {
-  const nomParTelephone = {};
-  for (const a of ctx.adherents.lire()) nomParTelephone[a.telephone] = a.nom;
+  const nomParTelephone = nomsParTelephone(ctx);
   const nbMessages = {};
   for (const m of ctx.depot.lire('Discussions')) if (!estVrai(m.supprime)) nbMessages[m.sortie_id] = (nbMessages[m.sortie_id] || 0) + 1;
   const traces = ctx.depot.lire('Traces');

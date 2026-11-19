@@ -150,3 +150,27 @@ test("le créateur d'une sortie ne peut pas supprimer la trace d'une autre sorti
   assert.ok(t.depot.lire('Traces').some((x) => x.id === 't-inter'));
   assert.equal(t.appel('trace_supprimer', { jeton: ludo, sortie_id: 'libre-etangs', trace_id: 't-boucle-foret' }).erreur, 'trace_inconnue');
 });
+
+test("fiche d'une sortie ouverte : l'interrogation de la discussion renvoie aussi les inscrits à jour, vus par celui qui lit", () => {
+  const t = contexteTest();
+  const ben = t.connecter('0600000002');
+  const marie = t.connecter('0600000001');
+  const id = 'R:sm:2026-11-21:1';
+  const avant = t.appel('discussion_lire', { jeton: ben, sortie_id: id, avec_inscrits: true }).data;
+  assert.ok(Array.isArray(avant.messages));
+  assert.deepEqual(avant.inscrits, sortieDe(t, ben, id).inscrits);
+  const ida = t.appel('calendrier', { jeton: marie }).data.personnes[0].id;
+  t.appel('inscription', { jeton: marie, sortie_id: id, personne_ids: [ida], inscrit: true });
+  const apres = t.appel('discussion_lire', { jeton: ben, sortie_id: id, avec_inscrits: true }).data;
+  assert.equal(apres.inscrits.length, avant.inscrits.length + 1);
+  assert.ok(apres.inscrits.some((i) => i.personne_id === ida));
+  assert.deepEqual(apres.inscrits, sortieDe(t, ben, id).inscrits);
+  assert.ok(apres.inscrits.every((i) => i.a_moi === false), 'a_moi calculé pour Ben');
+  assert.ok(!JSON.stringify(apres).includes('+33'));
+});
+
+test('discussion_lire sans avec_inscrits garde sa réponse habituelle (anciennes versions de l\'appli)', () => {
+  const t = contexteTest();
+  const jeton = t.connecter('0600000002');
+  assert.ok(Array.isArray(t.appel('discussion_lire', { jeton, sortie_id: 'R:sm:2026-11-21:1' }).data));
+});
