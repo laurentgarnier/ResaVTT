@@ -428,29 +428,42 @@ function initialiser() {
   Logger.log('Initialisation terminée. Fichier Adhérents : ' + classeurAdherents().getUrl());
 }
 
+// Données de démonstration : à lancer depuis l'éditeur Apps Script, après initialiser et la feuille « Porteur » remplie.
+// Remplace TOUTES les données de l'appli et la liste des adhérents. Jamais sur l'installation de l'association.
+//   chargerDonneesDemo          : comme une nouvelle installation, avec seulement de faux adhérents (et le porteur,
+//                                 administrateur). Ni sortie, ni récurrence, ni rappel ; paramètres et textes par défaut.
+//   chargerDonneesDemoCompletes : jeu complet (récurrences, sorties, inscriptions, discussions, traces, statistiques).
+// Dans les deux cas, chacun est déconnecté et les anciennes traces GPX passent à la corbeille de Drive.
 function chargerDonneesDemo() {
-  var classeur = classeurAppli();
-  var ligne = classeur.getSheetByName('Porteur').getRange(2, 1, 1, 3).getValues()[0];
+  remplacerDonnees(creerDonneesVierges(porteurDemo()));
+}
+
+function chargerDonneesDemoCompletes() {
+  var porteur = porteurDemo();
+  remplacerDonnees(creerDonneesDemo(aujourdhuiLocal(new Date()), porteur));
+}
+
+function porteurDemo() {
+  var ligne = classeurAppli().getSheetByName('Porteur').getRange(2, 1, 1, 3).getValues()[0];
   var porteur = { nom: String(ligne[0]).trim(), telephone: normaliserTelephone(String(ligne[1])), email: String(ligne[2]).trim() };
   if (!porteur.nom || !porteur.telephone || porteur.email.indexOf('@') < 0) {
     throw new Error('Remplissez la feuille « Porteur » ligne 2 : nom, numéro de mobile, adresse email.');
   }
-  var donnees = creerDonneesDemo(aujourdhuiLocal(new Date()), porteur);
-  var depot = depotSheets(classeur);
-  var props = proprietesScript();
-  var dossier = DriveApp.getFolderById(props.getProperty('TRACES_ID'));
+  return porteur;
+}
+
+function remplacerDonnees(donnees) {
+  var depot = depotSheets(classeurAppli());
+  var dossier = DriveApp.getFolderById(proprietesScript().getProperty('TRACES_ID'));
+  var anciens = dossier.getFiles();
+  while (anciens.hasNext()) anciens.next().setTrashed(true);
   donnees.tables.Traces.forEach(function (t) {
     var nom = String(t.drive_id).slice(5);
     t.drive_id = dossier.createFile(nom, TRACES_DEMO[nom], 'application/gpx+xml').getId();
   });
   Object.keys(donnees.tables).forEach(function (onglet) {
-    if (onglet === 'Parametres' || onglet === 'Modeles') return;
     depot.supprimer(onglet, function () { return true; });
-    depot.ajouter(onglet, donnees.tables[onglet]);
-  });
-  var voulus = { adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone, point_rdv_defaut: PARAMETRES_DEFAUT.point_rdv_defaut, rappels_migres: 'oui' };
-  Object.keys(voulus).forEach(function (cle) {
-    if (!depot.modifier('Parametres', function (l) { return l.cle === cle; }, { valeur: voulus[cle] })) depot.ajouter('Parametres', [{ cle: cle, valeur: voulus[cle] }]);
+    if (donnees.tables[onglet].length) depot.ajouter(onglet, donnees.tables[onglet]);
   });
 
   var feuilleAdh = classeurAdherents().getSheets()[0];
@@ -458,7 +471,9 @@ function chargerDonneesDemo() {
   var lignesAdh = donnees.adherents.map(function (a) { return [a.nom, a.telephone, a.email, a.actif, a.admin]; });
   feuilleAdh.getRange(2, 1, lignesAdh.length, ENTETES_ADHERENTS.length).setValues(lignesAdh);
   oublierAdherentsEnCache();
-  Logger.log('Données de démonstration chargées : ' + donnees.adherents.length + ' adhérents.');
+  oublierDonneesEnCache();
+  Logger.log('Données de démonstration chargées : ' + donnees.adherents.length + ' adhérents, '
+    + donnees.tables.Sorties.length + ' sorties, ' + donnees.tables.Regles.length + ' récurrences.');
 }
 
 function installer() {

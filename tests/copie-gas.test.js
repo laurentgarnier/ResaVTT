@@ -22,7 +22,7 @@ test('aucun nom global en double entre les fichiers copiés', () => {
   assert.deepEqual(doublons, []);
 });
 
-test('adaptateur : initialiser, chargerDonneesDemo, puis doPost connexion et calendrier sur un Google factice', () => {
+test('adaptateur : initialiser, chargerDonneesDemoCompletes, puis doPost connexion et calendrier sur un Google factice', () => {
   const g = creerGoogleFactice();
   const contexte = vm.createContext({ ...g.globaux, console });
   vm.runInContext(codeGas(), contexte);
@@ -35,7 +35,7 @@ test('adaptateur : initialiser, chargerDonneesDemo, puis doPost connexion et cal
   assert.equal(g.drive.dossiers.length, 1);
 
   classeur.getSheetByName('Porteur').getRange(2, 1, 1, 3).setValues([['Porteur', '06 11 11 11 11', 'porteur@example.org']]);
-  vm.runInContext('chargerDonneesDemo()', contexte);
+  vm.runInContext('chargerDonneesDemoCompletes()', contexte);
   assert.equal(g.drive.fichiers.size, 3);
 
   const post = (corps) => JSON.parse(contexte.doPost({ postData: { contents: JSON.stringify(corps) } }).getContent());
@@ -80,4 +80,26 @@ test('copier-vers-gas écrit dans backend/gas/gen exactement les fichiers constr
   const attendus = fichiersGas();
   assert.deepEqual(readdirSync('backend/gas/gen').sort(), attendus.map((f) => f.nom).sort());
   for (const f of attendus) assert.equal(readFileSync(`backend/gas/gen/${f.nom}`, 'utf8'), f.code);
+});
+
+test("adaptateur : chargerDonneesDemo repart comme une nouvelle installation (faux adhérents seulement, anciennes traces à la corbeille)", () => {
+  const g = creerGoogleFactice();
+  const contexte = vm.createContext({ ...g.globaux, console });
+  vm.runInContext(codeGas(), contexte);
+  vm.runInContext('initialiser()', contexte);
+  g.classeurActif.getSheetByName('Porteur').getRange(2, 1, 1, 3).setValues([['Porteur', '06 11 11 11 11', 'porteur@example.org']]);
+  vm.runInContext('chargerDonneesDemoCompletes()', contexte);
+  const post = (corps) => JSON.parse(contexte.doPost({ postData: { contents: JSON.stringify(corps) } }).getContent());
+  const avant = post({ action: 'connexion', telephone: '0611111111' }).data.jeton;
+
+  vm.runInContext('chargerDonneesDemo()', contexte);
+  assert.ok([...g.drive.fichiers.values()].every((f) => f.corbeille), 'anciennes traces à la corbeille');
+  assert.equal(post({ action: 'calendrier', jeton: avant }).ok, false, 'anciennes connexions effacées');
+  const cx = post({ action: 'connexion', telephone: '0611111111' });
+  assert.equal(cx.data.est_admin, true);
+  const cal = post({ action: 'calendrier', jeton: cx.data.jeton }).data;
+  assert.equal(cal.jours.flatMap((j) => j.sorties).length, 0);
+  assert.equal(post({ action: 'connexion', telephone: '0600000002' }).ok, true, 'faux adhérent connu');
+  assert.equal(g.classeurActif.getSheetByName('Regles').getLastRow(), 1);
+  assert.equal(g.classeurActif.getSheetByName('Rappels').getLastRow(), 1);
 });

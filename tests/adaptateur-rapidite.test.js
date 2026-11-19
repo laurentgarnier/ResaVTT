@@ -12,7 +12,7 @@ function installer(options) {
   vm.runInContext(codeGas(), contexte);
   vm.runInContext('initialiser()', contexte);
   g.classeurActif.getSheetByName('Porteur').getRange(2, 1, 1, 3).setValues([['Porteur', '06 11 11 11 11', 'porteur@example.org']]);
-  vm.runInContext('chargerDonneesDemo()', contexte);
+  vm.runInContext('chargerDonneesDemoCompletes()', contexte);
   const post = (corps) => JSON.parse(contexte.doPost({ postData: { contents: JSON.stringify(corps) } }).getContent());
   const remettreAZero = () => { g.stats.getValues = 0; g.stats.batchGet = 0; g.stats.ouvertures = {}; };
   return { g, contexte, post, remettreAZero };

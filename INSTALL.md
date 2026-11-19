@@ -87,12 +87,17 @@ Dans l'éditeur Apps Script (recharger la page) :
 3. Dans le classeur, une feuille **`Porteur`** est apparue. En ligne 2, saisir : votre nom (colonne A), votre numéro de mobile (B), votre adresse email (C).
 4. Revenir à l'éditeur, exécuter **`chargerDonneesDemo`**, puis **`installer`**.
 
-Résultat attendu :
+Résultat attendu (comme une nouvelle installation) :
 
-- le classeur contient les onglets Sorties, Inscriptions, Discussions… remplis ;
-- un fichier **« Adhérents du club (démo) »** est dans votre Drive (40 adhérents fictifs + vous, administrateur) ;
-- un dossier **« Sorties VTT – traces »** contient 3 fichiers GPX ;
+- un fichier **« Adhérents du club (démo) »** est dans votre Drive : 40 adhérents fictifs + vous, administrateur ;
+- le calendrier est vide : ni sortie, ni récurrence, ni rappel ; paramètres et textes par défaut, sauf les mails et WhatsApp, envoyés à votre adresse ;
 - dans **⏰ Déclencheurs** (à gauche), un déclencheur horaire `tic` existe.
+
+Pour une démonstration déjà remplie (récurrences du week-end, sorties, inscriptions, discussions, 3 traces GPX, statistiques), exécuter plutôt **`chargerDonneesDemoCompletes`**.
+
+**Repartir de zéro** : relancer `chargerDonneesDemo` (ou `chargerDonneesDemoCompletes`) à tout moment. Toutes les données de l'appli et la liste des adhérents sont remplacées, chacun est déconnecté (il faut se reconnecter, y compris sur l'appli installée) et les anciennes traces GPX passent à la corbeille de Drive.
+
+**Renommer ou déplacer les fichiers** : le classeur, le fichier des adhérents et le dossier des traces sont retrouvés par leur identifiant Drive, pas par leur nom ni leur dossier. On peut donc les renommer et les ranger où l'on veut dans son Drive, l'appli continue de fonctionner. En revanche, une **copie** a un nouvel identifiant : l'appli continuerait d'utiliser l'original. Et un fichier supprimé ou partagé sans le droit de modification pour le compte du script la casse.
 
 ### A5. Déployer l'API
 

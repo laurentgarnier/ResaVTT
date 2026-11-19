@@ -4,7 +4,7 @@ import { fenetre, ajouterJours, jourSemaine } from '../../site/sorties/js/logiqu
 import { genererSorties, sortiesAAnnulerPourFermeture } from '../../site/sorties/js/logique/recurrences.js';
 import { statsTrace } from '../../site/sorties/js/logique/gpx.js';
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
-import { PARAMETRES_DEFAUT } from './schema.js';
+import { PARAMETRES_DEFAUT, ONGLETS } from './schema.js';
 import { TRACES_DEMO } from './traces-demo.js';
 import { reglagesRappelDefaut, RAPPEL_WEEKEND } from './rappels.js';
 
@@ -66,6 +66,28 @@ function historiqueDemo(lundi) {
   return lignes;
 }
 
+function adherentsDemo(porteur) {
+  const adherents = NOMS_DEMO.map((nom, i) => ({ nom, telephone: telephoneDemo(i), email: '', actif: true, admin: false }));
+  adherents.push({ nom: porteur.nom, telephone: porteur.telephone, email: porteur.email, actif: true, admin: true });
+  return adherents;
+}
+
+// Mails, rappels et WhatsApp vont au porteur de la démo ; rappels_migres : pas de rappel du jeudi à convertir.
+function parametresDemo(porteur) {
+  return { ...PARAMETRES_DEFAUT, rappels_migres: 'oui', adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone };
+}
+
+const versLignes = (o) => Object.entries(o).map(([cle, valeur]) => ({ cle, valeur }));
+
+// Comme une nouvelle installation : seulement de faux adhérents (et le porteur, administrateur). Ni sortie, ni
+// récurrence, ni rappel, ni historique ; paramètres et textes par défaut.
+export function creerDonneesVierges(porteur) {
+  const tables = Object.fromEntries(Object.keys(ONGLETS).map((onglet) => [onglet, []]));
+  tables.Parametres = versLignes(parametresDemo(porteur));
+  tables.Modeles = versLignes(MODELES_DEFAUT);
+  return { adherents: adherentsDemo(porteur), tables };
+}
+
 export function creerDonneesDemo(aujourdhui, porteur) {
   const dates = fenetre(aujourdhui);
   const lundi = dates[0];
@@ -74,8 +96,7 @@ export function creerDonneesDemo(aujourdhui, porteur) {
   const vendredi = ajouterJours(samedi, -1);
   const dimanche = ajouterJours(samedi, 1);
 
-  const adherents = NOMS_DEMO.map((nom, i) => ({ nom, telephone: telephoneDemo(i), email: '', actif: true, admin: false }));
-  adherents.push({ nom: porteur.nom, telephone: porteur.telephone, email: porteur.email, actif: true, admin: true });
+  const adherents = adherentsDemo(porteur);
   const telDe = Object.fromEntries(adherents.map((a) => [a.nom, a.telephone]));
 
   const personnes = adherents.map((a) => ({ id: idPersonne(a.nom), telephone: a.telephone, nom_affiche: a.nom, actif: true }));
@@ -150,7 +171,7 @@ export function creerDonneesDemo(aujourdhui, porteur) {
     trace('t-inter', 'inter-rocher.gpx', idMatin, '', 'Ben'),
   ];
 
-  const parametres = { ...PARAMETRES_DEFAUT, rappels_migres: 'oui', adresse_liste: porteur.email, destinataires_whatsapp: porteur.email, email_alertes: porteur.email, whatsapp_numero: porteur.telephone };
+  const parametres = parametresDemo(porteur);
 
   return {
     adherents,
@@ -158,8 +179,8 @@ export function creerDonneesDemo(aujourdhui, porteur) {
       Jetons: [], Journal: [], Envois: [], Bilan: historiqueDemo(lundi),
       Personnes: personnes, Sorties: sorties, Inscriptions: inscriptions, Discussions: discussions, Traces: traces,
       Regles: regles, RegleSorties: regleSorties, Fermetures: [fermeture], Rappels: rappels,
-      Parametres: Object.entries(parametres).map(([cle, valeur]) => ({ cle, valeur })),
-      Modeles: Object.entries(MODELES_DEFAUT).map(([cle, valeur]) => ({ cle, valeur })),
+      Parametres: versLignes(parametres),
+      Modeles: versLignes(MODELES_DEFAUT),
     },
   };
 }

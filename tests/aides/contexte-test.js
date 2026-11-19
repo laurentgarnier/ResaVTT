@@ -1,14 +1,15 @@
 // Contexte serveur de test : dépôt en mémoire initialisé avec le jeu de démo, services factices.
 import { createHash } from 'node:crypto';
 import { creerDepotMemoire } from '../../backend/noyau/depot-memoire.js';
-import { creerDonneesDemo } from '../../backend/noyau/donnees-demo.js';
+import { creerDonneesDemo, creerDonneesVierges } from '../../backend/noyau/donnees-demo.js';
 import { traiter } from '../../backend/noyau/actions.js';
 import { TRACES_DEMO } from '../../backend/noyau/traces-demo.js';
 
 export const PORTEUR = { nom: 'Porteur', telephone: '+33611111111', email: 'porteur@example.org' };
 
-export function contexteTest({ maintenant = new Date(2026, 10, 12, 20, 0), porteur = PORTEUR, aujourdhui = '2026-11-12' } = {}) {
-  const donnees = creerDonneesDemo(aujourdhui, porteur);
+// vierge : comme une nouvelle installation (faux adhérents seulement), au lieu du jeu de démonstration complet.
+export function contexteTest({ maintenant = new Date(2026, 10, 12, 20, 0), porteur = PORTEUR, aujourdhui = '2026-11-12', vierge = false } = {}) {
+  const donnees = vierge ? creerDonneesVierges(porteur) : creerDonneesDemo(aujourdhui, porteur);
   const depot = creerDepotMemoire(donnees.tables);
   const adherents = donnees.adherents;
   const mails = [];

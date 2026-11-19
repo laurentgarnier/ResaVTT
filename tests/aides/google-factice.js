@@ -103,6 +103,10 @@ export function creerGoogleFactice(options = {}) {
       createFolder: (nom) => { const d = { id: `dossier-${++n}`, nom }; drive.dossiers.push(d); return { getId: () => d.id, getUrl: () => `https://drive/${d.id}` }; },
       getFolderById: () => ({
         createFile: (nom, contenu) => { const id = `fichier-${++n}`; drive.fichiers.set(id, { nom, contenu, corbeille: false }); return { getId: () => id }; },
+        getFiles: () => {
+          const ids = [...drive.fichiers.keys()].filter((id) => !drive.fichiers.get(id).corbeille);
+          return { hasNext: () => ids.length > 0, next: () => { const id = ids.shift(); return { setTrashed: (v) => { drive.fichiers.get(id).corbeille = v; } }; } };
+        },
       }),
       getFileById: (id) => ({
         getBlob: () => ({ getDataAsString: () => drive.fichiers.get(id).contenu }),
