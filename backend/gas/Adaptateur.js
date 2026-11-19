@@ -347,7 +347,7 @@ function contexteGoogle(options) {
       },
       fichiers: {
         enregistrer: function (nom, contenu) {
-          return DriveApp.getFolderById(props.getProperty('TRACES_ID')).createFile(nom, contenu, 'application/gpx+xml').getId();
+          return dossierTraces().createFile(nom, contenu, 'application/gpx+xml').getId();
         },
         lire: function (id) {
           if (String(id).indexOf('demo:') === 0) return TRACES_DEMO[String(id).slice(5)];
@@ -396,6 +396,26 @@ function brancherAdherents(id) {
   oublierAdherentsEnCache();
 }
 
+// Dossier Drive des traces GPX, retrouvé par son identifiant (on peut le renommer ou le déplacer). S'il n'existe pas
+// encore, a été supprimé ou est à la corbeille, un nouveau est créé dans le même dossier que le classeur de l'appli
+// (à la racine du Drive si le classeur y est) ; les traces d'un dossier supprimé sont perdues.
+var NOM_DOSSIER_TRACES = 'Sorties VTT – traces';
+function dossierTraces() {
+  var props = proprietesScript();
+  var id = props.getProperty('TRACES_ID');
+  if (id) {
+    try {
+      var existant = DriveApp.getFolderById(id);
+      if (!existant.isTrashed()) return existant;
+    } catch (e) { /* supprimé définitivement */ }
+  }
+  var parents = DriveApp.getFileById(classeurAppli().getId()).getParents();
+  var dossier = parents.hasNext() ? parents.next().createFolder(NOM_DOSSIER_TRACES) : DriveApp.createFolder(NOM_DOSSIER_TRACES);
+  props.setProperty('TRACES_ID', dossier.getId());
+  if (id) Logger.log('Dossier des traces introuvable ou à la corbeille : nouveau dossier ' + dossier.getUrl());
+  return dossier;
+}
+
 function initialiser() {
   var props = proprietesScript();
   var classeur = SpreadsheetApp.getActiveSpreadsheet();
@@ -422,9 +442,7 @@ function initialiser() {
     f.setFrozenRows(1);
     props.setProperty('ADHERENTS_ID', adh.getId());
   }
-  if (!props.getProperty('TRACES_ID')) {
-    props.setProperty('TRACES_ID', DriveApp.createFolder('Sorties VTT – traces').getId());
-  }
+  dossierTraces();
   Logger.log('Initialisation terminée. Fichier Adhérents : ' + classeurAdherents().getUrl());
 }
 
@@ -454,7 +472,7 @@ function porteurDemo() {
 
 function remplacerDonnees(donnees) {
   var depot = depotSheets(classeurAppli());
-  var dossier = DriveApp.getFolderById(proprietesScript().getProperty('TRACES_ID'));
+  var dossier = dossierTraces();
   var anciens = dossier.getFiles();
   while (anciens.hasNext()) anciens.next().setTrashed(true);
   donnees.tables.Traces.forEach(function (t) {

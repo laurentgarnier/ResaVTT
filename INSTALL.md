@@ -97,7 +97,9 @@ Pour une démonstration déjà remplie (récurrences du week-end, sorties, inscr
 
 **Repartir de zéro** : relancer `chargerDonneesDemo` (ou `chargerDonneesDemoCompletes`) à tout moment. Toutes les données de l'appli et la liste des adhérents sont remplacées, chacun est déconnecté (il faut se reconnecter, y compris sur l'appli installée) et les anciennes traces GPX passent à la corbeille de Drive.
 
-**Renommer ou déplacer les fichiers** : le classeur, le fichier des adhérents et le dossier des traces sont retrouvés par leur identifiant Drive, pas par leur nom ni leur dossier. On peut donc les renommer et les ranger où l'on veut dans son Drive, l'appli continue de fonctionner. En revanche, une **copie** a un nouvel identifiant : l'appli continuerait d'utiliser l'original. Et un fichier supprimé ou partagé sans le droit de modification pour le compte du script la casse.
+**Renommer ou déplacer les fichiers** : le classeur, le fichier des adhérents et le dossier des traces sont retrouvés par leur identifiant Drive, pas par leur nom ni leur dossier. On peut donc les renommer et les ranger où l'on veut dans son Drive, l'appli continue de fonctionner. En revanche, une **copie** a un nouvel identifiant : l'appli continuerait d'utiliser l'original. Et un classeur ou un fichier adhérents supprimé, ou partagé sans le droit de modification pour le compte du script, la casse.
+
+**Dossier des traces** : « Sorties VTT – traces » est créé dans le même dossier que le classeur de l'appli. S'il est supprimé ou mis à la corbeille, un nouveau dossier est créé au même endroit à la prochaine trace ajoutée (les traces de l'ancien dossier sont perdues s'il a été vidé de la corbeille).
 
 ### A5. Déployer l'API
 

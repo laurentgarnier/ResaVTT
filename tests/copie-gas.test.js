@@ -103,3 +103,55 @@ test("adaptateur : chargerDonneesDemo repart comme une nouvelle installation (fa
   assert.equal(g.classeurActif.getSheetByName('Regles').getLastRow(), 1);
   assert.equal(g.classeurActif.getSheetByName('Rappels').getLastRow(), 1);
 });
+
+// Classeur rangé dans un dossier « Club » du Drive, initialisé, démo complète chargée.
+function installationDansUnDossier({ dossierClasseur = true } = {}) {
+  const g = creerGoogleFactice();
+  if (dossierClasseur) g.drive.dossierClasseur = g.globaux.DriveApp.createFolder('Club').getId();
+  const contexte = vm.createContext({ ...g.globaux, console });
+  vm.runInContext(codeGas(), contexte);
+  vm.runInContext('initialiser()', contexte);
+  g.classeurActif.getSheetByName('Porteur').getRange(2, 1, 1, 3).setValues([['Porteur', '06 11 11 11 11', 'porteur@example.org']]);
+  const post = (corps) => JSON.parse(contexte.doPost({ postData: { contents: JSON.stringify(corps) } }).getContent());
+  const dossier = () => g.drive.dossiers.find((d) => d.id === g.proprietes.TRACES_ID);
+  return { g, contexte, post, dossier };
+}
+
+const GPX = '<?xml version="1.0"?><gpx><trk><trkseg><trkpt lat="48.4" lon="2.7"></trkpt></trkseg></trk></gpx>';
+
+test('dossier des traces : créé par initialiser dans le même dossier que le classeur', () => {
+  const { g, dossier } = installationDansUnDossier();
+  assert.equal(dossier().nom, 'Sorties VTT – traces');
+  assert.equal(dossier().parent, g.drive.dossierClasseur);
+});
+
+test('dossier des traces supprimé définitivement : recréé à côté du classeur au prochain ajout de trace, qui réussit', () => {
+  const { g, contexte, post, dossier } = installationDansUnDossier();
+  vm.runInContext('chargerDonneesDemoCompletes()', contexte);
+  const ancien = dossier();
+  ancien.supprime = true;
+  const jeton = post({ action: 'connexion', telephone: '0611111111' }).data.jeton;
+  const sortie = post({ action: 'calendrier', jeton }).data.jours.flatMap((j) => j.sorties)[0];
+  const r = post({ action: 'trace_ajouter', jeton, sortie_id: sortie.id, nom_fichier: 'boucle.gpx', contenu: GPX, km: '10', dplus: '100', via_discussion: true });
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.notEqual(g.proprietes.TRACES_ID, ancien.id);
+  assert.equal(dossier().parent, g.drive.dossierClasseur);
+  assert.ok([...g.drive.fichiers.values()].some((f) => f.nom === 'boucle.gpx' && f.dossier === dossier().id));
+});
+
+test('dossier des traces à la corbeille : un nouveau dossier est créé, rien ne part dans la corbeille', () => {
+  const { g, contexte, dossier } = installationDansUnDossier();
+  const ancien = dossier();
+  ancien.corbeille = true;
+  vm.runInContext('chargerDonneesDemoCompletes()', contexte);
+  assert.notEqual(dossier().id, ancien.id);
+  assert.equal(dossier().parent, g.drive.dossierClasseur);
+  const traces = [...g.drive.fichiers.values()].filter((f) => !f.corbeille);
+  assert.equal(traces.length, 3);
+  assert.ok(traces.every((f) => f.dossier === dossier().id));
+});
+
+test('dossier des traces : classeur à la racine du Drive, dossier créé à la racine', () => {
+  const { dossier } = installationDansUnDossier({ dossierClasseur: false });
+  assert.equal(dossier().parent, null);
+});

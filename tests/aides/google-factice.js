@@ -84,8 +84,26 @@ export function creerGoogleFactice(options = {}) {
   const proprietes = {};
   const mails = [];
   const declencheurs = [];
-  const drive = { dossiers: [], fichiers: new Map() };
+  const drive = { dossiers: [], fichiers: new Map(), dossierClasseur: null };
   let n = 0;
+  const creerDossier = (nom, parent) => {
+    const d = { id: `dossier-${++n}`, nom, parent, corbeille: false, supprime: false };
+    drive.dossiers.push(d);
+    return vueDossier(d);
+  };
+  function vueDossier(d) {
+    return {
+      getId: () => d.id,
+      getUrl: () => `https://drive/${d.id}`,
+      isTrashed: () => d.corbeille,
+      createFolder: (nom) => creerDossier(nom, d.id),
+      createFile: (nom, contenu) => { const id = `fichier-${++n}`; drive.fichiers.set(id, { nom, contenu, corbeille: false, dossier: d.id }); return { getId: () => id }; },
+      getFiles: () => {
+        const ids = [...drive.fichiers.keys()].filter((id) => drive.fichiers.get(id).dossier === d.id && !drive.fichiers.get(id).corbeille);
+        return { hasNext: () => ids.length > 0, next: () => { const id = ids.shift(); return { setTrashed: (v) => { drive.fichiers.get(id).corbeille = v; } }; } };
+      },
+    };
+  }
 
   const globaux = {
     SpreadsheetApp: {
@@ -99,16 +117,20 @@ export function creerGoogleFactice(options = {}) {
         setProperty: (k, v) => { proprietes[k] = String(v); },
       }),
     },
+    // Dossiers : parent (null = racine du Drive), corbeille, ou supprimés définitivement (introuvables).
+    // Le classeur de l'appli est rangé dans drive.dossierClasseur (null = à la racine).
     DriveApp: {
-      createFolder: (nom) => { const d = { id: `dossier-${++n}`, nom }; drive.dossiers.push(d); return { getId: () => d.id, getUrl: () => `https://drive/${d.id}` }; },
-      getFolderById: () => ({
-        createFile: (nom, contenu) => { const id = `fichier-${++n}`; drive.fichiers.set(id, { nom, contenu, corbeille: false }); return { getId: () => id }; },
-        getFiles: () => {
-          const ids = [...drive.fichiers.keys()].filter((id) => !drive.fichiers.get(id).corbeille);
-          return { hasNext: () => ids.length > 0, next: () => { const id = ids.shift(); return { setTrashed: (v) => { drive.fichiers.get(id).corbeille = v; } }; } };
-        },
-      }),
+      createFolder: (nom) => creerDossier(nom, null),
+      getFolderById: (id) => {
+        const d = drive.dossiers.find((x) => x.id === id && !x.supprime);
+        if (!d) throw new Error(`Dossier ${id} introuvable`);
+        return vueDossier(d);
+      },
       getFileById: (id) => ({
+        getParents: () => {
+          const parents = id === classeurActif.getId() && drive.dossierClasseur ? [drive.dossierClasseur] : [];
+          return { hasNext: () => parents.length > 0, next: () => vueDossier(drive.dossiers.find((x) => x.id === parents.shift())) };
+        },
         getBlob: () => ({ getDataAsString: () => drive.fichiers.get(id).contenu }),
         setTrashed: (v) => { drive.fichiers.get(id).corbeille = v; },
       }),
