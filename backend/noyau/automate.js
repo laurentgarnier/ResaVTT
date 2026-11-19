@@ -66,7 +66,7 @@ export function etapesMessage(ctx, objet, texteMail, texteWhatsApp, canaux = { m
       faire: () => {
         if (!parametres.adresse_liste) throw new Error('adresse_liste non renseignée');
         const c = courrierListe(objet, texteMail);
-        ctx.services.mail(parametres.adresse_liste, c.objet, c.texte);
+        ctx.services.mail(parametres.adresse_liste, c.objet, c.texte, c.html);
       },
     },
     {
