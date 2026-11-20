@@ -180,8 +180,8 @@ function premierJourUtile() {
 
 // Frise et agenda : un seul écran pour l'accueil et pour un jour donné, qu'on fait défiler jusqu'à ce jour.
 function afficherVariante(racine, date, meteo) {
-  const heures = heuresDuJour(meteo.hourly, etat.cal.aujourdhui);
-  racine.innerHTML = affichage.disposition === 'frise' ? renderFrise(etat.cal, meteo.parDate, (d) => heuresDuJour(meteo.hourly, d)) : renderAgenda(etat.cal, meteo.parDate, heures);
+  const heuresDe = (d) => heuresDuJour(meteo.hourly, d);
+  racine.innerHTML = affichage.disposition === 'frise' ? renderFrise(etat.cal, meteo.parDate, heuresDe) : renderAgenda(etat.cal, meteo.parDate, heuresDe);
   const cible = racine.querySelector(`#jour-${date}`);
   if (!cible) return;
   if (affichage.disposition === 'frise') {

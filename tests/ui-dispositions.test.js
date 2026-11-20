@@ -136,3 +136,18 @@ test('météo : des précipitations au-dessus de 0 sont écrites en gras, 0 mm r
   assert.match(html, /💧0 mm/);
   assert.match(html, /💧<strong class="pluie">0,2 mm<\/strong>/);
 });
+
+test("agenda : météo heure par heure pour chaque jour à venir, avec ou sans sortie, dépliée pour aujourd'hui, absente des jours passés", () => {
+  const cal = calendrierMarie();
+  const heures = (date) => [{ heure: '09', temp: date === cal.aujourdhui ? 3 : 7, pluie_proba: 0, pluie_mm: 0, vent: 12, vent_dir: 90, vent_cardinal: 'E', code: 0, emoji: '☀️' }];
+  const html = renderAgenda(cal, meteoPartout(cal), heures);
+  const bloc = (date) => { const i = html.indexOf(`id="jour-${date}"`); return i < 0 ? '' : html.slice(i, html.indexOf('id="jour-', i + 10) > 0 ? html.indexOf('id="jour-', i + 10) : undefined); };
+  assert.match(bloc(cal.aujourdhui), /<details class="heures" open><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>3°/);
+  const avenir = cal.jours.filter((j) => !j.passe && j.date !== cal.aujourdhui);
+  const vide = avenir.find((j) => !j.sorties.length);
+  const avecSortie = avenir.find((j) => j.sorties.length);
+  assert.match(bloc(vide.date), /<details class="heures"><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>09h<b>☀️<\/b>7°/);
+  assert.match(bloc(avecSortie.date), /<details class="heures"><summary>⏱ Heure par heure<\/summary>/);
+  const passe = cal.jours.find((j) => j.passe);
+  assert.doesNotMatch(bloc(passe.date), /Heure par heure/);
+});

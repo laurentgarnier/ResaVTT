@@ -112,7 +112,7 @@ Un bouton **🎨** dans l'en-tête permet à chacun de choisir, pour son apparei
 - **Agenda** : une liste qui part d'aujourd'hui.
   - En tête, **« Mes prochaines sorties »** : les sorties à venir où l'une des personnes du compte est inscrite, avec un accès direct.
   - Chaque sortie commence par **son heure**, en gros, suivie du titre, du lieu, des distances et des inscrits.
-  - Chaque jour donne sa météo résumée sur une ligne pour le matin et une pour l'après-midi ; aujourd'hui donne aussi la météo heure par heure.
+  - Chaque jour donne sa météo résumée sur une ligne pour le matin et une pour l'après-midi. Comme en Frise, chaque jour à venir, avec ou sans sortie, propose aussi la météo **heure par heure** (« ⏱ Heure par heure »), dépliée pour aujourd'hui et à déplier pour les autres jours **[décidé]**.
   - Les jours sans sortie ont le même cadre que les autres jours, plus court : « Aucune sortie », « + Créer » et la météo du matin et de l'après-midi (utile pour décaler une sortie).
   - Les jours passés de la quinzaine sont repliés sous « Jours passés ».
 - **Thèmes** (pour toute l'appli) :
@@ -205,7 +205,7 @@ La météo est celle de la demi-journée de la sortie, déjà connue du téléph
   - un pictogramme et la température ;
   - la **quantité de pluie en mm** **[décidé]**, cumulée sur la plage, **en gras dès qu'elle dépasse 0 mm** **[décidé]** (partout où la pluie est affichée, heure par heure comprise) ;
   - le **vent en km/h** et son **orientation** **[décidé]** : le secteur d'où il vient (N, NE, E, SE, S, SO, O, NO) et une flèche dans le sens où il souffle. L'orientation retenue est celle de l'heure où le vent est le plus fort.
-- **Pour le jour courant :** la météo **heure par heure** (de 6 h à 21 h) : pictogramme, température, pluie en mm, vent en km/h et orientation. En mise en page Frise, elle est aussi proposée pour les autres jours à venir (voir 4.3).
+- **Pour le jour courant :** la météo **heure par heure** (de 6 h à 21 h) : pictogramme, température, pluie en mm, vent en km/h et orientation. En mises en page Frise et Agenda, elle est aussi proposée pour les autres jours à venir (voir 4.3).
 - Au-delà de l'horizon de prévision fiable, l'appli affiche « Prévision indisponible ».
 - **Pas de météo pour les jours passés** **[décidé]**.
 

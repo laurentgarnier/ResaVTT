@@ -3,7 +3,7 @@
 // - agenda : une liste qui part d'aujourd'hui, mes sorties en tête, l'heure en premier, les jours vides sur une ligne.
 import { echapper } from '../logique/html.js';
 import { libelleJour, jourSemaine } from '../logique/dates.js';
-import { mm, vent, blocMeteo, encadreSortie, blocHeures, bandeHeures, inscritsSortie, ligneLieu, badgeSortie, lienSortie } from './calendrier.js';
+import { mm, vent, blocMeteo, encadreSortie, bandeHeures, inscritsSortie, ligneLieu, badgeSortie, lienSortie } from './calendrier.js';
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -70,18 +70,20 @@ function ligneSortie(s) {
   </a>`;
 }
 
-function blocJourAgenda(cal, jour, meteoParDate, heures) {
+// Comme en frise : chaque jour à venir, avec ou sans sortie, a sa météo heure par heure, dépliée pour aujourd'hui.
+function blocJourAgenda(cal, jour, meteoParDate, heuresDe) {
   const aujourdhui = jour.date === cal.aujourdhui;
   const creer = jour.passe ? '' : `<a class="creer-mini" href="#/creer/${jour.date}">+ Créer</a>`;
+  const heures = jour.passe ? '' : heuresRepliables(heuresDe(jour.date), aujourdhui);
   if (!jour.sorties.length) {
-    return `<div id="jour-${jour.date}" class="jour-vide"><span><b>${echapper(libelleJour(jour.date))}</b>${aujourdhui ? ' · aujourd\'hui' : ''}</span><span class="mut">Aucune sortie</span>${creer}${jour.passe ? '' : meteoMini(meteoParDate, jour)}</div>`;
+    return `<div id="jour-${jour.date}" class="jour-vide"><span><b>${echapper(libelleJour(jour.date))}</b>${aujourdhui ? ' · aujourd\'hui' : ''}</span><span class="mut">Aucune sortie</span>${creer}${jour.passe ? '' : meteoMini(meteoParDate, jour)}${heures}</div>`;
   }
   return `<section id="jour-${jour.date}" class="agenda-jour${aujourdhui ? ' aujourdhui' : ''}${jour.passe ? ' passe' : ''}">
     <header class="agenda-tete">
       <span class="date">${echapper(libelleJour(jour.date))}${aujourdhui ? ' <span class="pastille-jour">Aujourd\'hui</span>' : ''}</span>
       ${jour.passe ? '' : meteoMini(meteoParDate, jour)}
     </header>
-    ${aujourdhui && heures ? blocHeures(heures) : ''}
+    ${heures}
     <div class="petit mut">${resumeJour(jour)}</div>
     ${jour.sorties.map(ligneSortie).join('')}
     ${creer}
@@ -106,12 +108,12 @@ function mesSorties(cal) {
   </div>`;
 }
 
-export function renderAgenda(cal, meteoParDate, heures = null) {
+export function renderAgenda(cal, meteoParDate, heuresDe = () => null) {
   const passes = cal.jours.filter((j) => j.passe);
   const aVenir = cal.jours.filter((j) => !j.passe);
   return `<section class="agenda">
     ${mesSorties(cal)}
-    ${passes.length ? `<details class="jours-passes"><summary>Jours passés (${passes.length})</summary>${passes.map((j) => blocJourAgenda(cal, j, meteoParDate, null)).join('')}</details>` : ''}
-    <div class="agenda-jours">${aVenir.map((j) => blocJourAgenda(cal, j, meteoParDate, heures)).join('')}</div>
+    ${passes.length ? `<details class="jours-passes"><summary>Jours passés (${passes.length})</summary>${passes.map((j) => blocJourAgenda(cal, j, meteoParDate, heuresDe)).join('')}</details>` : ''}
+    <div class="agenda-jours">${aVenir.map((j) => blocJourAgenda(cal, j, meteoParDate, heuresDe)).join('')}</div>
   </section>`;
 }
