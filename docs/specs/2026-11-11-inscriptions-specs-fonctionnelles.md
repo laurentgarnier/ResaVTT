@@ -205,7 +205,7 @@ La météo est celle de la demi-journée de la sortie, déjà connue du téléph
   - un pictogramme et la température ;
   - la **quantité de pluie en mm** **[décidé]**, cumulée sur la plage, **en gras dès qu'elle dépasse 0 mm** **[décidé]** (partout où la pluie est affichée, heure par heure comprise) ;
   - le **vent en km/h** et son **orientation** **[décidé]** : le secteur d'où il vient (N, NE, E, SE, S, SO, O, NO) et une flèche dans le sens où il souffle. L'orientation retenue est celle de l'heure où le vent est le plus fort.
-- **Pour le jour courant :** la météo **heure par heure** (de 6 h à 21 h) : pictogramme, température, pluie en mm, vent en km/h et orientation. En mises en page Frise et Agenda, elle est aussi proposée pour les autres jours à venir (voir 4.3).
+- **Heure par heure :** la météo **heure par heure** (de 6 h à 21 h) : pictogramme, température, pluie en mm, vent en km/h et orientation. Dans toutes les mises en page (Classique sur PC et sur téléphone, Frise, Agenda), chaque jour à venir la propose à déplier (« ⏱ Heure par heure »), dépliée pour aujourd'hui **[décidé]**.
 - Au-delà de l'horizon de prévision fiable, l'appli affiche « Prévision indisponible ».
 - **Pas de météo pour les jours passés** **[décidé]**.
 

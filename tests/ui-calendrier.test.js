@@ -62,12 +62,23 @@ test('météo absente → « Météo indisponible » ; hors horizon → « Prév
   assert.match(renderGrille(cal, null), /Météo indisponible/);
 });
 
-test('jour courant : météo heure par heure affichée', () => {
+const HEURES = [{ heure: '06', temp: 3, pluie_proba: 10, code: 0, emoji: '☀️' }, { heure: '07', temp: 4, pluie_proba: 0, code: 1, emoji: '⛅' }];
+
+test("vue d'un jour (téléphone) : météo heure par heure dépliée pour aujourd'hui, à déplier pour un autre jour à venir, absente d'un jour passé", () => {
   const cal = calendrierBen();
-  const heures = [{ heure: '06', temp: 3, pluie_proba: 10, code: 0, emoji: '☀️' }, { heure: '07', temp: 4, pluie_proba: 0, code: 1, emoji: '⛅' }];
-  const html = renderJour(cal, '2026-11-12', meteoPartout(cal), heures);
-  assert.match(html, /Météo heure par heure/);
-  assert.match(html, /06h/);
+  assert.match(renderJour(cal, '2026-11-12', meteoPartout(cal), HEURES), /<details class="heures" open><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>06h/);
+  assert.match(renderJour(cal, '2026-11-14', meteoPartout(cal), HEURES), /<details class="heures"><summary>⏱ Heure par heure<\/summary><div class="horaire"><div>06h/);
+  assert.doesNotMatch(renderJour(cal, '2026-11-10', meteoPartout(cal), HEURES), /Heure par heure/);
+});
+
+test("grille (PC) : chaque jour à venir a sa météo heure par heure à déplier, dépliée pour aujourd'hui ; rien pour un jour passé", () => {
+  const cal = calendrierBen();
+  const html = renderGrille(cal, meteoPartout(cal), () => HEURES);
+  assert.match(blocJour(html, '2026-11-12'), /<details class="heures" open><summary>⏱ Heure par heure<\/summary>/);
+  assert.match(blocJour(html, '2026-11-14'), /<details class="heures"><summary>⏱ Heure par heure<\/summary><div class="horaire">/);
+  assert.match(blocJour(html, '2026-11-19'), /<details class="heures">/);
+  assert.doesNotMatch(blocJour(html, '2026-11-10'), /Heure par heure/);
+  assert.doesNotMatch(html, /⏱ Météo heure par heure<\/a>/, "plus de bouton vers la vue du jour");
 });
 
 test('sortie annulée barrée dans la vue jour', () => {

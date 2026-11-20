@@ -197,7 +197,7 @@ async function afficherCalendrier(racine) {
   if (affichage.disposition !== 'classique') {
     afficherVariante(racine, etat.cal.aujourdhui, meteo);
   } else if (window.matchMedia(ECRAN_LARGE).matches) {
-    racine.innerHTML = renderGrille(etat.cal, meteo.parDate);
+    racine.innerHTML = renderGrille(etat.cal, meteo.parDate, (d) => heuresDuJour(meteo.hourly, d));
   } else {
     afficherJour(racine, premierJourUtile(), meteo);
   }
@@ -230,7 +230,7 @@ function afficherEncartInstallation(racine) {
 
 function afficherJour(racine, date, meteo) {
   if (affichage.disposition !== 'classique') return afficherVariante(racine, date, meteo);
-  racine.innerHTML = renderJour(etat.cal, date, meteo.parDate, date === etat.cal.aujourdhui ? heuresDuJour(meteo.hourly, date) : null);
+  racine.innerHTML = renderJour(etat.cal, date, meteo.parDate, heuresDuJour(meteo.hourly, date));
   const onglet = racine.querySelector('.onglet.on');
   if (onglet) onglet.scrollIntoView({ inline: 'center', block: 'nearest' });
 }

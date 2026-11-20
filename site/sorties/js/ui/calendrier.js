@@ -87,7 +87,7 @@ export function encadreSortie(s, compact) {
   </a>`;
 }
 
-function carteJour(cal, jour, meteoParDate) {
+function carteJour(cal, jour, meteoParDate, heuresDe) {
   const classes = ['jour', jour.passe ? 'passe' : '', jour.date === cal.aujourdhui ? 'aujourdhui' : ''].filter(Boolean).join(' ');
   const nbInscriptions = jour.sorties.reduce((n, s) => n + s.inscrits.length, 0);
   const resume = jour.sorties.length
@@ -96,16 +96,16 @@ function carteJour(cal, jour, meteoParDate) {
   return `<div data-date="${jour.date}" class="${classes}">
     <div class="dh">${echapper(libelleJour(jour.date))}</div>
     ${blocMeteo(meteoParDate, jour)}
+    ${jour.passe ? '' : heuresRepliables(heuresDe(jour.date), jour.date === cal.aujourdhui)}
     <div class="resume">${resume}</div>
     ${jour.sorties.map((s) => encadreSortie(s, true)).join('')}
-    ${jour.date === cal.aujourdhui ? `<a class="btn s" href="#/jour/${jour.date}">⏱ Météo heure par heure</a>` : ''}
     ${jour.passe ? '' : `<a class="btn o" href="#/creer/${jour.date}">+ Créer une sortie</a>`}
   </div>`;
 }
 
-export function renderGrille(cal, meteoParDate) {
+export function renderGrille(cal, meteoParDate, heuresDe = () => null) {
   const semaine = (titre, jours) => `<div class="semaine-titre">${titre}</div>
-    <div class="grille">${jours.map((j) => carteJour(cal, j, meteoParDate)).join('')}</div>`;
+    <div class="grille">${jours.map((j) => carteJour(cal, j, meteoParDate, heuresDe)).join('')}</div>`;
   return semaine('Cette semaine', cal.jours.slice(0, 7)) + semaine('Semaine prochaine', cal.jours.slice(7));
 }
 
@@ -122,10 +122,10 @@ export function bandeHeures(heures) {
   return `<div class="horaire">${heures.map((h) => `<div>${h.heure}h<b>${h.emoji}</b>${h.temp}°<br>${mm(h.pluie_mm)}<br>${h.vent ?? 0} km/h${h.vent_cardinal ? `<br>${orientationVent(h.vent_dir, h.vent_cardinal)}` : ''}</div>`).join('')}</div>`;
 }
 
-export function blocHeures(heures) {
+// Météo heure par heure d'un jour, à déplier ; dépliée pour aujourd'hui (Classique, Frise et Agenda).
+export function heuresRepliables(heures, ouvert) {
   if (!heures || !heures.length) return '';
-  return `<div class="petit mut" style="margin-top:8px">Météo heure par heure</div>
-    ${bandeHeures(heures)}`;
+  return `<details class="heures"${ouvert ? ' open' : ''}><summary>⏱ Heure par heure</summary>${bandeHeures(heures)}</details>`;
 }
 
 export function renderJour(cal, date, meteoParDate, heures) {
@@ -140,7 +140,7 @@ export function renderJour(cal, date, meteoParDate, heures) {
     ${ongletsJours(cal, jour.date)}
     <div class="titre-jour">${jour.date === cal.aujourdhui ? "Aujourd'hui, " : ''}${echapper(libelleJour(jour.date))}</div>
     ${blocMeteo(meteoParDate, jour)}
-    ${jour.date === cal.aujourdhui ? blocHeures(heures) : ''}
+    ${jour.passe ? '' : heuresRepliables(heures, jour.date === cal.aujourdhui)}
     ${nbPersonnes ? `<div class="total"><b>${nbPersonnes} personne${nbPersonnes > 1 ? 's' : ''}</b> roule${nbPersonnes > 1 ? 'nt' : ''} ce jour-là${nbInscriptions !== nbPersonnes ? ` (${nbInscriptions} inscriptions)` : ''}.</div>` : ''}
     ${jour.sorties.length ? section('Matin', matin) + section('Après-midi', apresMidi) : '<p class="mut">Aucune sortie prévue pour l\'instant.</p>'}
     ${jour.passe ? '' : `<a class="btn o creer" href="#/creer/${jour.date}">+ Créer une sortie ${nomJour}</a>`}

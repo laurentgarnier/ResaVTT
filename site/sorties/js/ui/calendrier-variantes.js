@@ -3,7 +3,7 @@
 // - agenda : une liste qui part d'aujourd'hui, mes sorties en tête, l'heure en premier, les jours vides sur une ligne.
 import { echapper } from '../logique/html.js';
 import { libelleJour, jourSemaine } from '../logique/dates.js';
-import { mm, vent, blocMeteo, encadreSortie, bandeHeures, inscritsSortie, ligneLieu, badgeSortie, lienSortie } from './calendrier.js';
+import { mm, vent, blocMeteo, encadreSortie, heuresRepliables, inscritsSortie, ligneLieu, badgeSortie, lienSortie } from './calendrier.js';
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -20,11 +20,6 @@ function resumeJour(jour) {
 
 // ——— Frise horizontale ———
 
-// Détail heure par heure d'une colonne : déplié pour aujourd'hui, à déplier pour les autres jours à venir.
-function heuresRepliables(heures, ouvert) {
-  if (!heures || !heures.length) return '';
-  return `<details class="heures"${ouvert ? ' open' : ''}><summary>⏱ Heure par heure</summary>${bandeHeures(heures)}</details>`;
-}
 
 function colonneJour(cal, jour, meteoParDate, heuresDe) {
   const classes = ['col-jour', jour.passe ? 'passe' : '', jour.date === cal.aujourdhui ? 'aujourdhui' : ''].filter(Boolean).join(' ');
