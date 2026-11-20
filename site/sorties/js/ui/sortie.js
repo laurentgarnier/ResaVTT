@@ -1,5 +1,6 @@
 // Détail d'une sortie : informations, traces GPX, inscription, liste des inscrits, discussion.
 import { echapper, initiales, couleurAvatar } from '../logique/html.js';
+import { lireFichiers } from './formulaire.js';
 import { libelleJour } from '../logique/dates.js';
 import { lienWhatsApp } from '../logique/modeles.js';
 import { lirePoints } from '../logique/gpx.js';
@@ -40,14 +41,23 @@ export function renderDiscussion(messages, tousMessages) {
     </form>`;
 }
 
+// Proposer une trace : tout inscrit (une de ses personnes), le créateur ou un administrateur, sauf sortie annulée.
+function peutProposerTrace(sortie) {
+  return sortie.statut !== 'annulee' && (sortie.peut_modifier || sortie.inscrits.some((i) => i.a_moi));
+}
+
 function renderTraces(sortie) {
-  if (!sortie.traces.length) return '';
+  const proposer = peutProposerTrace(sortie);
+  if (!sortie.traces.length && !proposer) return '';
   return `<div class="section">🗺 Traces GPX</div>${sortie.traces.map((t) => `
     <div class="trace" data-trace="${echapper(t.id)}">
       <div class="srow"><span>${echapper(t.nom_fichier)}</span><span>${t.km ? `${echapper(t.km)} km` : ''}${t.dplus ? ` · ⛰ ${echapper(t.dplus)} m D+` : ''}</span></div>
-      <div class="actions-trace"><button data-carte="${echapper(t.id)}">▸ Voir la carte</button><button data-telecharger="${echapper(t.id)}">⬇ Télécharger</button>${sortie.peut_modifier ? `<button data-supprimer-trace="${echapper(t.id)}">✕ Retirer</button>` : ''}</div>
+      ${t.ajoute_par_nom ? `<div class="meta">Proposée par ${echapper(t.ajoute_par_nom)}</div>` : ''}
+      <div class="actions-trace"><button data-carte="${echapper(t.id)}">▸ Voir la carte</button><button data-telecharger="${echapper(t.id)}">⬇ Télécharger</button>${sortie.peut_modifier || t.a_moi ? `<button data-supprimer-trace="${echapper(t.id)}">✕ Retirer</button>` : ''}</div>
       <div class="carte-trace" hidden></div>
-    </div>`).join('')}`;
+    </div>`).join('')}${proposer ? `
+    <label class="btn o proposer-trace">🗺 Proposer une trace<input type="file" accept=".gpx,application/gpx+xml" multiple hidden data-proposer-trace></label>
+    <p class="avertissement">⚠ Évitez les traces qui partent de votre domicile.</p>` : ''}`;
 }
 
 // Départs (sortie récurrente à plusieurs points de départ) : départ de mes inscrits, sinon le premier.
@@ -269,6 +279,22 @@ export function brancherSortie(racine, actions, sortie) {
     } catch (e) {
       actions.toast(e.message);
     }
+  });
+
+  // Proposer une ou plusieurs traces GPX : lues et mesurées dans le navigateur, puis envoyées une à une.
+  racine.addEventListener('change', async (ev) => {
+    if (!ev.target.matches || !ev.target.matches('[data-proposer-trace]')) return;
+    const fichiers = [...ev.target.files];
+    ev.target.value = '';
+    if (!fichiers.length) return;
+    try {
+      const traces = await lireFichiers(fichiers);
+      for (const t of traces) {
+        await actions.appeler('trace_ajouter', { sortie_id: id, nom_fichier: t.nom, contenu: t.contenu, km: String(t.km), dplus: String(t.dplus) });
+      }
+      actions.toast(traces.length > 1 ? `${traces.length} traces ajoutées.` : 'Trace ajoutée.');
+      await actions.rafraichir();
+    } catch (e) { actions.toast(e.message); }
   });
 
   // Écoute sur la racine : le formulaire peut être remplacé quand mes inscriptions changent ailleurs.

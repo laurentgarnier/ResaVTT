@@ -82,7 +82,7 @@ function ligneP(id, nom) {
   return `<div class="personne" data-id="${echapper(id || '')}"><input name="nom" value="${echapper(nom || '')}" maxlength="60" placeholder="Prénom"><button class="btn o" type="button" data-action="retirer" title="Retirer">✕</button></div>`;
 }
 
-async function lireFichiers(fichiers) {
+export async function lireFichiers(fichiers) {
   const res = [];
   for (const f of fichiers) {
     if (f.size > TAILLE_MAX_GPX) throw new Error(`${f.name} : fichier trop gros (5 Mo maximum).`);

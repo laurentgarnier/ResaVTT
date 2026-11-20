@@ -154,8 +154,10 @@ Une fois les essais faits, le club pourra garder une seule mise en page et un se
 - Pour une **sortie récurrente**, n'importe quel adhérent peut changer **l'horaire** de cette occurrence uniquement **[décidé]**. La modification s'affiche, par exemple « Horaire modifié par Paul ». Les inscrits voient un message automatique dans la discussion.
 
 **Ajouter une trace GPX :**
-- Le créateur et les administrateurs peuvent ajouter ou retirer des traces **[choix du rédacteur]**.
-- Les autres adhérents peuvent proposer une trace en la joignant dans la discussion (voir 4.6) **[choix du rédacteur]**.
+- **Tout adhérent inscrit** à la sortie (une des personnes de son compte), quel que soit son type (récurrente comprise), peut **proposer une ou plusieurs traces** depuis la fiche, au moment de son inscription ou après (bouton « 🗺 Proposer une trace ») **[décidé]**. Le créateur et les administrateurs le peuvent aussi.
+- Chaque trace proposée indique **qui l'a proposée**. La retirent : son auteur, le créateur de la sortie ou un administrateur.
+- Si l'auteur se désinscrit, ses traces restent sur la sortie. Quand la sortie n'a **plus aucun inscrit**, les traces proposées pour elle sont **supprimées** (fichiers compris), avec un message dans la discussion **[décidé]**. La trace par défaut d'une récurrence n'est pas concernée.
+- Tout adhérent peut aussi joindre une trace à un message de la discussion (voir 4.6) **[choix du rédacteur]**.
 
 ### 4.5 Créer une sortie (tout adhérent)
 Le bouton « + Créer une sortie » d'un jour ouvre un **formulaire court** **[décidé]** :

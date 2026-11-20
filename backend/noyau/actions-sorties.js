@@ -156,7 +156,10 @@ export function actionTraceAjouter(ctx, u, req) {
   if (contenu.length > TAILLE_MAX_TRACE) throw erreurMetier('fichier_trop_gros', 'Fichier trop gros (5 Mo maximum).');
   if (!/^\s*(<\?xml|<gpx)/.test(contenu)) throw erreurMetier('fichier_invalide', "Ce fichier n'est pas un GPX valide.");
   const viaDiscussion = !!req.via_discussion;
-  if (!viaDiscussion && !peutModifier(sortiePourDroits(s), u)) throw interdit();
+  // Sur la fiche : le créateur, un administrateur, ou tout adhérent inscrit (une de ses personnes) à la sortie.
+  if (!viaDiscussion && !peutModifier(sortiePourDroits(s), u) && !inscritA(ctx, s, u)) {
+    throw erreurMetier('reserve_inscrits', 'Inscrivez-vous à la sortie pour proposer une trace.');
+  }
   const id = ctx.services.uuid();
   const driveId = ctx.services.fichiers.enregistrer(nom, contenu);
   ctx.depot.ajouter('Traces', [{
@@ -164,6 +167,21 @@ export function actionTraceAjouter(ctx, u, req) {
     km: nettoyer(req.km, 6), dplus: nettoyer(req.dplus, 6), ajoute_par_tel: u.telephone, ajoute_par_nom: u.nom, horodatage: horodatage(ctx),
   }]);
   return { id };
+}
+
+function inscritA(ctx, s, u) {
+  return ctx.depot.lire('Inscriptions').some((i) => i.sortie_id === s.id && i.telephone === u.telephone);
+}
+
+// Dernier inscrit parti : les traces proposées pour la sortie sont supprimées (Drive compris). La trace par défaut de
+// sa récurrence, qui appartient à la récurrence, et les traces jointes à un message ne sont pas touchées.
+export function retirerTracesSansInscrit(ctx, s) {
+  if (ctx.depot.lire('Inscriptions').some((i) => i.sortie_id === s.id)) return;
+  const traces = ctx.depot.lire('Traces').filter((t) => t.sortie_id === s.id);
+  if (!traces.length) return;
+  ctx.depot.supprimer('Traces', (t) => t.sortie_id === s.id);
+  for (const t of traces) if (!String(t.drive_id).startsWith('demo:')) ctx.services.fichiers.supprimer(t.drive_id);
+  messageSysteme(ctx, s.id, `Plus aucun inscrit : ${traces.length > 1 ? 'les traces proposées ont été retirées' : 'la trace proposée a été retirée'}.`);
 }
 
 export function actionTraceLire(ctx, _u, req) {

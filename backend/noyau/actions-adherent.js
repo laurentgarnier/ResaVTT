@@ -6,6 +6,7 @@ import { peutModifier, peutChangerHoraire, inscriptionsOuvertes } from '../../si
 import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schema.js';
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { departsDe, departInscription } from '../../site/sorties/js/logique/departs.js';
+import { retirerTracesSansInscrit } from './actions-sorties.js';
 
 export function horodatage(ctx) {
   return ctx.services.maintenant().toISOString();
@@ -81,7 +82,8 @@ export function vueSortie(s, contexteVue) {
     id: s.id, date: s.date, heure: s.heure, titre: s.titre, point_rdv: s.point_rdv, lieu: s.lieu, km: s.km, dplus: s.dplus,
     description: s.description, type: s.type, createur_nom: s.createur_nom, statut: s.statut, motif_annulation: s.motif_annulation,
     modifie_par: s.modifie_par, departs: departsDe(s), inscrits, nb_messages: nbMessages[s.id] || 0,
-    traces: traces.map((t) => ({ id: t.id, nom_fichier: t.nom_fichier, km: t.km, dplus: t.dplus })),
+    // ajoute_par_nom : qui a proposé la trace (vide pour celle de la récurrence) ; a_moi : il peut la retirer.
+    traces: traces.map((t) => ({ id: t.id, nom_fichier: t.nom_fichier, km: t.km, dplus: t.dplus, ajoute_par_nom: t.ajoute_par_nom || '', a_moi: !!t.ajoute_par_tel && t.ajoute_par_tel === u.telephone })),
     peut_modifier: peutModifier(sortie, u), peut_changer_horaire: peutChangerHoraire(sortie, u),
     // Sa propre sortie libre (sans transmettre de numéro) : seul son créateur annonce lui-même l'annulation sur WhatsApp.
     mienne: sortie.type === 'libre' && !!sortie.createur_tel && sortie.createur_tel === u.telephone,
@@ -191,6 +193,7 @@ export function actionInscription(ctx, u, req) {
     }
   } else {
     ctx.depot.supprimer('Inscriptions', (i) => i.sortie_id === s.id && ids.includes(i.personne_id));
+    retirerTracesSansInscrit(ctx, s);
   }
   return null;
 }

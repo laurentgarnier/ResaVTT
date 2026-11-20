@@ -116,3 +116,28 @@ test("fiche ouverte : une inscription faite ailleurs change la liste ; le formul
   assert.deepEqual(changementInscrits([autre], [moi, autre]), { liste: true, miennes: true });
   assert.deepEqual(changementInscrits([moi, autre], [autre]), { liste: true, miennes: true });
 });
+
+test('fiche : « Proposer une trace » (une ou plusieurs) seulement pour un inscrit ; chaque trace dit qui l\'a proposée ; ✕ pour son auteur', () => {
+  const t = contexteTest();
+  const ben = t.connecter('0600000002');
+  const marie = t.connecter('0600000001');
+  const id = 'R:sm:2026-11-21:1';
+  const gpx = '<?xml version="1.0"?><gpx><trk><trkseg><trkpt lat="48" lon="2"/></trkseg></trk></gpx>';
+  const vue = (jeton) => {
+    const cal = t.appel('calendrier', { jeton }).data;
+    return renderSortie(cal.jours.flatMap((j) => j.sorties).find((s) => s.id === id), [], cal.personnes);
+  };
+  assert.doesNotMatch(vue(ben), /data-proposer-trace/, 'pas inscrit');
+  for (const [jeton] of [[ben], [marie]]) {
+    const p = t.appel('calendrier', { jeton }).data.personnes[0].id;
+    t.appel('inscription', { jeton, sortie_id: id, personne_ids: [p], inscrit: true });
+  }
+  t.appel('trace_ajouter', { jeton: ben, sortie_id: id, nom_fichier: 'boucle-ben.gpx', contenu: gpx, km: '20', dplus: '300' });
+  const chezBen = vue(ben);
+  assert.match(chezBen, /<label class="btn o proposer-trace">🗺 Proposer une trace<input type="file" accept="\.gpx,application\/gpx\+xml" multiple hidden data-proposer-trace><\/label>/);
+  assert.match(chezBen, /boucle-ben\.gpx[\s\S]*?Proposée par Ben[\s\S]*?✕ Retirer/);
+  const chezMarie = vue(marie);
+  assert.match(chezMarie, /data-proposer-trace/);
+  const blocTrace = chezMarie.slice(chezMarie.indexOf('boucle-ben.gpx'), chezMarie.indexOf('carte-trace', chezMarie.indexOf('boucle-ben.gpx')));
+  assert.doesNotMatch(blocTrace, /✕ Retirer/, 'Marie ne retire pas la trace de Ben');
+});

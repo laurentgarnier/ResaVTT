@@ -120,7 +120,9 @@ test("trace : .txt refusé, 5 Mo + 1 refusé, contenu relu à l'identique", () =
   assert.deepEqual(t.appel('trace_lire', { jeton: ludo, trace_id: r.data.id }).data, { nom_fichier: 'etangs.gpx', contenu: gpx });
   assert.equal(sortieDe(t, ludo, 'libre-etangs').traces[0].nom_fichier, 'etangs.gpx');
   const ben = t.connecter('0600000002');
-  assert.equal(t.appel('trace_ajouter', { ...base, jeton: ben, nom_fichier: 'b.gpx', contenu: gpx }).erreur, 'interdit');
+  const pben = t.appel('calendrier', { jeton: ben }).data.personnes.map((p) => p.id);
+  t.appel('inscription', { jeton: ben, sortie_id: 'libre-etangs', personne_ids: pben, inscrit: false });
+  assert.equal(t.appel('trace_ajouter', { ...base, jeton: ben, nom_fichier: 'b.gpx', contenu: gpx }).erreur, 'reserve_inscrits', 'non inscrit');
   assert.equal(t.appel('trace_ajouter', { ...base, jeton: ben, nom_fichier: 'b.gpx', contenu: gpx, via_discussion: true }).ok, true);
 });
 
