@@ -12,13 +12,14 @@ function donnees(id, tel = '0600000002') {
   return { sortie, messages, personnes: cal.personnes };
 }
 
-test('détail du samedi matin : 22 noms triés, « Gérard (par Jo) »', () => {
+test('détail du samedi matin : 22 noms triés, sans « (par … ) »', () => {
   const { sortie, messages, personnes } = donnees('R:sm:2026-11-14:1');
   const html = renderSortie(sortie, messages, personnes);
   const noms = [...html.matchAll(/<span class="n">([^<]+)<\/span>/g)].map((m) => m[1]);
   assert.equal(noms.length, 22);
   assert.deepEqual(noms, [...noms].sort((a, b) => a.localeCompare(b, 'fr')));
-  assert.match(html, /Gérard<\/span> <small>\(par Jo\)<\/small>/);
+  assert.match(html, /Gérard<\/span><\/div>/);
+  assert.doesNotMatch(html, /\(par /);
   assert.match(html, /Inscrits <span>22 · ordre alphabétique<\/span>/);
   assert.match(html, /09:30/);
   assert.match(html, /modifié par Ben/);

@@ -1,20 +1,31 @@
 // Calendrier : grille de 14 jours (PC, tablette) et vue d'un jour (téléphone).
-import { echapper, initiales, couleurAvatar } from '../logique/html.js';
+import { echapper } from '../logique/html.js';
 import { libelleJour, creneau, jourSemaine } from '../logique/dates.js';
 
-const PASTILLES_MAX = 4;
 const JOURS_COURTS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
 
 export function lienSortie(id) {
   return '#/sortie/' + encodeURIComponent(id);
 }
 
-export function pastilles(inscrits) {
-  const visibles = inscrits.slice(0, PASTILLES_MAX)
-    .map((i) => `<span class="av" style="background:${couleurAvatar(i.nom_affiche)}" title="${echapper(i.nom_affiche)}">${echapper(initiales(i.nom_affiche))}</span>`)
-    .join('');
-  const reste = inscrits.length - PASTILLES_MAX;
-  return `<span class="pile">${visibles}${reste > 0 ? `<span class="av plus">+${reste}</span>` : ''}</span>`;
+// Inscrits d'une sortie dans le calendrier : le nombre seulement (pas de noms : une sortie peut en avoir 40) ; avec
+// plusieurs départs, le total puis une colonne par départ avec son nombre d'inscrits.
+export function inscritsSortie(s) {
+  const nb = s.inscrits.length;
+  const moi = s.inscrits.some((i) => i.a_moi);
+  const total = `<span class="who"><span class="cnt">${nb} inscrit${nb > 1 ? 's' : ''}</span>${moi ? '<span class="inscrit-moi">✓ Inscrit</span>' : ''}</span>`;
+  if (!plusieursDeparts(s)) return total;
+  const colonnes = s.departs.map((d) => {
+    const n = s.inscrits.filter((i) => (i.depart_id || 'd1') === d.id).length;
+    return `<span><small>${echapper(d.heure)} ${echapper(d.point_rdv)}</small><b>${n}</b></span>`;
+  }).join('');
+  return `${total}<span class="departs-cal">${colonnes}</span>`;
+}
+
+// Ligne du lieu : « 📍 PDL » ; avec plusieurs départs, ceux-ci sont dans les colonnes des inscrits.
+export function ligneLieu(s, suite) {
+  const morceaux = [plusieursDeparts(s) ? '' : `📍 ${lieuSortie(s)}`, ...suite].filter(Boolean);
+  return morceaux.length ? `<span class="meta">${morceaux.join(' · ')}</span>` : '';
 }
 
 export function badgeSortie(s) {
@@ -63,17 +74,16 @@ export function lieuSortie(s) {
 }
 
 export function encadreSortie(s, compact) {
-  const nb = s.inscrits.length;
   const moi = s.inscrits.some((i) => i.a_moi);
   const heure = s.modifie_par && s.type === 'recurrente'
     ? `<span class="modifie" title="modifié par ${echapper(s.modifie_par)}">${echapper(s.heure)}</span>` : echapper(s.heure);
   const details = [s.km && `${echapper(s.km)} km`, s.dplus && `${echapper(s.dplus)} m D+`].filter(Boolean).join(' · ');
   return `<a class="sortie${moi ? ' moi' : ''}${s.statut === 'annulee' ? ' annulee' : ''}" href="${lienSortie(s.id)}">
     <span class="srow"><span class="st">${echapper(s.titre)}${compact ? '' : ` · ${heure}`}</span>${badgeSortie(s)}</span>
-    <span class="meta">📍 ${lieuSortie(s)}${compact && !plusieursDeparts(s) ? ` · ${heure}` : ''}${details ? ` · ${details}` : ''}${s.nb_messages ? ` · 💬 ${s.nb_messages}` : ''}</span>
+    ${ligneLieu(s, [compact && !plusieursDeparts(s) ? heure : '', details, s.nb_messages ? `💬 ${s.nb_messages}` : ''])}
     ${s.statut === 'annulee'
     ? `<span class="meta">Motif : ${echapper(s.motif_annulation || 'non précisé')}</span>`
-    : `<span class="who">${nb ? pastilles(s.inscrits) : ''}<span class="cnt">${nb} inscrit${nb > 1 ? 's' : ''}</span>${moi ? '<span class="inscrit-moi">✓ Inscrit</span>' : ''}</span>`}
+    : inscritsSortie(s)}
   </a>`;
 }
 

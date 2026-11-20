@@ -3,7 +3,7 @@
 // - agenda : une liste qui part d'aujourd'hui, mes sorties en tête, l'heure en premier, les jours vides sur une ligne.
 import { echapper } from '../logique/html.js';
 import { libelleJour, jourSemaine } from '../logique/dates.js';
-import { mm, vent, blocMeteo, encadreSortie, blocHeures, bandeHeures, pastilles, badgeSortie, lienSortie, lieuSortie } from './calendrier.js';
+import { mm, vent, blocMeteo, encadreSortie, blocHeures, bandeHeures, inscritsSortie, ligneLieu, badgeSortie, lienSortie } from './calendrier.js';
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -56,17 +56,16 @@ function meteoMini(meteoParDate, jour) {
 }
 
 function ligneSortie(s) {
-  const nb = s.inscrits.length;
   const moi = s.inscrits.some((i) => i.a_moi);
   const details = [s.km && `${echapper(s.km)} km`, s.dplus && `${echapper(s.dplus)} m D+`].filter(Boolean).join(' · ');
   return `<a class="ligne-sortie${moi ? ' moi' : ''}${s.statut === 'annulee' ? ' annulee' : ''}" href="${lienSortie(s.id)}">
     <span class="heure${s.modifie_par && s.type === 'recurrente' ? ' modifie' : ''}"${s.modifie_par && s.type === 'recurrente' ? ` title="modifié par ${echapper(s.modifie_par)}"` : ''}>${echapper(s.heure)}</span>
     <span class="corps">
       <span class="srow"><span class="st">${echapper(s.titre)}</span>${badgeSortie(s)}</span>
-      <span class="meta">📍 ${lieuSortie(s)}${details ? ` · ${details}` : ''}${s.nb_messages ? ` · 💬 ${s.nb_messages}` : ''}</span>
+      ${ligneLieu(s, [details, s.nb_messages ? `💬 ${s.nb_messages}` : ''])}
       ${s.statut === 'annulee'
     ? `<span class="meta">Motif : ${echapper(s.motif_annulation || 'non précisé')}</span>`
-    : `<span class="who">${nb ? pastilles(s.inscrits) : ''}<span class="cnt">${nb} inscrit${nb > 1 ? 's' : ''}</span>${moi ? '<span class="inscrit-moi">✓ Inscrit</span>' : ''}</span>`}
+    : inscritsSortie(s)}
     </span>
   </a>`;
 }

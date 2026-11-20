@@ -35,12 +35,12 @@ test('grille : 14 cartes, jours passés grisés sans météo, jeudi encadré', (
   assert.doesNotMatch(blocJour(html, '2026-11-10'), /Créer une sortie/);
 });
 
-test('vue jour samedi : 2 sorties, « 22 inscrits » le matin, pastille « +18 », sections Matin / Après-midi', () => {
+test('vue jour samedi : 2 sorties, « 22 inscrits » le matin sans pastilles de noms, sections Matin / Après-midi', () => {
   const cal = calendrierBen();
   const html = renderJour(cal, '2026-11-14', meteoPartout(cal), null);
   assert.equal((html.match(/class="sortie[ "]/g) || []).length, 2);
   assert.match(html, /22 inscrits/);
-  assert.match(html, /\+18/);
+  assert.doesNotMatch(html, /class="av|\+18|class="pile/);
   assert.ok(html.indexOf('>Matin<') < html.indexOf('>Après-midi<'));
   assert.match(html, /href="#\/sortie\/R%3Asm%3A2026-11-14%3A1"/);
   assert.match(html, /href="#\/sortie\/R%3Asa%3A2026-11-14%3A1"/);

@@ -94,7 +94,7 @@ export function changementInscrits(avant, apres) {
   return { liste: cle(avant) !== cle(apres), miennes: miennes(avant) !== miennes(apres) };
 }
 
-const noms = (liste) => `<div class="noms">${liste.map((i) => `<div class="nm${i.a_moi ? ' moi' : ''}"><span class="av" style="background:${couleurAvatar(i.nom_affiche)}">${echapper(initiales(i.nom_affiche))}</span><span class="n">${echapper(i.nom_affiche)}</span>${i.inscrit_par ? ` <small>(par ${echapper(i.inscrit_par)})</small>` : ''}</div>`).join('')}</div>`;
+const noms = (liste) => `<div class="noms">${liste.map((i) => `<div class="nm${i.a_moi ? ' moi' : ''}"><span class="av" style="background:${couleurAvatar(i.nom_affiche)}">${echapper(initiales(i.nom_affiche))}</span><span class="n">${echapper(i.nom_affiche)}</span></div>`).join('')}</div>`;
 
 export function renderInscrits(sortie) {
   const n = sortie.inscrits.length;

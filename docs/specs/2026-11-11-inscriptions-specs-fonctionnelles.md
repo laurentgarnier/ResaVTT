@@ -97,7 +97,7 @@ Il reprend la mise en page de la capture d'inspiration :
   - la date ;
   - la **météo** pour le **matin** et pour l'**après-midi** : un pictogramme, la température, la pluie en **mm** et le vent (voir 4.7) ;
   - le résumé « N sortie(s) · N inscription(s) ».
-- **Un encadré par sortie du jour** (voir 4.4), trié par heure de rendez-vous. Replié, il montre le titre, l'heure, le point de rendez-vous, quelques pastilles d'inscrits et leur **nombre**, et le nombre de messages.
+- **Un encadré par sortie du jour** (voir 4.4), trié par heure de rendez-vous. Replié, il montre le titre, l'heure, le point de rendez-vous, le **nombre** d'inscrits (sans leurs noms, pour rester léger avec 40 inscrits) **[décidé]**, et le nombre de messages. Dans toutes les mises en page.
 - **Bouton « + Créer une sortie »** (voir 4.5).
 - Il n'y a **pas de bouton « Intéressé pour rouler »** **[décidé]**. Pour signaler qu'on roule, on crée une sortie avec le formulaire court ; les autres s'y inscrivent.
 
@@ -140,7 +140,7 @@ Une fois les essais faits, le club pourra garder une seule mise en page et un se
   - la **distance** et le **dénivelé positif cumulé**, calculés automatiquement à partir de la trace ;
   - une **petite carte fixe, sans interaction**, qui montre le tracé. Sur téléphone, la trace tient sur une ligne et la carte s'ouvre au toucher ;
   - un bouton « Télécharger » ;
-- la **liste complète des inscrits**, sur deux colonnes et par ordre alphabétique, pour faire l'appel au départ. Une personne inscrite par un autre compte est marquée, par exemple « Gérard (par Jo) ». Un bouton **« M'inscrire »** ou **« Me désinscrire »**, avec un choix des personnes du compte ;
+- la **liste complète des inscrits**, sur deux colonnes et par ordre alphabétique, pour faire l'appel au départ. Le nom de qui a fait l'inscription n'est pas affiché **[décidé]**. Un bouton **« M'inscrire »** ou **« Me désinscrire »**, avec un choix des personnes du compte ;
 - la **discussion** (voir 4.6), avec le nombre de messages.
 
 **Ouverture et clôture des inscriptions :**
@@ -230,7 +230,7 @@ Dans l'onglet **Messages**, chaque texte réglable (partage d'une nouvelle sorti
   - Sur la fiche, l'adhérent choisit **« Mon départ »** (présélection : son départ actuel, sinon le premier). Les personnes d'un compte inscrites ensemble partent du **même départ** ; on peut ensuite en changer (« Changer de départ » pour un compte d'une personne).
   - La liste des inscrits donne le **total**, puis les inscrits **regroupés par départ** avec un sous-total, par ordre alphabétique.
   - Les inscriptions ferment à l'heure de la sortie (son premier départ). L'heure de chaque départ se change séparément (✎ à côté de chacun).
-  - Calendrier et Agenda montrent les départs dans la ligne du lieu ; « Mes prochaines sorties » donne l'heure et le lieu de son départ.
+  - Dans le calendrier (toutes mises en page), la sortie donne le **total des inscrits**, puis **une colonne par départ** (heure, lieu, nombre d'inscrits) **[décidé]** ; « Mes prochaines sorties » donne l'heure et le lieu de son départ.
   - Réservé aux sorties récurrentes pour l'instant (pas aux sorties libres).
 - Les sorties issues des règles apparaissent automatiquement **au plus tard au début de la « semaine prochaine »** affichée, c'est-à-dire avec environ 2 semaines d'avance.
 - La création et la modification d'une règle se font sur un **écran dédié**, comme la création d'une sortie, et non sous la liste des règles **[décidé]**. Enregistrer ou annuler ramène à la liste.

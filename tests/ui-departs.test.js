@@ -68,10 +68,19 @@ test("fiche ouverte : changer de départ ailleurs redessine aussi le formulaire"
   assert.deepEqual(changementInscrits(avant, [{ ...avant[0], depart_id: 'd2' }]), { liste: true, miennes: true });
 });
 
-test('calendrier et agenda : les départs dans la ligne du lieu ; « Mes prochaines sorties » donne mon départ', () => {
+test('agenda : « Mes prochaines sorties » donne mon départ', () => {
   const { cal } = donnees();
-  assert.match(renderGrille(cal, {}), /📍 09:00 PDL · 09:30 Parking gare/);
   const agenda = renderAgenda(cal, {});
-  assert.match(agenda, /📍 09:00 PDL · 09:30 Parking gare/);
   assert.match(agenda, /Sam\.? 21[^<]*· 09:30 Parking gare<\/b>/);
+});
+
+test('calendrier et agenda, sortie à plusieurs départs : le total, puis une colonne par départ avec son nombre d\'inscrits', () => {
+  const { cal } = donnees();
+  for (const html of [renderGrille(cal, {}), renderAgenda(cal, {})]) {
+    const i = html.lastIndexOf('R%3Asm%3A2026-11-21%3A1"');
+    const bloc = html.slice(i, html.indexOf('</a>', i));
+    assert.match(bloc, /<span class="cnt">2 inscrits<\/span>/);
+    assert.match(bloc, /<span class="departs-cal"><span><small>09:00 PDL<\/small><b>1<\/b><\/span><span><small>09:30 Parking gare<\/small><b>1<\/b><\/span><\/span>/);
+    assert.doesNotMatch(bloc, /class="av/);
+  }
 });
