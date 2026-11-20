@@ -106,7 +106,7 @@ Sur téléphone, la vue du jour regroupe les sorties en « Matin » et « Après
 Sur téléphone, les cartes s'affichent les unes sous les autres et l'appli ouvre directement sur le jour courant **[choix du rédacteur]**.
 
 **Mises en page et thèmes à l'essai [décidé : à tester avant de choisir]**
-Un bouton **🎨** dans l'en-tête permet à chacun de choisir, pour son appareil uniquement, une mise en page du calendrier, un thème et un espacement. Le choix est mémorisé sur l'appareil. Par défaut, l'appli garde la mise en page **Classique**, le thème **Nuit** et l'espacement **Compact** décrits ci-dessus.
+Un bouton **🎨** dans l'en-tête permet à chacun de choisir, pour son appareil uniquement, une mise en page du calendrier, un thème et un espacement. Le choix est mémorisé sur l'appareil. Par défaut, l'appli s'ouvre en mise en page **Agenda**, avec le thème **Club** (aux couleurs du logo) et l'espacement **Compact** **[décidé]** ; les autres restent au choix dans 🎨. Un choix déjà fait sur un appareil est gardé.
 - **Classique** : la grille des deux semaines (une carte par jour) ; sur téléphone, un jour à la fois avec les onglets de jours.
 - **Frise** (horizontale) : les 14 jours en colonnes côte à côte, qu'on fait glisser du doigt, avec un repère entre les deux semaines. L'appli s'ouvre sur aujourd'hui, ou sur le jour visé par un lien. Sur téléphone, une colonne occupe presque tout l'écran et laisse voir le bord du jour suivant. Chaque jour à venir propose la météo heure par heure, dépliée pour aujourd'hui et repliée pour les autres jours.
 - **Agenda** : une liste qui part d'aujourd'hui.

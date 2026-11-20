@@ -22,7 +22,7 @@ export const ESPACEMENTS = [
 ];
 
 const CLE = 'sorties-vtt-affichage';
-const DEFAUT = { disposition: 'classique', theme: 'nuit', espacement: 'compact' };
+const DEFAUT = { disposition: 'agenda', theme: 'club', espacement: 'compact' };
 
 export function lireAffichage(stockage) {
   let lu = {};

@@ -8,7 +8,8 @@ test('manifest : portée limitée à /sorties/, icônes 192 et 512', () => {
   assert.equal(m.start_url, './');
   assert.equal(m.display, 'standalone');
   assert.equal(m.lang, 'fr');
-  assert.equal(m.theme_color, '#121a2b');
+  assert.equal(m.theme_color, '#b3000c', 'thème Club par défaut');
+  assert.equal(m.background_color, '#efecea');
   // Icône normale (« any ») et icône découpable par Android (« maskable », logo dans le cercle central).
   assert.deepEqual(m.icons.map((i) => `${i.sizes} ${i.purpose}`).sort(), ['192x192 any', '192x192 maskable', '512x512 any', '512x512 maskable']);
   for (const i of m.icons) assert.ok(existsSync(`site/sorties/${i.src}`), i.src);

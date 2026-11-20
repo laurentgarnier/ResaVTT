@@ -63,13 +63,14 @@ test('agenda : sans inscription, pas de bloc « Mes prochaines sorties »', () =
   assert.doesNotMatch(renderAgenda(cal, null), /class="mes-sorties"/);
 });
 
-const DEFAUT = { disposition: 'classique', theme: 'nuit', espacement: 'compact' };
+const DEFAUT = { disposition: 'agenda', theme: 'club', espacement: 'compact' };
 
-test('affichage : classique, thème nuit et espacement compact par défaut ; un choix inconnu ou un stockage illisible retombe sur le défaut', () => {
+test('affichage : agenda, thème club et espacement compact par défaut ; un choix inconnu ou un stockage illisible retombe sur le défaut', () => {
   assert.deepEqual(lireAffichage(stockage()), DEFAUT);
   assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"agenda","theme":"club","espacement":"aere"}' })), { disposition: 'agenda', theme: 'club', espacement: 'aere' });
   assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"bidon","theme":"contraste","espacement":"bidon"}' })), { ...DEFAUT, theme: 'contraste' });
-  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"agenda","theme":"foret"}' })), { ...DEFAUT, disposition: 'agenda' }, 'Forêt a été retiré : retour au thème nuit');
+  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"frise","theme":"foret"}' })), { ...DEFAUT, disposition: 'frise' }, 'Forêt a été retiré : retour au thème par défaut');
+  assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': '{"disposition":"classique","theme":"nuit","espacement":"compact"}' })), { disposition: 'classique', theme: 'nuit', espacement: 'compact' }, 'un choix déjà fait est gardé');
   assert.deepEqual(lireAffichage(stockage({ 'sorties-vtt-affichage': 'pas du json' })), DEFAUT);
   assert.deepEqual(lireAffichage({ getItem: () => { throw new Error('bloqué'); } }), DEFAUT);
 });
