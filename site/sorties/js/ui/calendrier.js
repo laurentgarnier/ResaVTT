@@ -56,6 +56,12 @@ export function blocMeteo(meteoParDate, jour) {
   return `<div class="meteo">${plage('Matin', m.matin)}${plage('Après-midi', m.apres_midi)}</div>`;
 }
 
+// Lieu d'une sortie : son point de rendez-vous, ou ses départs s'il y en a plusieurs (« 09:00 PDL · 09:30 Gare »).
+const plusieursDeparts = (s) => !!(s.departs && s.departs.length > 1);
+export function lieuSortie(s) {
+  return echapper(plusieursDeparts(s) ? s.departs.map((d) => `${d.heure} ${d.point_rdv}`).join(' · ') : s.point_rdv);
+}
+
 export function encadreSortie(s, compact) {
   const nb = s.inscrits.length;
   const moi = s.inscrits.some((i) => i.a_moi);
@@ -64,7 +70,7 @@ export function encadreSortie(s, compact) {
   const details = [s.km && `${echapper(s.km)} km`, s.dplus && `${echapper(s.dplus)} m D+`].filter(Boolean).join(' · ');
   return `<a class="sortie${moi ? ' moi' : ''}${s.statut === 'annulee' ? ' annulee' : ''}" href="${lienSortie(s.id)}">
     <span class="srow"><span class="st">${echapper(s.titre)}${compact ? '' : ` · ${heure}`}</span>${badgeSortie(s)}</span>
-    <span class="meta">📍 ${echapper(s.point_rdv)}${compact ? ` · ${heure}` : ''}${details ? ` · ${details}` : ''}${s.nb_messages ? ` · 💬 ${s.nb_messages}` : ''}</span>
+    <span class="meta">📍 ${lieuSortie(s)}${compact && !plusieursDeparts(s) ? ` · ${heure}` : ''}${details ? ` · ${details}` : ''}${s.nb_messages ? ` · 💬 ${s.nb_messages}` : ''}</span>
     ${s.statut === 'annulee'
     ? `<span class="meta">Motif : ${echapper(s.motif_annulation || 'non précisé')}</span>`
     : `<span class="who">${nb ? pastilles(s.inscrits) : ''}<span class="cnt">${nb} inscrit${nb > 1 ? 's' : ''}</span>${moi ? '<span class="inscrit-moi">✓ Inscrit</span>' : ''}</span>`}

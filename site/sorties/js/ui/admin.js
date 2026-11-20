@@ -1,5 +1,6 @@
 // Page d'administration : code par email, récurrences, fermetures, rappels, paramètres, messages et envois.
 import { echapper } from '../logique/html.js';
+import { libelleDeparts } from '../logique/departs.js';
 import { aujourdhuiLocal } from '../logique/dates.js';
 import { MODELES_DEFAUT, REPERES, SENS_REPERES } from '../logique/modeles.js';
 
@@ -46,7 +47,7 @@ function optionsJours(choisi) {
 }
 
 const REPERES_RAPPEL = `Repères : ${REPERES.rappel.map((r) => `{{${r}}} : ${SENS_REPERES[r]}`).join(' ; ')}. `
-  + 'Avec plusieurs sorties, {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{meteo}} et {{lien_sortie}} sont ceux de la première.';
+  + 'Avec plusieurs sorties, {{titre}}, {{date}}, {{heure}}, {{point_rdv}}, {{departs}}, {{meteo}} et {{lien_sortie}} sont ceux de la première ; avec plusieurs départs, {{heure}} et {{point_rdv}} sont ceux du premier.';
 
 const case_ = (nom, coche, libelle) => `<label class="case"><input name="${nom}" type="checkbox"${coche ? ' checked' : ''}> ${libelle}</label>`;
 
@@ -88,9 +89,10 @@ function formulaireRegle(regle, sorties, d = {}) {
     <label>Nom</label><input name="nom" value="${echapper(r.nom)}" required maxlength="60" placeholder="Mardi soir">
     <div class="ligne2">
       <div><label>Jour</label><select name="jour">${optionsJours(r.jour)}</select></div>
-      <div><label>Heure</label><input name="heure" type="time" value="${echapper(r.heure)}" required></div>
+      <div><label>Heure du premier départ</label><input name="heure" type="time" value="${echapper(r.heure)}" required></div>
     </div>
-    <label>Point de rendez-vous</label><input name="point_rdv" value="${echapper(r.point_rdv)}" maxlength="120">
+    <label>Point de rendez-vous du premier départ</label><input name="point_rdv" value="${echapper(r.point_rdv)}" maxlength="120">
+    <label for="autres_departs">Autres points de départ (un par ligne : heure puis lieu, ex. « 09:30 Parking gare »)</label><textarea id="autres_departs" name="autres_departs" rows="2" placeholder="Vide : un seul départ">${echapper(r.autres_departs || '')}</textarea>
     <div class="ligne2">
       <div><label>Fréquence</label><select name="frequence_semaines">${[1, 2, 3, 4].map((n) => `<option value="${n}"${String(n) === String(r.frequence_semaines) ? ' selected' : ''}>${frequence(n)}</option>`).join('')}</select></div>
       <div><label>À partir du</label><input name="date_depart" type="date" value="${echapper(r.date_depart)}" required></div>
@@ -119,7 +121,7 @@ function ongletRecurrences(d) {
   return `<a class="btn p nouvelle-regle" href="#/admin/recurrences/nouvelle">+ Nouvelle récurrence</a>`
     + d.regles.map((r) => `<div class="bloc">
       <h3><span>${echapper(r.nom)}</span><label class="interrupteur"><input type="checkbox" data-active="${echapper(r.id)}"${r.active ? ' checked' : ''}> active</label></h3>
-      <div class="meta">${frequence(r.frequence_semaines)} · ${echapper(r.heure)} · ${echapper(r.point_rdv)} · ${JOURS[Number(r.jour)]}</div>
+      <div class="meta">${frequence(r.frequence_semaines)} · ${JOURS[Number(r.jour)]} · ${echapper(libelleDeparts(r))}</div>
       <ul>${sortiesDe(r.id).map((s) => `<li>${echapper(s.titre)}</li>`).join('')}</ul>
       <div class="actions"><a class="btn o" href="${echapper(lienRegle(r.id))}">✎ Modifier</a><button class="btn d" data-supprimer-regle="${echapper(r.id)}">Supprimer</button></div>
     </div>`).join('')
@@ -363,7 +365,7 @@ export function brancherAdmin(racine, actions, d, reafficher) {
     const f = ev.target;
     if (f.id === 'form-regle') {
       const id = f.dataset.id;
-      const regle = { nom: f.nom.value, jour: f.jour.value, heure: f.heure.value, point_rdv: f.point_rdv.value, frequence_semaines: f.frequence_semaines.value, date_depart: f.date_depart.value, active: true };
+      const regle = { nom: f.nom.value, jour: f.jour.value, heure: f.heure.value, point_rdv: f.point_rdv.value, autres_departs: f.autres_departs.value, frequence_semaines: f.frequence_semaines.value, date_depart: f.date_depart.value, active: true };
       if (f.rappel_jour) {
         Object.assign(regle, { rappel_actif: f.rappel_actif.checked, rappel_jour: f.rappel_jour.value, rappel_heure: f.rappel_heure.value,
           rappel_mail: f.rappel_mail.checked, rappel_whatsapp: f.rappel_whatsapp.checked, rappel_objet: f.rappel_objet.value, rappel_texte: f.rappel_texte.value });

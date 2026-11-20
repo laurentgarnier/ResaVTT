@@ -217,7 +217,7 @@ test("classeur d'une version précédente : les colonnes rappel_* manquantes son
   const n = vm.runInContext("depotSheets(classeurAppli, {}).modifier('Regles', function (r) { return r.id === 'sm'; }, { rappel_jour: '4', rappel_actif: true })", contexte);
   assert.equal(n, 1);
   const entete = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0];
-  assert.deepEqual(entete.slice(8), ['rappel_actif', 'rappel_jour', 'rappel_heure', 'rappel_mail', 'rappel_whatsapp', 'rappel_objet', 'rappel_texte']);
+  assert.deepEqual(entete.slice(8), ['rappel_actif', 'rappel_jour', 'rappel_heure', 'rappel_mail', 'rappel_whatsapp', 'rappel_objet', 'rappel_texte', 'autres_departs']);
   const relu = JSON.parse(vm.runInContext("JSON.stringify(depotSheets(classeurAppli, {}).lire('Regles'))", contexte)).find((r) => r.id === 'sm');
   assert.equal(String(relu.rappel_jour), '4');
   assert.equal(relu.nom, 'Samedi matin');
@@ -240,5 +240,5 @@ test('colonnes ajoutées à un classeur existant : mises au format texte, comme 
   const f = g.classeurActif.insertSheet('Regles');
   f.getRange(1, 1, lignes.length, 8).setValues(lignes);
   vm.runInContext("depotSheets(classeurAppli, {}).modifier('Regles', function (r) { return r.id === 'sm'; }, { rappel_heure: '18:00' })", contexte);
-  assert.deepEqual(f.formatsTexte, [[1, 9, f.getMaxRows(), 7]]);
+  assert.deepEqual(f.formatsTexte, [[1, 9, f.getMaxRows(), 8]]);
 });

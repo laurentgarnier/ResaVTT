@@ -25,7 +25,7 @@ test('onglet récurrences : 3 règles initiales et leurs sorties', () => {
   assert.equal((html.match(/<li>Samedi matin<\/li>/g) || []).length, 1);
   assert.match(html, /<li>Samedi après-midi<\/li>/);
   assert.match(html, /<li>Dimanche matin<\/li>/);
-  assert.match(html, /Chaque semaine · 09:00 · PDL/);
+  assert.match(html, /Chaque semaine · samedi · 09:00 PDL/i);
   assert.match(html, /\+ Nouvelle récurrence/);
   assert.match(html, /class="on"[^>]*>Récurrences/);
 });
@@ -227,4 +227,15 @@ test('onglet Messages : sous chaque texte, la liste complète de ses repères ; 
 test("Paramètres : nom de l'association (onglet du navigateur, bandeau, appli installée)", () => {
   const html = renderAdmin(donneesAdmin(), 'parametres');
   assert.match(html, /<label>Nom de l'association[^<]*<\/label><input name="nom_appli" value="Sorties VTT"/);
+});
+
+test("écran d'une récurrence : heure et point de rendez-vous du premier départ, puis les autres départs (un par ligne)", () => {
+  const d = donneesAdmin();
+  const r = d.regles.find((x) => x.nom === 'Samedi matin');
+  r.autres_departs = '09:30 Parking gare';
+  const html = renderAdmin(d, 'recurrences', { regleEditee: r.id });
+  assert.match(html, /<label>Heure du premier départ<\/label>/);
+  assert.match(html, /<label>Point de rendez-vous du premier départ<\/label>/);
+  assert.match(html, /<label for="autres_departs">Autres points de départ \(un par ligne : heure puis lieu, ex\. « 09:30 Parking gare »\)<\/label><textarea id="autres_departs" name="autres_departs"[^>]*>09:30 Parking gare<\/textarea>/);
+  assert.match(renderAdmin(d, 'recurrences'), /09:00 PDL · 09:30 Parking gare/);
 });

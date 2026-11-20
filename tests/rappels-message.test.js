@@ -119,3 +119,12 @@ test('composerMessage : lignes vides ajoutées quel que soit le texte réglé, j
   const lignes = m.texte.split('\n');
   assert.deepEqual(lignes.map((l) => (l === '' ? '·' : l.trim().slice(0, 2))), ['In', '·', '🚵', 'Mé', '👉', '·', '🚵', 'Mé', '👉', '·', 'Fi']);
 });
+
+test('composerMessage : une sortie à plusieurs départs les annonce tous ; repère {{departs}}', () => {
+  const sorties = [{ ...SORTIES[0], heure: '09:00', autres_departs: '09:30 Parking gare' }];
+  const m = composerMessage(groupe({ texte: '{{liste_sorties}}\n{{departs}}' }), sorties, null, '');
+  assert.match(m.texte, /^🚵 Samedi 14 novembre 09:00 – Samedi matin \(09:00 PDL · 09:30 Parking gare\)$/m);
+  assert.match(m.texte, /^09:00 PDL · 09:30 Parking gare$/m);
+  const seul = composerMessage(groupe({ texte: '{{departs}}' }), SORTIES.slice(0, 1), null, '');
+  assert.equal(seul.texte, '09:30 PDL');
+});

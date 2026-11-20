@@ -191,7 +191,7 @@ Le schéma ne montre que les clés et les champs utiles aux liens ; le détail d
 Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux données de l'appli, et une mauvaise manipulation de sa part ne peut pas casser les onglets gérés par le code. Le chargement initial consiste à copier la liste existante du secrétaire dans ce fichier. L'email est **obligatoire pour les administrateurs** (voir §8, double vérification), facultatif pour les autres.
 
 ### Gérés via la page d'administration (le Sheet n'est que le stockage)
-- **`Regles`** : id, nom, jour (lundi à dimanche), heure, point_rdv, frequence_semaines (1, 2…), date_depart, active, puis le rappel individuel : rappel_actif, rappel_jour, rappel_heure, rappel_mail, rappel_whatsapp, rappel_objet, rappel_texte (colonnes ajoutées en fin d'en-tête des classeurs existants par l'adaptateur).
+- **`Regles`** : id, nom, jour (lundi à dimanche), heure, point_rdv, frequence_semaines (1, 2…), date_depart, active, puis le rappel individuel : rappel_actif, rappel_jour, rappel_heure, rappel_mail, rappel_whatsapp, rappel_objet, rappel_texte, puis autres_departs : autres points de départ, un par ligne « HH:MM lieu » (heure et point_rdv = premier départ) (colonnes ajoutées en fin d'en-tête des classeurs existants par l'adaptateur).
 - **`Rappels`** (rappels groupés) : id, nom, regle_ids (séparés par des virgules), jour, heure, mail, whatsapp, actif, objet, texte.
 - **`RegleSorties`** : regle_id, ordre (1, 2, 3…), titre, lieu, km, dplus, description, trace_id (facultatif).
 - **`Fermetures`** : id, debut, fin, regle_id (vide si toutes les règles sont concernées), motif, cree_par.
@@ -213,9 +213,10 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 ### Gérés par le code
 - **`Jetons`** : jeton_hash, telephone, appareil (libellé indicatif), admin_verifie, code_hash, code_expire, code_essais, cree_le, derniere_utilisation. Il y a **une ligne par jeton** : un même numéro peut être connecté sur plusieurs appareils (téléphone, tablette, Safari et appli installée).
 - **`Personnes`** : id, telephone, nom_affiche, actif.
-- **`Sorties`** : id, date, heure, titre, point_rdv, lieu, km, dplus, description, type (`recurrente` ou `libre`), regle_id, ordre, createur_tel, createur_nom, statut (`ouverte` ou `annulee`), motif_annulation, a_notifier (annulation à annoncer par mail et WhatsApp), annulation_notifiee, modifie_par, modifie_le, cree_le.
+- **`Sorties`** : id, date, heure, titre, point_rdv, lieu, km, dplus, description, type (`recurrente` ou `libre`), regle_id, ordre, createur_tel, createur_nom, statut (`ouverte` ou `annulee`), motif_annulation, a_notifier (annulation à annoncer par mail et WhatsApp), annulation_notifiee, modifie_par, modifie_le, cree_le, autres_departs (recopié de la règle à la génération).
+  - **Départs** (`logique/departs.js`) : `departsDe(sortie)` → `d1` (heure, point_rdv), puis `d2`, `d3`… dans l'ordre de `autres_departs` ; `libelleDeparts` → « 09:00 PDL · 09:30 Parking gare ». Le tri, la météo, la fermeture des inscriptions, la purge et les statistiques ne regardent que le premier départ.
   - L'id d'une sortie récurrente est **déterministe** : `R:<regle_id>:<date>:<ordre>`. Cela garantit l'unicité et empêche de régénérer une sortie annulée.
-- **`Inscriptions`** : sortie_id, personne_id, nom_affiche, telephone, horodatage.
+- **`Inscriptions`** : sortie_id, personne_id, nom_affiche, telephone, horodatage, depart_id (vide = `d1`, inscriptions d'avant les départs multiples).
 - **`Discussions`** : id, sortie_id, auteur_nom, telephone, texte, trace_id, horodatage, supprime.
 - **`Traces`** : id, sortie_id (vide pour une trace par défaut de règle), regle_id (renseigné pour une trace par défaut), nom_fichier, drive_id, km, dplus, ajoute_par_tel, ajoute_par_nom, horodatage.
   - Une sortie générée ne **copie pas** la trace par défaut de sa règle : elle y fait référence par `RegleSorties.trace_id`.
@@ -250,10 +251,10 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 | `deconnexion` | adhérent | Supprime le jeton. |
 | `calendrier` | adhérent | Renvoie les 14 jours (semaine courante et semaine suivante, du lundi au dimanche). Pour chaque jour : sorties, inscrits, nombre de messages par sortie, traces (métadonnées). S'y ajoutent les personnes du compte, `est_admin` et la version. |
 | `personnes_enregistrer` | adhérent | Ajoute, renomme ou retire les personnes du compte. Retirer une personne supprime ses inscriptions **à venir**. |
-| `inscription` | adhérent | `{sortie_id, personne_ids[], inscrit}`. Refusée si la sortie est annulée ou si l'heure du rendez-vous est passée. Vérifie que chaque personne appartient au compte. |
+| `inscription` | adhérent | `{sortie_id, personne_ids[], inscrit, depart_id}`. Refusée si la sortie est annulée ou si l'heure du rendez-vous est passée. Vérifie que chaque personne appartient au compte. `depart_id` (défaut `d1`, inconnu → `depart_inconnu`) vaut pour toutes les personnes envoyées ; une personne déjà inscrite et envoyée avec un `depart_id` change de départ. Le calendrier renvoie `departs` pour chaque sortie et `depart_id` pour chaque inscrit. |
 | `sortie_creer` | adhérent | Crée une sortie `libre`. Le créateur (sa première personne, ou celle qu'il choisit) y est inscrit automatiquement. |
 | `sortie_modifier` | créateur ou admin | Modifie n'importe quel champ. |
-| `sortie_horaire` | adhérent, sortie `recurrente` uniquement | Change seulement l'heure. Renseigne modifie_par et ajoute un message automatique dans la discussion. |
+| `sortie_horaire` | adhérent, sortie `recurrente` uniquement | Change seulement l'heure, du départ `depart_id` (défaut `d1` : l'heure de la sortie ; sinon sa ligne de `autres_departs`). Renseigne modifie_par et ajoute un message automatique dans la discussion. |
 | `sortie_annuler` | créateur ou admin | Passe le statut à `annulee` et ajoute un message automatique. **Si c'est un admin qui annule**, l'annulation est aussi notifiée par mail et WhatsApp (§7.3). |
 | `discussion_lire` | adhérent | `{sortie_id, depuis, avec_inscrits}`. Renvoie les messages plus récents que `depuis`. Avec `avec_inscrits` : `{messages, inscrits}`, les inscrits de la sortie au même format que dans `calendrier` (sans numéro, `a_moi` vu par le demandeur). |
 | `discussion_ecrire` / `discussion_supprimer` | adhérent ; suppression : auteur ou admin | Un message peut contenir une trace jointe. |

@@ -12,8 +12,8 @@ function sortiesDemo() {
   return contexteTest({ maintenant: new Date(2026, 10, 12, 18, 0) }).depot.lire('Sorties');
 }
 
-test('schéma : colonnes rappel_* en fin de Regles, onglet Rappels', () => {
-  assert.deepEqual(ONGLETS.Regles.slice(-7), ['rappel_actif', 'rappel_jour', 'rappel_heure', 'rappel_mail', 'rappel_whatsapp', 'rappel_objet', 'rappel_texte']);
+test('schéma : colonnes rappel_* en fin de Regles (puis autres_departs), onglet Rappels', () => {
+  assert.deepEqual(ONGLETS.Regles.slice(-8), ['rappel_actif', 'rappel_jour', 'rappel_heure', 'rappel_mail', 'rappel_whatsapp', 'rappel_objet', 'rappel_texte', 'autres_departs']);
   assert.deepEqual(ONGLETS.Rappels, ['id', 'nom', 'regle_ids', 'jour', 'heure', 'mail', 'whatsapp', 'actif', 'objet', 'texte']);
 });
 

@@ -3,6 +3,7 @@ import { estPasse } from '../../site/sorties/js/logique/dates.js';
 import { peutModifier, peutChangerHoraire } from '../../site/sorties/js/logique/droits.js';
 import { estVrai, erreurMetier } from './schema.js';
 import { horodatage, personnesDuCompte, trouverSortie, inscritsVus, nomsParTelephone } from './actions-adherent.js';
+import { departsDe, lireDeparts } from '../../site/sorties/js/logique/departs.js';
 
 const TAILLE_MAX_TRACE = 5 * 1024 * 1024;
 const LONGUEUR_MAX_MESSAGE = 1000;
@@ -75,8 +76,21 @@ export function actionSortieHoraire(ctx, u, req) {
   if (!peutChangerHoraire(sortiePourDroits(s), u)) throw interdit();
   const heure = nettoyer(req.heure, 5);
   verifierChamps({ ...s, heure });
-  ctx.depot.modifier('Sorties', (x) => x.id === s.id, { heure, modifie_par: u.nom, modifie_le: horodatage(ctx) });
-  messageSysteme(ctx, s.id, `${u.nom} a changé l'horaire : ${heure}.`);
+  const departs = departsDe(s);
+  const depart = departs.find((d) => d.id === (req.depart_id || 'd1'));
+  if (!depart) throw erreurMetier('depart_inconnu', 'Point de départ inconnu.');
+  if (depart.id === 'd1') {
+    ctx.depot.modifier('Sorties', (x) => x.id === s.id, { heure, modifie_par: u.nom, modifie_le: horodatage(ctx) });
+  } else {
+    // Autre départ : sa ligne dans autres_departs.
+    const autres = lireDeparts(s.autres_departs).map((d, i) => (`d${i + 2}` === depart.id ? { ...d, heure } : d));
+    ctx.depot.modifier('Sorties', (x) => x.id === s.id, {
+      autres_departs: autres.map((d) => `${d.heure} ${d.point_rdv}`).join('\n'), modifie_par: u.nom, modifie_le: horodatage(ctx),
+    });
+  }
+  messageSysteme(ctx, s.id, departs.length > 1
+    ? `${u.nom} a changé l'horaire du départ ${depart.point_rdv} : ${heure}.`
+    : `${u.nom} a changé l'horaire : ${heure}.`);
   return null;
 }
 

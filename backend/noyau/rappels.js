@@ -2,6 +2,7 @@
 // Le rappel individuel est rangé dans la récurrence (colonnes rappel_* de Regles), les rappels groupés dans l'onglet Rappels.
 import { aujourdhuiLocal, jourSemaine, estPasse, creneau, libelleJour } from '../../site/sorties/js/logique/dates.js';
 import { lienSortie } from '../../site/sorties/js/logique/liens.js';
+import { departsDe, libelleDeparts } from '../../site/sorties/js/logique/departs.js';
 import { MODELES_DEFAUT, remplirModele } from '../../site/sorties/js/logique/modeles.js';
 import { synthetiser, ligneMeteoTexte } from '../../site/sorties/js/logique/meteo.js';
 import { estVrai, lireCleValeur } from './schema.js';
@@ -98,12 +99,18 @@ function meteoDe(sortie, hourly) {
   }
 }
 
+// « (PDL) », ou tous les départs d'une sortie qui en a plusieurs : « (09:00 PDL · 09:30 Parking gare) ».
+function lieuAnnonce(s) {
+  if (departsDe(s).length > 1) return ` (${libelleDeparts(s)})`;
+  return s.point_rdv ? ` (${s.point_rdv})` : '';
+}
+
 // Objet et texte d'un rappel : repères {{nom}}, {{liste_sorties}}, {{lien}}, et ceux de la première sortie annoncée.
 export function composerMessage(rappel, sorties, hourly, urlAppli) {
   const lignes = sorties.map((s) => {
     const lien = lienSortie(urlAppli, s.id);
     return [
-      `🚵 ${libelleJour(s.date)} ${s.heure} – ${s.titre}${s.point_rdv ? ` (${s.point_rdv})` : ''}`,
+      `🚵 ${libelleJour(s.date)} ${s.heure} – ${s.titre}${lieuAnnonce(s)}`,
       `   ${ligneMeteoTexte(meteoDe(s, hourly))}`,
       lien ? `   👉 ${lien}` : '',
     ].filter(Boolean).join('\n');
@@ -117,6 +124,7 @@ export function composerMessage(rappel, sorties, hourly, urlAppli) {
     date: premiere.date ? libelleJour(premiere.date) : '',
     heure: premiere.heure || '',
     point_rdv: premiere.point_rdv || '',
+    departs: premiere.date ? libelleDeparts(premiere) : '',
     meteo: premiere.date ? ligneMeteoTexte(meteoDe(premiere, hourly)) : '',
     lien_sortie: premiere.id ? lienSortie(urlAppli, premiere.id) : '',
   };

@@ -5,6 +5,7 @@ import { genererSorties } from '../../site/sorties/js/logique/recurrences.js';
 import { peutModifier, peutChangerHoraire, inscriptionsOuvertes } from '../../site/sorties/js/logique/droits.js';
 import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schema.js';
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
+import { departsDe, departInscription } from '../../site/sorties/js/logique/departs.js';
 
 export function horodatage(ctx) {
   return ctx.services.maintenant().toISOString();
@@ -57,6 +58,7 @@ export function inscritsVus(inscriptions, u, nomParTelephone) {
       nom_affiche: i.nom_affiche,
       inscrit_par: titulaire && titulaire !== i.nom_affiche ? titulaire : null,
       a_moi: i.telephone === u.telephone,
+      depart_id: departInscription(i),
     };
   }).sort((a, b) => a.nom_affiche.localeCompare(b.nom_affiche, 'fr'));
 }
@@ -78,7 +80,7 @@ export function vueSortie(s, contexteVue) {
   return {
     id: s.id, date: s.date, heure: s.heure, titre: s.titre, point_rdv: s.point_rdv, lieu: s.lieu, km: s.km, dplus: s.dplus,
     description: s.description, type: s.type, createur_nom: s.createur_nom, statut: s.statut, motif_annulation: s.motif_annulation,
-    modifie_par: s.modifie_par, inscrits, nb_messages: nbMessages[s.id] || 0,
+    modifie_par: s.modifie_par, departs: departsDe(s), inscrits, nb_messages: nbMessages[s.id] || 0,
     traces: traces.map((t) => ({ id: t.id, nom_fichier: t.nom_fichier, km: t.km, dplus: t.dplus })),
     peut_modifier: peutModifier(sortie, u), peut_changer_horaire: peutChangerHoraire(sortie, u),
     // Sa propre sortie libre (sans transmettre de numéro) : seul son créateur annonce lui-même l'annulation sur WhatsApp.
@@ -175,11 +177,18 @@ export function actionInscription(ctx, u, req) {
   const ids = req.personne_ids || [];
   const personnes = ids.map((id) => miennes.find((p) => p.id === id));
   if (!ids.length || personnes.some((p) => !p)) throw erreurMetier('personne_inconnue', 'Personne inconnue dans votre compte.');
+  // Départ choisi pour toutes les personnes cochées (les personnes d'un compte inscrites ensemble partent du même).
+  const depart = req.depart_id || 'd1';
+  if (!departsDe(s).some((d) => d.id === depart)) throw erreurMetier('depart_inconnu', 'Point de départ inconnu.');
   if (req.inscrit) {
     const deja = new Set(ctx.depot.lire('Inscriptions').filter((i) => i.sortie_id === s.id).map((i) => i.personne_id));
     ctx.depot.ajouter('Inscriptions', personnes.filter((p) => !deja.has(p.id)).map((p) => ({
-      sortie_id: s.id, personne_id: p.id, nom_affiche: p.nom_affiche, telephone: u.telephone, horodatage: horodatage(ctx),
+      sortie_id: s.id, personne_id: p.id, nom_affiche: p.nom_affiche, telephone: u.telephone, horodatage: horodatage(ctx), depart_id: depart,
     })));
+    // Déjà inscrite et cochée : elle change de départ (une appli d'avant les départs n'en envoie pas : rien ne change).
+    if (req.depart_id && personnes.some((p) => deja.has(p.id))) {
+      ctx.depot.modifier('Inscriptions', (i) => i.sortie_id === s.id && ids.includes(i.personne_id) && departInscription(i) !== depart, { depart_id: depart });
+    }
   } else {
     ctx.depot.supprimer('Inscriptions', (i) => i.sortie_id === s.id && ids.includes(i.personne_id));
   }

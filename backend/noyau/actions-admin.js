@@ -4,6 +4,7 @@ import { sortiesAAnnulerPourFermeture } from '../../site/sorties/js/logique/recu
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schema.js';
 import { horodatage, completerRecurrences } from './actions-adherent.js';
+import { lireDeparts } from '../../site/sorties/js/logique/departs.js';
 import { messageSysteme } from './actions-sorties.js';
 import { migrerRappels, reglagesRappelDefaut, regleIdsDuGroupe, envoyerRappelManuel, heureCourte } from './rappels.js';
 
@@ -129,6 +130,8 @@ function enregistrerRegles(ctx, regles, regleSorties) {
       id, nom: texte(r.nom, 60), jour: String(jour), heure: r.heure, point_rdv: texte(r.point_rdv, 120),
       frequence_semaines: String(Math.max(1, Number(r.frequence_semaines) || 1)), date_depart: r.date_depart, active: estVrai(r.active) || r.active === true,
       ...reglagesRappel(r, jour),
+      // Autres points de départ : une ligne « HH:MM lieu » par départ ; les lignes illisibles sont ignorées.
+      autres_departs: lireDeparts(r.autres_departs).map((d) => `${d.heure} ${texte(d.point_rdv, 120)}`).join('\n'),
     };
   });
   const lignesRS = (regleSorties || []).map((rs) => ({

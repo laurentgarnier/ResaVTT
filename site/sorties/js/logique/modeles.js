@@ -18,7 +18,7 @@ export const MODELES_DEFAUT = {
 export const REPERES = {
   partage_whatsapp: ['titre', 'date', 'heure', 'point_rdv', 'distances', 'meteo', 'lien_sortie', 'createur', 'lien'],
   annulation_partage_whatsapp: ['titre', 'date', 'heure', 'point_rdv', 'distances', 'motif', 'lien_sortie', 'createur', 'lien'],
-  rappel: ['liste_sorties', 'nom', 'titre', 'date', 'heure', 'point_rdv', 'meteo', 'lien_sortie', 'lien'],
+  rappel: ['liste_sorties', 'nom', 'titre', 'date', 'heure', 'point_rdv', 'departs', 'meteo', 'lien_sortie', 'lien'],
   annulation: ['liste_annulations', 'lien'],
 };
 
@@ -27,6 +27,7 @@ export const SENS_REPERES = {
   date: 'jour, ex. Samedi 21 novembre',
   heure: 'heure de rendez-vous',
   point_rdv: 'point de rendez-vous',
+  departs: 'points de départ et leurs horaires, ex. 09:00 PDL · 09:30 Parking gare',
   distances: 'km et dénivelé',
   meteo: 'météo de la demi-journée',
   lien_sortie: "lien vers la sortie (inscription)",

@@ -131,7 +131,7 @@ Une fois les essais faits, le club pourra garder une seule mise en page et un se
 ### 4.4 Une sortie
 **Ce qui est affiché :**
 - le **titre** (par exemple « Samedi matin – Cool ») ;
-- l'heure et le **point de rendez-vous** ;
+- l'heure et le **point de rendez-vous** ; pour une sortie récurrente à **plusieurs points de départ**, chaque départ avec son heure (« 📍 09:00 PDL · 09:30 Parking gare ») ;
 - le lieu ou le secteur de la sortie ;
 - le **kilométrage** et le **dénivelé** prévus ;
 - un badge **« Récurrente »** ou **« Proposée par Paul »** ;
@@ -217,6 +217,7 @@ Dans l'onglet **Messages**, chaque texte réglable (partage d'une nouvelle sorti
 - Créer, modifier, suspendre ou supprimer une **règle récurrente**. Une règle comprend :
   - le jour de la semaine et l'heure de rendez-vous ;
   - le point de rendez-vous ;
+  - éventuellement d'**autres points de départ**, chacun avec son heure (voir ci-dessous) ;
   - la **fréquence** : toutes les semaines, toutes les 2 semaines, etc., avec une date de départ ;
   - la **liste des sorties générées**, chacune avec son titre et éventuellement un kilométrage, un dénivelé, une description ou une trace par défaut.
 - Règles initiales **[décidé]**, chacune avec **un seul créneau** (une sortie générée) et le rendez-vous à **PDL**, le point de rendez-vous du club :
@@ -224,6 +225,13 @@ Dans l'onglet **Messages**, chaque texte réglable (partage d'une nouvelle sorti
   - **Samedi après-midi**, 14 h, chaque semaine ;
   - **Dimanche matin**, 9 h, chaque semaine.
 - Une règle peut toujours générer plusieurs sorties (par exemple une par groupe de niveau) si le club le souhaite plus tard.
+- **Plusieurs points de départ [décidé]** : une sortie récurrente peut partir de plusieurs endroits à des heures différentes (ex. 09:00 PDL, 09:30 Parking gare). Elle reste **une seule sortie** : une fiche, une discussion, une liste complète des inscrits. Détail : `docs/superpowers/specs/2026-11-20-departs-multiples-design.md`.
+  - Dans l'écran de la récurrence, l'heure et le point de rendez-vous sont ceux du **premier départ** ; une zone « Autres points de départ » en prend un par ligne (« 09:30 Parking gare »). Les sorties déjà générées gardent leurs départs, comme leur heure.
+  - Sur la fiche, l'adhérent choisit **« Mon départ »** (présélection : son départ actuel, sinon le premier). Les personnes d'un compte inscrites ensemble partent du **même départ** ; on peut ensuite en changer (« Changer de départ » pour un compte d'une personne).
+  - La liste des inscrits donne le **total**, puis les inscrits **regroupés par départ** avec un sous-total, par ordre alphabétique.
+  - Les inscriptions ferment à l'heure de la sortie (son premier départ). L'heure de chaque départ se change séparément (✎ à côté de chacun).
+  - Calendrier et Agenda montrent les départs dans la ligne du lieu ; « Mes prochaines sorties » donne l'heure et le lieu de son départ.
+  - Réservé aux sorties récurrentes pour l'instant (pas aux sorties libres).
 - Les sorties issues des règles apparaissent automatiquement **au plus tard au début de la « semaine prochaine »** affichée, c'est-à-dire avec environ 2 semaines d'avance.
 - La création et la modification d'une règle se font sur un **écran dédié**, comme la création d'une sortie, et non sous la liste des règles **[décidé]**. Enregistrer ou annuler ramène à la liste.
 - Modifier une règle ne change que les sorties **qui n'ont pas encore été générées**. Les sorties déjà visibles se modifient une par une **[choix du rédacteur]**.
@@ -260,6 +268,7 @@ Le rappel unique du jeudi est remplacé par des rappels réglés **par récurren
 
 - **Rappel individuel** : dans l'écran de chaque récurrence, l'admin choisit s'il y a un rappel, son **jour** et son **heure** d'envoi, ses **canaux** (mail à la liste, WhatsApp, ou les deux), son **objet** et son **texte**. Par défaut : 2 jours avant la sortie, à 18 h, par mail et WhatsApp.
 - **Rappels groupés** (onglet Admin « Rappels ») : un rappel nommé (ex. « Week-end ») annonce en un seul message les prochaines sorties de plusieurs récurrences, avec ses propres jour, heure, canaux et texte. Il **remplace les rappels individuels** des récurrences qu'il couvre. Une récurrence n'appartient qu'à un rappel groupé ; le désactiver ou le supprimer rend leur rappel individuel à ses récurrences.
+- **Plusieurs départs** : la ligne d'une telle sortie les annonce tous, « (09:00 PDL · 09:30 Parking gare) » ; repère `{{departs}}`.
 - **Sorties annoncées** : pour chaque récurrence couverte, sa prochaine date dans les 7 jours qui suivent l'envoi, sans les sorties annulées. Sans sortie à annoncer, rien ne part. Dans le message, une ligne vide précède chaque sortie annoncée et suit son lien, quel que soit le texte réglé (jamais deux lignes vides de suite). Le mail à la liste est mis en forme : texte plus grand, **date et heure de chaque sortie en plus gros**, un lien court « Voir la sortie et s'inscrire » sur la ligne du 👉, et le lien de l'appli affiché « Application <nom de l'association> » ; une version en texte brut l'accompagne pour les messageries qui n'affichent pas la mise en forme **[décidé]**.
 - **Expéditeur** : les mails portent le **nom de l'association** comme nom d'expéditeur ; l'adresse reste celle du compte Google du club **[décidé]**.
 - **Contenu par défaut** : chaque sortie annoncée avec la **météo prévue** pour sa demi-journée (pictogramme, état du ciel en mots, températures, pluie en mm, vent en km/h et secteur) et le **lien direct vers la sortie**, où l'on s'inscrit :

@@ -3,7 +3,7 @@
 // - agenda : une liste qui part d'aujourd'hui, mes sorties en tête, l'heure en premier, les jours vides sur une ligne.
 import { echapper } from '../logique/html.js';
 import { libelleJour, jourSemaine } from '../logique/dates.js';
-import { mm, vent, blocMeteo, encadreSortie, blocHeures, bandeHeures, pastilles, badgeSortie, lienSortie } from './calendrier.js';
+import { mm, vent, blocMeteo, encadreSortie, blocHeures, bandeHeures, pastilles, badgeSortie, lienSortie, lieuSortie } from './calendrier.js';
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -63,7 +63,7 @@ function ligneSortie(s) {
     <span class="heure${s.modifie_par && s.type === 'recurrente' ? ' modifie' : ''}"${s.modifie_par && s.type === 'recurrente' ? ` title="modifié par ${echapper(s.modifie_par)}"` : ''}>${echapper(s.heure)}</span>
     <span class="corps">
       <span class="srow"><span class="st">${echapper(s.titre)}</span>${badgeSortie(s)}</span>
-      <span class="meta">📍 ${echapper(s.point_rdv)}${details ? ` · ${details}` : ''}${s.nb_messages ? ` · 💬 ${s.nb_messages}` : ''}</span>
+      <span class="meta">📍 ${lieuSortie(s)}${details ? ` · ${details}` : ''}${s.nb_messages ? ` · 💬 ${s.nb_messages}` : ''}</span>
       ${s.statut === 'annulee'
     ? `<span class="meta">Motif : ${echapper(s.motif_annulation || 'non précisé')}</span>`
     : `<span class="who">${nb ? pastilles(s.inscrits) : ''}<span class="cnt">${nb} inscrit${nb > 1 ? 's' : ''}</span>${moi ? '<span class="inscrit-moi">✓ Inscrit</span>' : ''}</span>`}
@@ -89,13 +89,21 @@ function blocJourAgenda(cal, jour, meteoParDate, heures) {
   </section>`;
 }
 
+// Heure de ma sortie ; avec plusieurs départs, l'heure et le lieu de mon départ.
+function monDepartCourt(s) {
+  if (!s.departs || s.departs.length < 2) return echapper(s.heure);
+  const id = (s.inscrits.find((i) => i.a_moi) || {}).depart_id || 'd1';
+  const d = s.departs.find((x) => x.id === id) || s.departs[0];
+  return `${echapper(d.heure)} ${echapper(d.point_rdv)}`;
+}
+
 function mesSorties(cal) {
   const miennes = cal.jours.filter((j) => !j.passe)
     .flatMap((j) => j.sorties.map((s) => ({ ...s, date: j.date })))
     .filter((s) => s.statut !== 'annulee' && s.inscrits.some((i) => i.a_moi));
   if (!miennes.length) return '';
   return `<div class="mes-sorties"><div class="titre-bloc">Mes prochaines sorties</div>
-    <div class="mes-sorties-liste">${miennes.map((s) => `<a class="ma-sortie" href="${lienSortie(s.id)}"><b>${libelleCourt(s.date)} · ${echapper(s.heure)}</b>${echapper(s.titre)}</a>`).join('')}</div>
+    <div class="mes-sorties-liste">${miennes.map((s) => `<a class="ma-sortie" href="${lienSortie(s.id)}"><b>${libelleCourt(s.date)} · ${monDepartCourt(s)}</b>${echapper(s.titre)}</a>`).join('')}</div>
   </div>`;
 }
 

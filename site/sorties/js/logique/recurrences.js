@@ -29,7 +29,7 @@ export function genererSorties(regles, regleSorties, fermetures, dates, idsExist
           type: 'recurrente', regle_id: r.id, ordre: String(l.ordre), trace_regle_id: l.trace_id || '',
           createur_tel: '', createur_nom: '', statut: 'ouverte', motif_annulation: '',
           a_notifier: false, annulation_notifiee: false, modifie_par: '', modifie_le: '',
-          traces_masquees: '', cree_le: maintenantIso,
+          traces_masquees: '', cree_le: maintenantIso, autres_departs: r.autres_departs || '',
         });
       }
     }
