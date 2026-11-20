@@ -461,5 +461,5 @@ label.case input:disabled + * , label.case:has(input:disabled) { color: var(--mu
 
 /* Fiche : proposer une ou plusieurs traces (inscrits). */
 .proposer-trace { display: block; width: 100%; text-align: center; margin-top: 8px; cursor: pointer; }
-.jour-vide details.heures { flex-basis: 100%; }
+.jour-vide details.heures { flex-basis: 100%; min-width: 0; max-width: 100%; } /* sinon la bande des heures élargit la carte au lieu de défiler */
 :root[data-espacement="aere"] .jour-vide details.heures { grid-column: 1 / -1; }
