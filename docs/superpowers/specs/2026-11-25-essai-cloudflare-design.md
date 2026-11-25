@@ -23,10 +23,11 @@ Téléphone / PC ──HTTPS──▶ Cloudflare Pages (site, nouveau dépôt Gi
        └──HTTPS POST JSON──▶ Cloudflare Worker (API, même contrat que l'actuelle)
                                  ├── D1 (SQL)  : sorties, inscriptions, discussions, règles, rappels, paramètres…
                                  ├── KV        : fichiers GPX ; copie de la liste des adhérents
-                                 ├── Cron      : tic horaire (récurrences, rappels, annulations, purge)
+                                 ├── /tic      : récurrences, rappels, annulations, purge (appelé toutes les heures par la passerelle)
                                  └──HTTPS + secret──▶ Passerelle Apps Script (Google)
                                                           ├── adherents_lire  (lecture seule du fichier adhérents)
-                                                          └── mail_envoyer    (MailApp, au nom de l'association)
+                                                          ├── mail_envoyer    (MailApp, au nom de l'association)
+                                                          └── déclencheur horaire → appelle /tic du Worker (signé)
 Open-Meteo : appelé par le navigateur (inchangé) et par le Worker pour la météo des rappels.
 ```
 
@@ -44,7 +45,9 @@ Open-Meteo : appelé par le navigateur (inchangé) et par le Worker pour la mét
 - **Mails** : le Worker demande à la passerelle de les envoyer (`MailApp`, nom d'expéditeur = l'association). Pendant
   l'essai, la passerelle n'envoie **qu'à l'adresse du porteur**, quels que soient les destinataires demandés.
 - **Traces GPX** : dans KV (jusqu'à 5 Mo ; une ligne D1 est limitée à 2 Mo).
-- **Tic** : Cron Trigger horaire appelant `ticNoyau` (inchangé).
+- **Tic** : pas de Cron Trigger Cloudflare (le compte en a déjà 5 sur 5, pour une autre appli). La passerelle Apps Script,
+  avec un déclencheur horaire gratuit de Google, appelle toutes les heures l'adresse `/tic` du Worker, signée avec le
+  secret partagé ; le Worker exécute `ticNoyau` (inchangé). Un appel non signé est refusé.
 
 ## Sécurité du lien Worker ↔ passerelle
 - Un **secret partagé** long et aléatoire : secret du Worker (`wrangler secret`) et propriété du script Apps Script.
@@ -58,7 +61,7 @@ Open-Meteo : appelé par le navigateur (inchangé) et par le Worker pour la mét
 | Worker : requêtes | 100 000 / jour | 1 000 à 5 000 / jour (relectures de 30 s comprises) |
 | Worker : temps de calcul | **10 ms par requête** | à mesurer : le point à surveiller (voir Risques) |
 | Worker : sous-requêtes | 50 par requête | 1 à 3 (passerelle, Open-Meteo) |
-| Cron Triggers | 5 par compte | 1 (tic horaire) |
+| Cron Triggers | 5 par compte (déjà tous pris par une autre appli) | aucun : le tic est déclenché par la passerelle Apps Script |
 | D1 | 10 bases, 500 Mo par base, 5 Go au total ; 5 M lignes lues et 100 000 écrites / jour ; 50 requêtes par appel | quelques Mo ; < 1 M lignes lues / jour |
 | KV | 1 Go ; 100 000 lectures, 1 000 écritures, 1 000 suppressions / jour ; 25 Mo par valeur ; 1 écriture / s sur une même clé | quelques dizaines d'écritures / jour (GPX, adhérents) |
 | Pages | 500 déploiements / mois ; 20 000 fichiers ; 25 Mo par fichier | quelques déploiements / semaine |
@@ -95,5 +98,5 @@ et aucune régression aux tests.
 1. Dépôt et projet Cloudflare : Worker, D1, KV, Pages ; dépôt dérivé de l'actuel.
 2. Dépôt D1 + adaptateur Worker ; tests de l'adaptateur (comme ceux d'Apps Script, avec un Cloudflare imité).
 3. Passerelle Apps Script (adhérents, mails, signature) et ses tests.
-4. Tic par Cron ; traces dans KV.
+4. Tic déclenché par la passerelle Apps Script ; traces dans KV.
 5. Site publié sur Pages, branché sur le Worker ; mesure du gain ; compte rendu.
