@@ -85,11 +85,11 @@ et aucune régression aux tests.
 3. **Données hors tableur** : sorties et inscriptions ne se consultent plus dans Google Sheets (un export pourra être
    ajouté si le club en a besoin).
 
-## Décisions demandées
-1. **Nom du nouveau dépôt** (ex. `sorties-vtt-cloudflare`) et compte GitHub (le tien pour l'essai ?).
-2. **Nouveau dépôt créé comme copie du dépôt actuel** (historique, site, logique et tests repris d'un coup ; je
-   recommande) **ou dépôt vide** où l'on recopie le nécessaire.
-3. **Compte Cloudflare** : le tien pour l'essai, transférable au club ensuite ?
+## Décisions (25/11/2026)
+1. **Dépôt** : `ResaVTT-cloudflare`, sur le compte GitHub de Laurent, créé comme **copie du dépôt actuel** (historique,
+   site, logique et tests repris d'un coup).
+2. **Compte Cloudflare** : le compte existant de Laurent pour l'essai (transférable au club ensuite). La connexion de
+   l'outil `wrangler` à ce compte se fait par Laurent lui-même, dans son navigateur.
 
 ## Étapes (après validation)
 1. Dépôt et projet Cloudflare : Worker, D1, KV, Pages ; dépôt dérivé de l'actuel.
