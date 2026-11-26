@@ -61,6 +61,7 @@ Source d'inspiration **[décidé]** : une appli de padel montrant les jours de l
 |---|---|
 | **Adhérent** | Se connecter avec son numéro. Gérer les personnes de son compte. S'inscrire ou se désinscrire d'une sortie. Créer une sortie libre. Modifier ou supprimer **ses propres** sorties. Changer **l'horaire d'une sortie récurrente** pour la semaine concernée. Écrire dans les discussions. |
 | **Administrateur** (déclaré par le secrétaire) | Tout ce que fait un adhérent, plus l'accès à la page d'administration. Lors de sa première connexion sur un appareil, il reçoit un **code par email** **[décidé]**, puisque les numéros sont visibles par tous dans WhatsApp. Il peut modifier ou supprimer **n'importe quelle** sortie et supprimer n'importe quel message. |
+| **Gestionnaire de la remorque** (email désigné par un administrateur) **[décidé]** | Tout ce que fait un adhérent, plus : valider ou refuser les demandes de remorque, bloquer la remorque (utilisation par le club, non disponible). Comme un administrateur, il confirme son identité par un **code par email** une fois par appareil ; il n'a pas accès à l'administration. |
 | **Secrétaire** | Tient la liste des adhérents et désigne les administrateurs, dans le tableau Google. Reçoit le rappel WhatsApp prêt à envoyer. |
 | **Suppléants** | Reçoivent aussi le rappel WhatsApp prêt à envoyer. |
 | **Automate** | Génère les sorties récurrentes, envoie les rappels (par récurrence ou groupés), envoie les annulations et purge les données anciennes. |
@@ -288,6 +289,16 @@ Le rappel unique du jeudi est remplacé par des rappels réglés **par récurren
 - **Mise en service** : l'ancien rappel du jeudi devient le rappel groupé « Week-end » (récurrences du samedi et du dimanche, mêmes jour et heure).
 - **Doubles annonces** : si l'admin modifie les rappels en cours de semaine, une sortie peut être annoncée deux fois ; accepté, car cela ne suit qu'une modification.
 - Si l'envoi échoue, les destinataires des alertes sont prévenus.
+
+### 4.10 Réservation de la remorque **[décidé]**
+Le club prête sa remorque à vélos. L'administrateur ouvre ou ferme la page (Paramètres : case « Proposer la réservation de la remorque ») et désigne les gestionnaires par leur email.
+- **Bouton « 🚚 Remorque »** dans le bandeau quand la page est ouverte. Pour un gestionnaire, une pastille orange donne le nombre de demandes en attente.
+- **Calendrier** mois par mois, sans limite dans le temps, une ligne par semaine du lundi au dimanche. Couleurs (palette contrastée) : libre ; **demandée** orange ; **réservée** rouge ; **bloquée** gris foncé avec cadenas. Aujourd'hui est entouré. Toucher un jour pris affiche sa période (le nom du demandeur et le commentaire ne sont visibles que de lui et des gestionnaires) ; toucher deux jours libres prépare la demande (début puis fin).
+- **Demande** (du, au inclus, pour quoi faire) : refusée si elle chevauche une demande en attente, une réservation ou un blocage, ou si elle commence avant aujourd'hui. Les gestionnaires sont prévenus par email. « Mes demandes » liste les demandes et leur état ; une demande en attente ou une réservation à venir peut être annulée (gestionnaires prévenus).
+- **Gestionnaire** : « À valider » (Valider / Refuser avec motif facultatif, le demandeur est prévenu par email s'il a une adresse), « Bloquer la remorque » (période, motif « utilisation par le club » ou « non disponible ») : un blocage est refusé sur une réservation ou un autre blocage, et refuse les demandes en attente qu'il recouvre (demandeurs prévenus). « Blocages en cours » permet de débloquer.
+- **Aucune limite** de durée ni de délai pour l'instant ; pas de demi-journées.
+- **Statistiques** (Admin → Statistiques, par année, pour l'assemblée générale) : réservations validées, jours de prêt, adhérents différents, demandes refusées et annulées, jours bloqués (club / indisponible), jours de prêt par mois.
+- **Données personnelles** : passé la durée de conservation, une réservation perd le nom, le numéro et le commentaire ; dates et état restent pour les statistiques.
 
 ## 5. Données personnelles (RGPD)
 - **Données traitées :**

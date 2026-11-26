@@ -463,3 +463,30 @@ label.case input:disabled + * , label.case:has(input:disabled) { color: var(--mu
 .proposer-trace { display: block; width: 100%; text-align: center; margin-top: 8px; cursor: pointer; }
 .jour-vide details.heures { flex-basis: 100%; min-width: 0; max-width: 100%; } /* sinon la bande des heures élargit la carte au lieu de défiler */
 :root[data-espacement="aere"] .jour-vide details.heures { grid-column: 1 / -1; }
+
+/* Remorque : palette C (contrastée), la même dans tous les thèmes. */
+:root { --r-validee: #e24b4a; --r-validee-txt: #fcebeb; --r-demandee: #ef9f27; --r-demandee-txt: #412402; --r-bloquee: #5f5e5a; --r-bloquee-txt: #f1efe8; }
+.chip-remorque { position: relative; }
+.pastille-attente { display: inline-block; min-width: 18px; margin-left: 5px; padding: 1px 5px; border-radius: 999px; background: var(--r-demandee); color: var(--r-demandee-txt); font-size: 11px; font-weight: 700; text-align: center; }
+.remorque-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.remorque-nav h2 { margin: 0; font-size: 18px; }
+.remorque-nav .btn { min-width: 44px; text-align: center; }
+.remorque-grille { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.remorque-grille th { font-size: 12px; color: var(--mut); font-weight: 600; }
+.remorque-grille td { padding: 0; }
+.remorque-grille button { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 56px; border-radius: 8px; border: 1px solid var(--line); background: var(--card2); color: var(--txt); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; }
+.remorque-grille button i { position: absolute; right: 2px; bottom: 0; font-style: normal; font-size: 9px; }
+.remorque-grille .r-validee, .remorque-legende .r-validee, .badge.r-validee { background: var(--r-validee); color: var(--r-validee-txt); border-color: var(--r-validee); }
+.remorque-grille .r-demandee, .remorque-legende .r-demandee, .badge.r-demandee { background: var(--r-demandee); color: var(--r-demandee-txt); border-color: var(--r-demandee); }
+.remorque-grille .r-bloquee, .remorque-legende .r-bloquee, .badge.r-bloquee { background: var(--r-bloquee); color: var(--r-bloquee-txt); border-color: var(--r-bloquee); }
+.badge.r-refusee, .badge.r-annulee { background: var(--fond-neutre); color: var(--txt); }
+.remorque-grille .r-passe { opacity: .45; }
+.remorque-grille .r-aujourdhui { outline: 3px solid var(--txt); outline-offset: 1px; }
+.remorque-grille .r-choisi { outline: 3px dashed var(--acc); outline-offset: 1px; }
+.remorque-legende { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 12px; }
+.remorque-legende span { padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line); }
+.remorque-legende .r-libre { background: var(--card2); }
+.remorque-ligne { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.remorque-ligne:first-of-type { border-top: 0; }
+.remorque-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.remorque-stats .chiffres { grid-template-columns: repeat(3, 1fr); margin: 6px 0; }

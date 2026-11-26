@@ -3,6 +3,7 @@ import { estVrai } from './schema.js';
 import { actionConnexion, actionDeconnexion, actionCalendrier, actionPersonnesEnregistrer, actionInscription } from './actions-adherent.js';
 import { actionAdminCodeDemander, actionAdminCodeVerifier, actionAdminLire, actionAdminEnregistrer, actionAdminGeocoder, actionRappelEnvoyerMaintenant } from './actions-admin.js';
 import { actionAdminStats } from './statistiques.js';
+import { actionRemorqueLire, actionRemorqueDemander, actionRemorqueAnnuler, actionRemorqueValider, actionRemorqueRefuser, actionRemorqueBloquer, actionRemorqueDebloquer, actionRemorqueStats } from './actions-remorque.js';
 import { actionSortieCreer, actionSortieModifier, actionSortieHoraire, actionSortieAnnuler, actionDiscussionLire, actionDiscussionEcrire, actionDiscussionSupprimer, actionTraceAjouter, actionTraceLire, actionTraceSupprimer } from './actions-sorties.js';
 
 // Construite à l'appel (et non au chargement) : Apps Script ne garantit pas l'ordre de chargement des fichiers.
@@ -30,6 +31,14 @@ function tableActions() {
     admin_geocoder: actionAdminGeocoder,
     admin_stats: actionAdminStats,
     rappel_envoyer_maintenant: actionRappelEnvoyerMaintenant,
+    remorque_lire: actionRemorqueLire,
+    remorque_demander: actionRemorqueDemander,
+    remorque_annuler: actionRemorqueAnnuler,
+    remorque_valider: actionRemorqueValider,
+    remorque_refuser: actionRemorqueRefuser,
+    remorque_bloquer: actionRemorqueBloquer,
+    remorque_debloquer: actionRemorqueDebloquer,
+    remorque_stats: actionRemorqueStats,
   };
 }
 
@@ -49,7 +58,8 @@ function utilisateurCourant(requete, ctx) {
   const est_admin = estVrai(adherent.admin);
   return {
     telephone: adherent.telephone, nom: adherent.nom, email: adherent.email || '',
-    est_admin, admin_verifie: est_admin && estVrai(jeton.admin_verifie), jeton_hash: hash,
+    // identite_verifiee : code mail saisi sur cet appareil (administrateur ou gestionnaire de la remorque).
+    est_admin, admin_verifie: est_admin && estVrai(jeton.admin_verifie), identite_verifiee: estVrai(jeton.admin_verifie), jeton_hash: hash,
   };
 }
 

@@ -20,6 +20,7 @@ export const ONGLETS = {
   Journal: ['horodatage', 'type', 'detail'],
   Rappels: ['id', 'nom', 'regle_ids', 'jour', 'heure', 'mail', 'whatsapp', 'actif', 'objet', 'texte'],
   Bilan: ['sortie_id', 'date', 'heure', 'statut', 'participants'],
+  Remorque: ['id', 'debut', 'fin', 'statut', 'motif', 'commentaire', 'demandeur_tel', 'demandeur_nom', 'traite_par', 'traite_le', 'cree_le'],
 };
 
 export const ENTETES_ADHERENTS = ['nom', 'telephone', 'email', 'actif', 'admin'];
@@ -39,6 +40,8 @@ export const PARAMETRES_DEFAUT = {
   conservation_mois: '1',
   url_appli: '',
   contact_rgpd: '',
+  remorque_active: 'non', // « oui » : bouton Remorque dans le bandeau
+  remorque_gestionnaires: '', // emails des gestionnaires de la remorque, séparés par des virgules
 };
 
 // Les booléens peuvent revenir de Sheets en booléen ou en texte.

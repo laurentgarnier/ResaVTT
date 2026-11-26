@@ -6,6 +6,7 @@ import { completerRecurrences, horodatage } from './actions-adherent.js';
 import { courrierListe, courrierWhatsApp } from './courriers.js';
 import { migrerRappels, rappelsDuTic } from './rappels.js';
 import { archiverSorties } from './statistiques.js';
+import { anonymiserRemorque } from './actions-remorque.js';
 
 const SEUIL_ALERTE_ENVOI = 3;
 
@@ -119,6 +120,7 @@ export function purger(ctx, aujourdhui) {
     }
     ctx.depot.supprimer('Traces', (t) => anciennes.has(t.sortie_id));
   }
+  anonymiserRemorque(ctx, limite);
   ctx.depot.supprimer('Envois', (e) => String(e.horodatage).slice(0, 10) < limite);
   ctx.depot.supprimer('Jetons', (j) => String(j.derniere_utilisation).slice(0, 10) < limiteJetons);
 

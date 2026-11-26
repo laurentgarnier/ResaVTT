@@ -6,6 +6,7 @@ import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schem
 import { horodatage, completerRecurrences } from './actions-adherent.js';
 import { lireDeparts } from '../../site/sorties/js/logique/departs.js';
 import { messageSysteme } from './actions-sorties.js';
+import { estGestionnaire } from './actions-remorque.js';
 import { migrerRappels, reglagesRappelDefaut, regleIdsDuGroupe, envoyerRappelManuel, heureCourte } from './rappels.js';
 
 const DUREE_CODE_MS = 15 * 60 * 1000;
@@ -19,18 +20,23 @@ function ligneJeton(ctx, u) {
   return ctx.depot.lire('Jetons').find((j) => j.jeton_hash === u.jeton_hash);
 }
 
+// Le code mail confirme l'identité d'un administrateur ou d'un gestionnaire de la remorque.
+function exigerAdminOuGestionnaire(ctx, u) {
+  if (!u.est_admin && !estGestionnaire(ctx, u)) throw erreurMetier('interdit', 'Réservé aux administrateurs.');
+}
+
 export function actionAdminCodeDemander(ctx, u) {
-  if (!u.est_admin) throw erreurMetier('interdit', 'Réservé aux administrateurs.');
+  exigerAdminOuGestionnaire(ctx, u);
   if (!u.email) throw erreurMetier('email_manquant', "Aucune adresse email n'est renseignée pour ce compte administrateur.");
   const code = String(parseInt(ctx.services.hacher(ctx.services.uuid()).slice(0, 8), 16) % 1000000).padStart(6, '0');
   const expire = new Date(ctx.services.maintenant().getTime() + DUREE_CODE_MS).toISOString();
   ctx.depot.modifier('Jetons', (j) => j.jeton_hash === u.jeton_hash, { code_hash: ctx.services.hacher(code), code_expire: expire, code_essais: '0' });
-  ctx.services.mail(u.email, "Code d'accès administration", `Votre code : ${code} (valable 15 minutes)`);
+  ctx.services.mail(u.email, u.est_admin ? "Code d'accès administration" : 'Code de gestion de la remorque', `Votre code : ${code} (valable 15 minutes)`);
   return { envoye: true };
 }
 
 export function actionAdminCodeVerifier(ctx, u, req) {
-  if (!u.est_admin) throw erreurMetier('interdit', 'Réservé aux administrateurs.');
+  exigerAdminOuGestionnaire(ctx, u);
   const j = ligneJeton(ctx, u);
   const essais = Number(j.code_essais || 0);
   if (essais >= ESSAIS_CODE_MAX) throw erreurMetier('trop_essais', 'Trop d’essais : demandez un nouveau code.');

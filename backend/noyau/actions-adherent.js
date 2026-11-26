@@ -7,6 +7,7 @@ import { estVrai, lireCleValeur, erreurMetier, PARAMETRES_DEFAUT } from './schem
 import { MODELES_DEFAUT } from '../../site/sorties/js/logique/modeles.js';
 import { departsDe, departInscription } from '../../site/sorties/js/logique/departs.js';
 import { retirerTracesSansInscrit } from './actions-sorties.js';
+import { etatRemorque } from './actions-remorque.js';
 
 export function horodatage(ctx) {
   return ctx.services.maintenant().toISOString();
@@ -126,6 +127,7 @@ export function actionCalendrier(ctx, u) {
     aujourdhui,
     est_admin: u.est_admin,
     admin_verifie: u.admin_verifie,
+    remorque: etatRemorque(ctx, u),
     moi: { telephone: u.telephone, nom: u.nom },
     personnes: personnesDuCompte(ctx, u).map((p) => ({ id: p.id, nom_affiche: p.nom_affiche })),
     parametres: {

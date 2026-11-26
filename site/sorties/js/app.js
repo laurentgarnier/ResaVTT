@@ -14,6 +14,7 @@ import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
 import { creneau as creneauDe } from './logique/dates.js';
 import { renderAdmin, renderCode, brancherAdmin, brancherCode } from './ui/admin.js';
+import { renderRemorque, brancherRemorque } from './ui/remorque.js';
 import { renderEncartInstallation, plateformeDepuis } from './ui/installation.js';
 import { reaffichageAutomatiquePermis, destinationApresConnexion, doitRelireCalendrier, calendrierAChange, INTERVALLE_CALENDRIER_MS, destinationLienCourt } from './ui/navigation.js';
 import { creerAttente } from './ui/attente.js';
@@ -79,7 +80,8 @@ const attente = creerAttente();
 
 // Ces écritures demandent le calendrier à jour dans leur réponse : pas de second aller-retour pour réafficher.
 const ECRITURES = ['connexion', 'inscription', 'sortie_creer', 'sortie_modifier', 'sortie_horaire', 'sortie_annuler', 'trace_ajouter',
-  'trace_supprimer', 'personnes_enregistrer', 'admin_code_verifier', 'admin_enregistrer'];
+  'trace_supprimer', 'personnes_enregistrer', 'admin_code_verifier', 'admin_enregistrer',
+  'remorque_demander', 'remorque_annuler', 'remorque_valider', 'remorque_refuser', 'remorque_bloquer', 'remorque_debloquer'];
 // Appels de fond (rafraîchissement de la discussion) : pas d'indicateur d'attente.
 const SILENCIEUSES = ['discussion_lire'];
 const FRAICHEUR = 2000; // ms : un calendrier reçu depuis moins longtemps n'est pas redemandé
@@ -123,6 +125,13 @@ const actions = {
   afficherConnexion,
 };
 
+// Bouton « Remorque » si la page est ouverte ; pour un gestionnaire, pastille du nombre de demandes en attente.
+function boutonRemorque(r) {
+  if (!r || !r.active) return '';
+  const pastille = r.attente ? `<span class="pastille-attente" aria-label="${r.attente} demande${r.attente > 1 ? 's' : ''} en attente">${r.attente}</span>` : '';
+  return `<a class="chip chip-remorque" href="#/remorque">🚚<span class="optionnel"> Remorque</span>${pastille}</a>`;
+}
+
 function afficherBarre() {
   const b = document.getElementById('barre');
   const cal = etat.cal;
@@ -130,6 +139,7 @@ function afficherBarre() {
     <button type="button" class="chip" id="bouton-affichage" aria-label="Affichage">🎨<span class="optionnel"> Affichage</span></button>
     ${cal ? `<span class="chip optionnel">Connecté : ${echapper(cal.moi.nom)}</span>
       <a class="chip" href="#/personnes">👪 Personnes</a>
+      ${boutonRemorque(cal.remorque)}
       ${cal.est_admin ? '<a class="chip" href="#/admin">⚙ Admin</a>' : ''}
       <a class="chip optionnel" href="#/deconnexion">Déconnexion</a>` : ''}`;
 }
@@ -297,7 +307,12 @@ async function afficherAdmin(racine, onglet, initiales = {}) {
     return;
   }
   if (onglet === 'stats') {
-    racine.innerHTML = renderAdmin(await actions.appeler('admin_stats', { annee: initiales.annee }), 'stats');
+    const [stats, remorque] = await Promise.all([
+      actions.appeler('admin_stats', { annee: initiales.annee }),
+      actions.appeler('remorque_stats', { annee: initiales.annee }).catch(() => null),
+    ]);
+    const montrer = remorque && ((etat.cal.remorque && etat.cal.remorque.active) || remorque.reservations || remorque.refusees || remorque.annulees);
+    racine.innerHTML = renderAdmin({ ...stats, remorque: montrer ? remorque : null }, 'stats');
     return;
   }
   let options = initiales;
@@ -317,7 +332,30 @@ async function afficherAdmin(racine, onglet, initiales = {}) {
   await afficher();
 }
 
+async function afficherRemorque(racine, mois) {
+  if (!etat.cal.remorque || !etat.cal.remorque.active) {
+    racine.innerHTML = '<p class="mut">La réservation de la remorque n’est pas ouverte.</p><a class="btn o" href="#/">Retour au calendrier</a>';
+    return;
+  }
+  let options = { mois: mois || etat.cal.aujourdhui.slice(0, 7), choix: {}, code: {} };
+  const afficher = async () => {
+    const d = await actions.appeler('remorque_lire');
+    racine.innerHTML = renderRemorque(d, options);
+    brancherRemorque(racine, actions, d, options, (o) => { options = o; reconstruire(); });
+  };
+  // Chaque réaffichage repart d'un élément neuf pour ne pas cumuler les écouteurs.
+  const reconstruire = () => {
+    const y = window.scrollY;
+    const neuf = racine.cloneNode(false);
+    racine.replaceWith(neuf);
+    racine = neuf;
+    afficher().then(() => window.scrollTo(0, y)).catch((e) => toast(e.message));
+  };
+  await afficher();
+}
+
 const ROUTES = [
+  { motif: /^#\/remorque(?:\/(\d{4}-\d{2}))?$/, afficher: (racine, m) => afficherRemorque(racine, m[1]) },
   { motif: /^#\/admin\/recurrences\/(.+)$/, afficher: (racine, m) => afficherAdmin(racine, 'recurrences', { regleEditee: decodeURIComponent(m[1]) }) },
   { motif: /^#\/admin\/rappels\/(.+)$/, afficher: (racine, m) => afficherAdmin(racine, 'rappels', { rappelEdite: decodeURIComponent(m[1]) }) },
   { motif: /^#\/admin\/stats(?:\/(\d{4}))?$/, afficher: (racine, m) => afficherAdmin(racine, 'stats', { annee: m[1] ? Number(m[1]) : undefined }) },

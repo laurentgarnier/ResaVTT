@@ -1,4 +1,5 @@
 // Page d'administration : code par email, récurrences, fermetures, rappels, paramètres, messages et envois.
+import { renderStatsRemorque } from './remorque.js';
 import { echapper } from '../logique/html.js';
 import { libelleDeparts } from '../logique/departs.js';
 import { aujourdhuiLocal } from '../logique/dates.js';
@@ -206,6 +207,9 @@ function ongletParametres(d) {
     ${c('email_alertes', 'Email prévenu en cas d\'échec d\'envoi', 'type="email"')}
     ${c('url_appli', 'Adresse de l\'appli (lien des messages)', 'type="url"')}
     ${c('conservation_mois', 'Durée de conservation des sorties (mois) ; leurs chiffres restent dans les statistiques', 'type="number" min="1" max="36"')}
+    <h3>Remorque</h3>
+    <label class="case"><input type="checkbox" name="remorque_active" value="oui"${p.remorque_active === 'oui' ? ' checked' : ''}> Proposer la réservation de la remorque (bouton 🚚 Remorque dans le bandeau)</label>
+    ${c('remorque_gestionnaires', 'Gestionnaires de la remorque : emails (fichier des adhérents), séparés par des virgules ; ils reçoivent les demandes et les valident')}
     <button class="btn p" type="submit" style="width:100%;margin-top:12px">Enregistrer les paramètres</button>
   </form>`;
 }
@@ -266,7 +270,7 @@ function ongletStats(s) {
 export function renderAdmin(d, onglet, { regleEditee, rappelEdite } = {}) {
   if (onglet === 'recurrences' && regleEditee) return `<section class="admin">${ecranRegle(d, regleEditee)}</section>`;
   if (onglet === 'rappels' && rappelEdite) return `<section class="admin">${ecranRappel(d, rappelEdite)}</section>`;
-  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), rappels: () => ongletRappels(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) }[onglet] || (() => ongletParametres(d));
+  const contenu = { recurrences: () => ongletRecurrences(d), fermetures: () => ongletFermetures(d), rappels: () => ongletRappels(d), parametres: () => ongletParametres(d), messages: () => ongletMessages(d), stats: () => ongletStats(d) + renderStatsRemorque(d.remorque) }[onglet] || (() => ongletParametres(d));
   return `<section class="admin">
     <a class="retour" href="#/">‹ Calendrier</a>
     <h1 style="font-size:20px;margin:0">⚙ Administration</h1>
@@ -390,7 +394,9 @@ export function brancherAdmin(racine, actions, d, reafficher) {
       enregistrer({ fermetures: d.fermetures.concat([fermeture]) }, 'Période fermée : les adhérents seront prévenus.');
     }
     if (f.id === 'form-parametres') {
-      enregistrer({ parametres: Object.fromEntries([...new FormData(f)].map(([k, v]) => [k, String(v)])) }, 'Paramètres enregistrés.');
+      const parametres = Object.fromEntries([...new FormData(f)].map(([k, v]) => [k, String(v)]));
+      parametres.remorque_active = f.remorque_active.checked ? 'oui' : 'non'; // case décochée : absente du formulaire
+      enregistrer({ parametres }, 'Paramètres enregistrés.');
     }
     if (f.id === 'form-modeles') {
       enregistrer({ modeles: Object.fromEntries([...new FormData(f)].map(([k, v]) => [k, String(v)])) }, 'Textes enregistrés.');

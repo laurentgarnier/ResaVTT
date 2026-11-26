@@ -203,7 +203,8 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
   - adresse_liste (adresse @googlegroups.com) ;
   - destinataires_whatsapp, email_alertes ;
   - whatsapp_numero (facultatif) : s'il est renseigné, le lien devient `https://wa.me/<numero>?text=…` et ouvre directement la conversation avec ce numéro. Vide, le lien laisse choisir la conversation ou le groupe ;
-  - conservation_mois, url_appli, contact_rgpd.
+  - conservation_mois, url_appli, contact_rgpd ;
+  - remorque_active (`oui` / `non`, défaut `non`) et remorque_gestionnaires (emails séparés par des virgules) : page Remorque (§4).
 - **`Modeles`** (clé / valeur) :
   - annulation_mail_objet, annulation_mail_corps, annulation_whatsapp ;
   - rappel_individuel_objet / _texte et rappel_groupe_objet / _texte : textes proposés à la création d'un rappel. Le texte d'un rappel est ensuite rangé avec lui (`Regles.rappel_*` ou `Rappels`), avec les repères `{{liste_sorties}}`, `{{nom}}`, `{{lien}}`, `{{titre}}`, `{{date}}`, `{{heure}}`, `{{point_rdv}}`, `{{meteo}}`, `{{lien_sortie}}` (§7.2).
@@ -225,6 +226,7 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 - **`Envois`** : cle (par exemple `rappel:2026-11-12` ou `annulation:<sortie_id>`), etape_mail, etape_whatsapp, tentatives, derniere_erreur.
 - **`Journal`** : horodatage, type, detail.
 - **`Bilan`** : sortie_id, date, heure, statut, participants. Une ligne anonyme par sortie supprimée par la purge (§7.4), pour les statistiques annuelles. Aucun nom ni numéro. L'adaptateur crée l'onglet s'il manque.
+- **`Remorque`** : id, debut, fin (AAAA-MM-JJ, inclus), statut (`demandee`, `validee`, `refusee`, `annulee`, `bloquee`), motif (`club` / `indisponible` pour un blocage, motif libre d'un refus), commentaire, demandeur_tel, demandeur_nom, traite_par, traite_le, cree_le. Code : `backend/noyau/actions-remorque.js` ; grille du mois : `logique/remorque.js` ; page : `ui/remorque.js`.
 
 **Les numéros de téléphone ne sortent jamais de l'API**, à l'exception de celui du compte connecté. Pour indiquer qui a créé ou modifié quelque chose, l'API ne renvoie que des noms.
 
@@ -264,6 +266,11 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 | `admin_lire` / `admin_enregistrer` | admin | Lecture et écriture de `Regles` + `RegleSorties`, `Fermetures`, `Parametres` et `Modeles`. Enregistrer une fermeture déclenche immédiatement l'annulation des sorties déjà générées sur la période (§7.3). |
 | `rappel_envoyer_maintenant` | admin | `{ type: 'R'|'G', id }` : envoie tout de suite ce rappel (individuel ou groupé), même désactivé ou couvert, avec la clé `rappel-manuel:<type>:<id>:<horodatage>`. Renvoie `{ nb_sorties }`. |
 | `admin_stats` | admin | Statistiques d'une année (`annee`, par défaut l'année en cours) : sorties proposées et annulées, total des participants (inscriptions), participants et sorties par mois, participants par jour de la semaine et demi-journée (matin : départ avant 13 h). Réunit `Bilan` et les sorties encore présentes ; seules les sorties déjà parties comptent, les annulées sont mises à part. Renvoie aussi `annees`, les années disponibles. |
+| `remorque_lire` | adhérent (page ouverte, sinon `remorque_fermee`, comme toutes les actions `remorque_*`) | `{aujourdhui, est_gestionnaire, verifie, periodes, mes_demandes}` ; `periodes` : demandées, validées et bloquées (id, debut, fin, statut, motif, a_moi ; demandeur_nom et commentaire pour le demandeur et le gestionnaire vérifié). Gestionnaire vérifié : `a_valider` et `blocages` (à venir) en plus. Le calendrier renvoie `remorque: {active, attente}` (`attente` pour un gestionnaire seulement). |
+| `remorque_demander` / `remorque_annuler` | adhérent ; annulation : le demandeur | `{debut, fin, commentaire}` → `dates_invalides`, `periode_prise` (chevauche une période demandée, validée ou bloquée). Mail aux gestionnaires. Annulation d'une demande en attente ou d'une réservation pas encore finie → `annulee`. |
+| `remorque_valider` / `remorque_refuser` / `remorque_bloquer` / `remorque_debloquer` | gestionnaire (email dans `remorque_gestionnaires`) à l'identité vérifiée, sinon `interdit` ou `identite_non_verifiee` | Décision sur une demande `demandee` (mail au demandeur s'il a un email, `{id, motif}` pour un refus) ; blocage `{debut, fin, motif: club|indisponible, commentaire}` refusé (`periode_prise`) sur une réservation ou un blocage, il refuse les demandes en attente recouvertes ; déblocage → `annulee`. Les mails n'empêchent pas l'action : un échec est noté au journal. |
+| `remorque_stats` | admin | `{annee}` : réservations validées, jours_pret, adherents (numéros encore connus), refusees, annulees (hors blocages levés), jours_bloques_club / _indisponible, jours_par_mois (une période à cheval sur deux années ne compte que ses jours de l'année), annees. |
+| `admin_code_demander` / `admin_code_verifier` | admin ou gestionnaire de la remorque | Code à 6 chiffres par mail (15 min, 5 essais) ; il pose `admin_verifie` sur le jeton. L'utilisateur courant expose `admin_verifie` (admin) et `identite_verifiee` (tout compte ayant saisi le code). |
 | `admin_geocoder` | admin | Cherche une commune via l'API de géocodage Open-Meteo et renvoie des candidats avec latitude et longitude. |
 
 ## 5. PWA (front)
@@ -427,6 +434,8 @@ Pour un numéro absent de `Adherents` ou marqué inactif :
 - dans `Inscriptions`, `Discussions`, `Traces` et `Sorties`, la colonne téléphone est **vidée** : l'historique garde les noms, mais plus le numéro.
 
 Les jetons inutilisés depuis plus de 12 mois sont également supprimés.
+
+Les réservations de la remorque terminées depuis plus de `conservation_mois` sont **anonymisées** (demandeur_nom, demandeur_tel, commentaire vidés) et gardées pour les statistiques.
 
 ## 8. Sécurité
 - Le Sheet et le dossier Drive ne sont **jamais partagés publiquement**. Seul le script y accède.
