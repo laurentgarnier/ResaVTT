@@ -8,7 +8,8 @@ import { renderFrise, renderAgenda } from './ui/calendrier-variantes.js';
 import { messagePartageSortie, messageAnnulationSortie } from './logique/partage.js';
 import { lienWhatsApp } from './logique/modeles.js';
 import { surveillerMisesAJour } from './maj-appli.js';
-import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, THEMES } from './ui/affichage.js';
+import { lireAffichage, enregistrerAffichage, renderSelecteurAffichage, choixAffichage, THEMES } from './ui/affichage.js';
+import { renderMenuBas, renderProfil, renderBlocAffichage } from './ui/profil.js';
 import { renderSortie, brancherSortie, arreterDiscussion } from './ui/sortie.js';
 import { chargerMeteo, meteoParDate, heuresDuJour } from './ui/meteo-vue.js';
 import { valeursParDefaut, sortiesMemeCreneau, renderFormulaire, brancherFormulaire, renderPersonnes, brancherPersonnes } from './ui/formulaire.js';
@@ -30,6 +31,9 @@ const stockageLocal = (() => {
   try { return window.localStorage; } catch (e) { return { getItem: () => null, setItem: () => {} }; }
 })();
 let affichage = lireAffichage(stockageLocal);
+// Barre de menu fixe en bas et page Profil : selon config.js (front Cloudflare). Pour l'essayer ailleurs :
+// localStorage['sorties-vtt-menu-bas'] = '1'.
+const menuBas = CONFIG.menuBas === true || stockageLocal.getItem('sorties-vtt-menu-bas') === '1';
 
 function appliquerTheme() {
   document.documentElement.dataset.theme = affichage.theme;
@@ -54,6 +58,12 @@ function appliquerNomAppli(nom) {
 }
 appliquerNomAppli(nomAppli);
 
+function changerAffichage(choix) {
+  affichage = { ...affichage, ...choix };
+  enregistrerAffichage(stockageLocal, affichage);
+  appliquerTheme();
+}
+
 function basculerSelecteur(ouvrir) {
   const existant = document.querySelector('.selecteur-affichage');
   if (existant) existant.remove();
@@ -62,11 +72,8 @@ function basculerSelecteur(ouvrir) {
   document.querySelector('.selecteur-affichage').addEventListener('click', (ev) => {
     const b = ev.target.closest('button');
     if (!b) return;
-    const choix = b.dataset.disposition ? { disposition: b.dataset.disposition }
-      : b.dataset.espacement ? { espacement: b.dataset.espacement } : { theme: b.dataset.themeChoix };
-    affichage = { ...affichage, ...choix };
-    enregistrerAffichage(stockageLocal, affichage);
-    appliquerTheme();
+    const choix = choixAffichage(b);
+    changerAffichage(choix);
     basculerSelecteur(true);
     if (b.dataset.disposition && etat.cal) router();
   });
@@ -132,9 +139,32 @@ function boutonRemorque(r) {
   return `<a class="chip chip-remorque" href="#/remorque">🚚<span class="optionnel"> Remorque</span>${pastille}</a>`;
 }
 
+function afficherMenuBas() {
+  let nav = document.getElementById('menu-bas');
+  if (!menuBas || !etat.cal) {
+    if (nav) nav.remove();
+    document.body.classList.remove('avec-menu-bas');
+    return;
+  }
+  if (!nav) {
+    nav = document.createElement('nav');
+    nav.id = 'menu-bas';
+    nav.className = 'menu-bas';
+    nav.setAttribute('aria-label', 'Menu');
+    document.body.appendChild(nav);
+  }
+  document.body.classList.add('avec-menu-bas');
+  nav.innerHTML = renderMenuBas(etat.cal, location.hash);
+}
+
 function afficherBarre() {
   const b = document.getElementById('barre');
   const cal = etat.cal;
+  afficherMenuBas();
+  if (menuBas && cal) {
+    b.innerHTML = `<a class="logo" href="#/">${logoAppli(nomAppli)}</a><span class="sp"></span>`;
+    return;
+  }
   b.innerHTML = `<a class="logo" href="#/">${logoAppli(nomAppli)}</a><span class="sp"></span>
     <button type="button" class="chip" id="bouton-affichage" aria-label="Affichage">🎨<span class="optionnel"> Affichage</span></button>
     ${cal ? `<span class="chip optionnel">Connecté : ${echapper(cal.moi.nom)}</span>
@@ -289,6 +319,18 @@ function afficherModification(racine, id) {
   brancherFormulaire(racine, actions, { mode: 'modifier', sortie, cal: etat.cal });
 }
 
+function afficherProfil(racine) {
+  racine.innerHTML = renderProfil(etat.cal, affichage, libelleVersion());
+  brancherPersonnes(racine, actions);
+  racine.addEventListener('click', (ev) => {
+    const choix = choixAffichage(ev.target.closest('.profil-affichage button'));
+    if (!choix) return;
+    changerAffichage(choix);
+    // Seuls les choix d'affichage sont redessinés : une saisie en cours dans les personnes est gardée.
+    racine.querySelector('.profil-affichage').outerHTML = renderBlocAffichage(affichage);
+  });
+}
+
 function afficherPersonnes(racine) {
   racine.innerHTML = renderPersonnes(etat.cal.personnes);
   brancherPersonnes(racine, actions);
@@ -363,6 +405,7 @@ const ROUTES = [
   { motif: /^#\/creer\/(\d{4}-\d{2}-\d{2})$/, afficher: (racine, m) => afficherCreation(racine, m[1]) },
   { motif: /^#\/modifier\/(.+)$/, afficher: (racine, m) => afficherModification(racine, decodeURIComponent(m[1])) },
   { motif: /^#\/personnes$/, afficher: (racine) => afficherPersonnes(racine) },
+  { motif: /^#\/profil$/, afficher: (racine) => afficherProfil(racine) },
   { motif: /^#\/$/, afficher: (racine) => afficherCalendrier(racine) },
   { motif: /^#\/jour\/(\d{4}-\d{2}-\d{2})$/, afficher: async (racine, m) => afficherJour(racine, m[1], await meteoCourante()) },
   { motif: /^#\/sortie\/(.+)$/, afficher: (racine, m) => afficherSortie(racine, decodeURIComponent(m[1])) },
@@ -446,6 +489,7 @@ document.addEventListener('visibilitychange', () => {
   else chargerCalendrier().catch(() => {});
 });
 window.addEventListener('hashchange', router);
+window.addEventListener('hashchange', afficherMenuBas);
 if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
   surveillerMisesAJour(navigator, document, location);

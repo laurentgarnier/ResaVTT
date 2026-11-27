@@ -300,6 +300,18 @@ Le club prête sa remorque à vélos. L'administrateur ouvre ou ferme la page (P
 - **Statistiques** (Admin → Statistiques, par année, pour l'assemblée générale) : réservations validées, jours de prêt, adhérents différents, demandes refusées et annulées, jours bloqués (club / indisponible), jours de prêt par mois.
 - **Données personnelles** : passé la durée de conservation, une réservation perd le nom, le numéro et le commentaire ; dates et état restent pour les statistiques.
 
+### 4.11 Menu du bas et page Profil (front Cloudflare) **[décidé]**
+Sur le front hébergé par Cloudflare seulement (la démo GitHub garde son bandeau actuel) :
+- **Barre de menu fixe en bas** de l'écran : « 🚵 Sorties » (calendrier), « 🚚 Remorque » si la page est ouverte (avec
+  la pastille des demandes en attente pour un gestionnaire), « ⚙ Admin » pour un administrateur ; à droite, les
+  **initiales** de l'adhérent dans une pastille de couleur, qui ouvrent sa page Profil. L'entrée de l'écran affiché est
+  soulignée.
+- **Le bandeau du haut** ne garde que le logo et le nom de l'association : les boutons Affichage, Personnes, Admin et
+  Déconnexion passent dans la barre du bas et dans le profil.
+- **Page Profil** : nom et rôle ; **Affichage** (mise en page du calendrier, thème, espacement : appliqué aussitôt,
+  mémorisé sur l'appareil) ; **Personnes de mon compte** (ajouter, renommer, retirer) ; « Se déconnecter de cet
+  appareil » ; numéro de version.
+
 ## 5. Données personnelles (RGPD)
 - **Données traitées :**
   - le téléphone, le nom et éventuellement l'email des adhérents, déjà détenus par le club ;

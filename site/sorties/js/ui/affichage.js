@@ -38,15 +38,27 @@ export function enregistrerAffichage(stockage, affichage) {
   try { stockage.setItem(CLE, JSON.stringify(affichage)); } catch (e) { /* stockage indisponible : le choix vaut pour la session */ }
 }
 
-export function renderSelecteurAffichage(affichage) {
+// Choix de mise en page, thème et espacement : dans la fenêtre « Affichage » ou dans la page Profil.
+export function renderChoixAffichage(affichage) {
   const bouton = (attr, id, libelle, actif, aide) => `<button type="button" ${attr}="${id}" aria-pressed="${actif}"${aide ? ` title="${echapper(aide)}"` : ''}>${echapper(libelle)}</button>`;
-  return `<div class="selecteur-affichage" role="dialog" aria-label="Affichage">
-    <div class="petit mut">Mise en page du calendrier</div>
+  return `<div class="petit mut">Mise en page du calendrier</div>
     <div class="choix">${DISPOSITIONS.map((d) => bouton('data-disposition', d.id, d.libelle, d.id === affichage.disposition, d.aide)).join('')}</div>
     <div class="petit mut">Thème</div>
     <div class="choix">${THEMES.map((t) => bouton('data-theme-choix', t.id, t.libelle, t.id === affichage.theme)).join('')}</div>
     <div class="petit mut">Espacement</div>
     <div class="choix">${ESPACEMENTS.map((e) => bouton('data-espacement', e.id, e.libelle, e.id === affichage.espacement, e.aide)).join('')}</div>
-    <div class="petit mut">À l'essai : le choix ne vaut que pour cet appareil.</div>
-  </div>`;
+    <div class="petit mut">Le choix ne vaut que pour cet appareil.</div>`;
+}
+
+export function renderSelecteurAffichage(affichage) {
+  return `<div class="selecteur-affichage" role="dialog" aria-label="Affichage">${renderChoixAffichage(affichage)}</div>`;
+}
+
+// Choix touché (bouton de renderChoixAffichage) → changement à appliquer, ou null.
+export function choixAffichage(bouton) {
+  if (!bouton) return null;
+  if (bouton.dataset.disposition) return { disposition: bouton.dataset.disposition };
+  if (bouton.dataset.espacement) return { espacement: bouton.dataset.espacement };
+  if (bouton.dataset.themeChoix) return { theme: bouton.dataset.themeChoix };
+  return null;
 }

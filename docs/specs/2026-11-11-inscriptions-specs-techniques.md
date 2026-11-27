@@ -278,7 +278,8 @@ Pourquoi un fichier séparé : le secrétaire n'a pas besoin d'accéder aux donn
 ### Fichiers
 Tous dans `site/sorties/` (voir l'arborescence au §2.1) :
 - `index.html`, `app.js`, `api.js`, `meteo.js`, `gpx.js`, `admin.js`, `style.css`
-- `config.js` : contient l'URL de l'API
+- `config.js` : contient l'URL de l'API (`urlApi`) et l'option `menuBas` (`true` sur le front Cloudflare, `false` sur la démo GitHub ; pour l'essayer ailleurs : `localStorage['sorties-vtt-menu-bas'] = '1'`)
+- `js/logique/menu-bas.js` (`entreesMenuBas(cal)` : entrées selon `cal.remorque` et `cal.est_admin`, initiales du profil ; `entreeActive(hash)`) et `js/ui/profil.js` (`renderMenuBas`, `renderProfil`, `renderBlocAffichage`) : barre `<nav id="menu-bas">` ajoutée au `body` (classe `avec-menu-bas`), mise à jour à chaque changement d'écran ; route `#/profil`. Le profil réutilise `renderChoixAffichage` (`ui/affichage.js`) et `formPersonnes` / `brancherPersonnes` (`ui/formulaire.js`).
 - `manifest.webmanifest`, `sw.js`, `js/maj-appli.js` (mises à jour de l'appli installée), `js/version.js` (numéro de version en pied de page)
 - **Icônes** : `icones/icone-192.png` et `icone-512.png` (*purpose* `any` : onglet, bandeau, page de connexion, Android), `icone-maskable-192/512.png` (*purpose* `maskable` : le logo tient dans le cercle central qu'Android peut découper), `apple-touch-icon.png` (180 px, iPhone). Toutes viennent de deux images sources de 1024 px, `logo.png` et `logo-maskable.png`, réduites par `npm run icones` (`outils/generer-icones.ps1`, Windows).
 - **Logo du club** : `docs/logo/corbas-vtt.svg`, vectorisé depuis l'image fournie (`outils/vectoriser-logo.py`, potrace, avec le Python d'Inkscape). `outils/composer-icone.py` en compose les deux sources carrées sur fond blanc (logo à 88 % du côté, ou diagonale à 80 % pour la version découpable) et les exporte avec Inkscape.

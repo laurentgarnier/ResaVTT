@@ -69,13 +69,18 @@ export function renderPersonnes(personnes) {
     <a class="retour" href="#/">‹ Calendrier</a>
     <h1 style="font-size:20px;margin:0">👪 Personnes de mon compte</h1>
     <p class="mut petit">Vous pouvez inscrire ces personnes en même temps que vous : famille, ami sans smartphone…</p>
-    <form id="form-personnes">
+    ${formPersonnes(personnes)}
+    <p style="margin-top:28px"><a class="btn o" href="#/deconnexion">Se déconnecter de cet appareil</a></p>
+  </section>`;
+}
+
+// Formulaire des personnes du compte : page Personnes et page Profil.
+export function formPersonnes(personnes) {
+  return `<form id="form-personnes">
       <div id="liste-personnes">${personnes.map((p) => ligneP(p.id, p.nom_affiche)).join('')}</div>
       <button class="btn o" type="button" data-action="ajouter" style="margin-top:10px">+ Ajouter une personne</button>
       <button class="btn p" type="submit" style="width:100%;margin-top:14px">Enregistrer</button>
-    </form>
-    <p style="margin-top:28px"><a class="btn o" href="#/deconnexion">Se déconnecter de cet appareil</a></p>
-  </section>`;
+    </form>`;
 }
 
 function ligneP(id, nom) {

@@ -16,4 +16,6 @@ export const CONFIG = {
   urlApi: surcharge() || (enLocal ? '/api' : 'https://resavtt-essai.lologar69.workers.dev/'),
   urlAppli: '',
   indiceDemo: 'Démo : essayez 06 00 00 00 02 (Ben) ou votre propre numéro (administrateur).',
+  // Barre de menu fixe en bas (Sorties, Remorque, Admin, profil) : activée sur le front Cloudflare seulement.
+  menuBas: false,
 };
